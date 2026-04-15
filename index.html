@@ -44,7 +44,9 @@ canvas {
 }
 html, body {
     overflow: hidden;
-    height: 100%;}
+    height: 100%;
+}
+    
 </style>
 
 </head>
@@ -233,24 +235,16 @@ function draw() {
 
 
 // ---------------- SCROLLBLOCK ----------------
+
+<canvas id="snakeCanvas" width="400" height="400" tabindex="-1"></canvas>
     
-window.addEventListener("keydown", function(e) {
-    const keys = ["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"," "];
+document.addEventListener("keydown", function(e) {
+    const keys = ["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"];
 
     if (keys.includes(e.key)) {
         e.preventDefault();
-        e.stopPropagation();
-        return false;
     }
 }, true);
-
-window.addEventListener("wheel", function(e) {
-    e.preventDefault();
-}, { passive: false });
-
-window.addEventListener("touchmove", function(e) {
-    e.preventDefault();
-}, { passive: false });
     
 
     
