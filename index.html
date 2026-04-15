@@ -48,7 +48,7 @@ canvas {
 <body>
 
 <header>
-<h1>🎮 LGame 🎮</h1>
+<h1>🎮 LGame</h1>
 
 <button onclick="showGame('menu')">Start</button>
 <button onclick="showGame('clicker')">Klick-Spiel</button>
@@ -88,13 +88,12 @@ canvas {
 </div>
 
 <script>
+// ---------------- MENU ----------------
 let score = 0;
 let secretNumber = Math.floor(Math.random() * 10) + 1;
 
-// ---------------- MENU ----------------
 function showGame(id) {
-    let games = document.querySelectorAll(".game");
-    games.forEach(g => g.classList.remove("active"));
+    document.querySelectorAll(".game").forEach(g => g.classList.remove("active"));
     document.getElementById(id).classList.add("active");
 
     if (id === "guess") {
@@ -131,11 +130,13 @@ const ctx = canvas.getContext("2d");
 const box = 20;
 
 let snake, direction, food, game, snakeScore;
+let gameOver = false;
 
 document.addEventListener("keydown", changeDirection);
 
 function startSnake() {
     clearInterval(game);
+    gameOver = false;
 
     snake = [{x: 200, y: 200}];
     direction = "RIGHT";
@@ -189,8 +190,16 @@ function draw() {
         head.y < 0 || head.y >= 400 ||
         collision(head, snake)
     ) {
-        alert("Game Over! Score: " + snakeScore);
         clearInterval(game);
+        gameOver = true;
+
+        ctx.fillStyle = "white";
+        ctx.font = "30px Arial";
+        ctx.textAlign = "center";
+
+        ctx.fillText("Game Over!", 200, 180);
+        ctx.fillText("Score: " + snakeScore, 200, 220);
+
         return;
     }
 
