@@ -229,14 +229,28 @@ function draw() {
 }
 
 
-document.addEventListener("keydown", function(e) {
-    const keys = ["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"];
+// ---------------- SCROLLBLOCK ----------------
+    
+window.addEventListener("keydown", function(e) {
+    const keys = ["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"," "];
+
     if (keys.includes(e.key)) {
         e.preventDefault();
+        e.stopPropagation();
+        return false;
     }
-}, false);
+}, true);
 
+window.addEventListener("wheel", function(e) {
+    e.preventDefault();
+}, { passive: false });
 
+window.addEventListener("touchmove", function(e) {
+    e.preventDefault();
+}, { passive: false });
+    
+
+    
     
 </script>
 
