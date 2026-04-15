@@ -36,6 +36,12 @@ button {
 .active {
     display: block;
 }
+
+canvas {
+    background: black;
+    display: block;
+    margin: 20px auto;
+}
 </style>
 
 </head>
@@ -43,9 +49,12 @@ button {
 
 <header>
 <h1>🎮 LGame</h1>
+
 <button onclick="showGame('menu')">Start</button>
 <button onclick="showGame('clicker')">Klick-Spiel</button>
 <button onclick="showGame('guess')">Zahlen raten</button>
+<button onclick="showGame('snake')">Snake 🐍</button>
+
 </header>
 
 <!-- MENÜ -->
@@ -70,10 +79,19 @@ button {
     <p id="result"></p>
 </div>
 
+<!-- SNAKE SPIEL -->
+<div id="snake" class="game">
+    <h2>🐍 Snake</h2>
+    <p>Steuerung: Pfeiltasten</p>
+    <div id="snakeScore">Score: 0</div>
+    <canvas id="game" width="400" height="400"></canvas>
+</div>
+
 <script>
 let score = 0;
 let secretNumber = Math.floor(Math.random() * 10) + 1;
 
+// ---------------- MENU ----------------
 function showGame(id) {
     let games = document.querySelectorAll(".game");
     games.forEach(g => g.classList.remove("active"));
@@ -83,13 +101,19 @@ function showGame(id) {
         secretNumber = Math.floor(Math.random() * 10) + 1;
         document.getElementById("result").innerText = "";
     }
+
+    if (id === "snake") {
+        startSnake();
+    }
 }
 
+// ---------------- CLICKER ----------------
 function addPoint() {
     score++;
     document.getElementById("score").innerText = score;
 }
 
+// ---------------- GUESS ----------------
 function checkGuess() {
     let guess = Number(document.getElementById("guessInput").value);
 
@@ -98,6 +122,86 @@ function checkGuess() {
         secretNumber = Math.floor(Math.random() * 10) + 1;
     } else {
         document.getElementById("result").innerText = "❌ Falsch, versuch es nochmal!";
+    }
+}
+
+// ---------------- SNAKE ----------------
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+const box = 20;
+
+let snake, direction, food, game, snakeScore;
+
+document.addEventListener("keydown", changeDirection);
+
+function startSnake() {
+    clearInterval(game);
+
+    snake = [{x: 200, y: 200}];
+    direction = "RIGHT";
+    food = randomFood();
+    snakeScore = 0;
+
+    document.getElementById("snakeScore").innerText = "Score: 0";
+
+    game = setInterval(draw, 120);
+}
+
+function changeDirection(e) {
+    if (e.key === "ArrowLeft" && direction !== "RIGHT") direction = "LEFT";
+    if (e.key === "ArrowRight" && direction !== "LEFT") direction = "RIGHT";
+    if (e.key === "ArrowUp" && direction !== "DOWN") direction = "UP";
+    if (e.key === "ArrowDown" && direction !== "UP") direction = "DOWN";
+}
+
+function randomFood() {
+    return {
+        x: Math.floor(Math.random() * 20) * box,
+        y: Math.floor(Math.random() * 20) * box
+    };
+}
+
+function collision(head, arr) {
+    return arr.some(seg => seg.x === head.x && seg.y === head.y);
+}
+
+function draw() {
+    ctx.fillStyle = "black";
+    ctx.fillRect(0, 0, 400, 400);
+
+    snake.forEach(s => {
+        ctx.fillStyle = "lime";
+        ctx.fillRect(s.x, s.y, box, box);
+    });
+
+    ctx.fillStyle = "red";
+    ctx.fillRect(food.x, food.y, box, box);
+
+    let head = {x: snake[0].x, y: snake[0].y};
+
+    if (direction === "LEFT") head.x -= box;
+    if (direction === "RIGHT") head.x += box;
+    if (direction === "UP") head.y -= box;
+    if (direction === "DOWN") head.y += box;
+
+    if (
+        head.x < 0 || head.x >= 400 ||
+        head.y < 0 || head.y >= 400 ||
+        collision(head, snake)
+    ) {
+        alert("Game Over! Score: " + snakeScore);
+        clearInterval(game);
+        return;
+    }
+
+    snake.unshift(head);
+
+    if (head.x === food.x && head.y === food.y) {
+        snakeScore++;
+        document.getElementById("snakeScore").innerText = "Score: " + snakeScore;
+        food = randomFood();
+    } else {
+        snake.pop();
     }
 }
 </script>
