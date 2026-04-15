@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>Flappy Final Stable</title>
+<style>
+body {
+ margin:0;
+ display:flex;
+ justify-content:center;
+ align-items:center;
+ height:100vh;
+ background:#87ceeb;
+}
+canvas {
+ border:2px solid black;
+}
+</style>
+</head>
+<body>
+
+<canvas id="game" width="420" height="640"></canvas>
+
+<script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+// ======================
+// 🐦 PLAYER
+// ======================
+let bird = {
+ x: 80,
+ y: 200,
+ r: 14,
+ v: 0,
+ g: 0.45,
+ jump: -8,
+ wing: 0
+};
+
+// ======================
+// GAME STATE
+// ======================
+let pipes = [];
+let powerups = [];
+let score = 0;
+let frame = 0;
+let gameOver = false;
+
+// effects
+let slowMo = 0;
+let shield = 0;
+
+// ======================
+// CONTROLS
+// ======================
+document.addEventListener("keydown", () => {
+ if (!gameOver) bird.v = bird.jump;
+ else reset();
+});
+
+// ======================
+// 🌍 WORLD SYSTEM
+// ======================
+function getWorld() {
+ return Math.floor(score / 10) % 4;
+}
+
+function background(w) {
+ if (w === 0) return "#4fc3f7";   // day
+ if (w === 1) return "#0d1b2a";   // night
+ if (w === 2) return "#ff6f00";   // sunset
+ return "#000814";               // space
+}
+
+// ======================
+// 📈 DIFFICULTY
+// ======================
+function difficulty() {
+ let lvl = Math.floor(score / 10);
+
+ return {
+   speed: 2 + lvl * 0.4,
+   gap: Math.max(90, 160 - lvl * 10),
+   spawn: Math.max(90, 120 - lvl * 6),
+   powerChance: Math.max(0.08, 0.25 - lvl * 0.03)
+ };
+}
+
+// ======================
+// PIPE
+// ======================
+function addPipe() {
+ let d = difficulty();
+ let gap = d.gap;
+
+ let top = Math.random() * 240 + 60;
+
+ pipes.push({
+   x: canvas.width,
+   w: 50,
+   top: top,
+   bottom: canvas.height - top - gap,
+   passed: false
+ });
+
+ // powerups (rare + controlled)
+ if (Math.random() < d.powerChance) {
+   powerups.push({
+     x: canvas.width + 40,
+     y: top + gap / 2,
+     type: Math.random() < 0.5 ? "slow" : "shield",
+     taken: false
+   });
+ }
+}
+
+// ======================
+// COLLISION
+// ======================
+function hit(cx,cy,r,rx,ry,rw,rh) {
+ let x = Math.max(rx, Math.min(cx, rx+rw));
+ let y = Math.max(ry, Math.min(cy, ry+rh));
+ let dx = cx - x;
+ let dy = cy - y;
+ return dx*dx + dy*dy < r*r;
+}
+
+// ======================
+// UPDATE
+// ======================
+function update() {
+ if (gameOver) return;
+
+ let d = difficulty();
+ let speed = slowMo > 0 ? d.speed * 0.6 : d.speed;
+
+ // bird physics
+ bird.v += bird.g;
+ bird.y += bird.v;
+
+ if (bird.y < 0 || bird.y > canvas.height) gameOver = true;
+
+ // spawn pipes
+ if (frame % d.spawn === 0) addPipe();
+
+ // pipes
+ for (let p of pipes) {
+   p.x -= speed;
+
+   if (!p.passed && p.x + p.w < bird.x) {
+     score++;
+     p.passed = true;
+   }
+
+   if (
+     hit(bird.x,bird.y,bird.r,p.x,0,p.w,p.top) ||
+     hit(bird.x,bird.y,bird.r,p.x,canvas.height-p.bottom,p.w,p.bottom)
+   ) {
+     if (shield > 0) shield--;
+     else gameOver = true;
+   }
+ }
+
+ pipes = pipes.filter(p => p.x > -80);
+
+ // powerups
+ for (let p of powerups) {
+   p.x -= speed;
+
+   if (!p.taken && hit(bird.x,bird.y,bird.r,p.x,p.y,20,20)) {
+     p.taken = true;
+
+     if (p.type === "slow") slowMo = 180;  // SHORT + balanced
+     if (p.type === "shield") shield = 1;  // single hit only
+   }
+ }
+
+ powerups = powerups.filter(p => !p.taken && p.x > -60);
+
+ if (slowMo > 0) slowMo--;
+
+ bird.wing += 0.25;
+ frame++;
+}
+
+// ======================
+// PIPE (MARIO STYLE)
+// ======================
+function drawPipe(p) {
+ ctx.fillStyle = "#2e7d32";
+ ctx.fillRect(p.x,0,p.w,p.top);
+ ctx.fillRect(p.x,canvas.height-p.bottom,p.w,p.bottom);
+
+ ctx.fillStyle = "#1b5e20";
+ ctx.fillRect(p.x-3,p.top-18,p.w+6,18);
+ ctx.fillRect(p.x-3,canvas.height-p.bottom,p.w+6,18);
+}
+
+// ======================
+// BIRD
+// ======================
+function drawBird() {
+ let w = Math.sin(bird.wing)*6;
+
+ ctx.fillStyle="yellow";
+ ctx.beginPath();
+ ctx.arc(bird.x,bird.y,bird.r,0,Math.PI*2);
+ ctx.fill();
+
+ ctx.fillStyle="orange";
+ ctx.beginPath();
+ ctx.ellipse(bird.x-12,bird.y+w,10,6,0,0,Math.PI*2);
+ ctx.fill();
+
+ ctx.beginPath();
+ ctx.ellipse(bird.x+12,bird.y-w,10,6,0,0,Math.PI*2);
+ ctx.fill();
+
+ ctx.fillStyle="black";
+ ctx.beginPath();
+ ctx.arc(bird.x+5,bird.y-4,3,0,Math.PI*2);
+ ctx.fill();
+}
+
+// ======================
+// DRAW
+// ======================
+function draw() {
+ let w = getWorld();
+
+ ctx.fillStyle = background(w);
+ ctx.fillRect(0,0,canvas.width,canvas.height);
+
+ // space stars
+ if (w === 3) {
+   ctx.fillStyle = "white";
+   for (let i=0;i<40;i++) {
+     ctx.fillRect((i*37)%420,(i*91)%640,2,2);
+   }
+ }
+
+ pipes.forEach(drawPipe);
+
+ // powerups
+ for (let p of powerups) {
+   ctx.fillStyle = p.type === "slow" ? "cyan" : "gold";
+   ctx.beginPath();
+   ctx.arc(p.x,p.y,10,0,Math.PI*2);
+   ctx.fill();
+ }
+
+ drawBird();
+
+ // shield visual
+ if (shield > 0) {
+   ctx.strokeStyle = "cyan";
+   ctx.beginPath();
+   ctx.arc(bird.x,bird.y,22,0,Math.PI*2);
+   ctx.stroke();
+ }
+
+ // UI
+ ctx.fillStyle = "white";
+ ctx.font = "20px Arial";
+ ctx.fillText("Score: " + score, 10, 30);
+
+ let names = ["TAG","NACHT","SUNSET","SPACE"];
+ ctx.fillText("Welt: " + names[w], 10, 55);
+
+ if (slowMo > 0) ctx.fillText("SLOW", 10, 80);
+
+ if (gameOver) {
+   ctx.fillStyle = "rgba(0,0,0,0.5)";
+   ctx.fillRect(0,0,420,640);
+
+   ctx.fillStyle = "white";
+   ctx.font = "30px Arial";
+   ctx.fillText("Game Over", 110, 300);
+
+   ctx.font = "16px Arial";
+   ctx.fillText("Taste drücken zum Neustart", 80, 340);
+ }
+}
+
+// ======================
+// LOOP
+// ======================
+function loop() {
+ update();
+ draw();
+ requestAnimationFrame(loop);
+}
+
+// ======================
+// RESET
+// ======================
+function reset() {
+ bird.y = 200;
+ bird.v = 0;
+ pipes = [];
+ powerups = [];
+ score = 0;
+ frame = 0;
+ gameOver = false;
+ slowMo = 0;
+ shield = 0;
+}
+
+loop();
+</script>
+
+</body>
+</html>
