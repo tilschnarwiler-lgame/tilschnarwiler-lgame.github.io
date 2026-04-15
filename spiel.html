@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>Meine Spieleseite</title>
+
+<style>
+body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+    background: #f0f0f0;
+    margin: 0;
+}
+
+header {
+    background: #222;
+    color: white;
+    padding: 20px;
+}
+
+button {
+    padding: 10px 15px;
+    margin: 10px;
+    cursor: pointer;
+    border: none;
+    background: #007bff;
+    color: white;
+    border-radius: 8px;
+}
+
+.game {
+    display: none;
+    margin-top: 30px;
+}
+
+.active {
+    display: block;
+}
+</style>
+
+</head>
+<body>
+
+<header>
+<h1>🎮 Meine kleine Spieleseite</h1>
+<button onclick="showGame('menu')">Start</button>
+<button onclick="showGame('clicker')">Klick-Spiel</button>
+<button onclick="showGame('guess')">Zahlen raten</button>
+</header>
+
+<!-- MENÜ -->
+<div id="menu" class="game active">
+    <h2>Willkommen!</h2>
+    <p>Wähle ein Spiel oben aus 🎯</p>
+</div>
+
+<!-- KLICKER SPIEL -->
+<div id="clicker" class="game">
+    <h2>🖱️ Klick-Spiel</h2>
+    <p>Punkte: <span id="score">0</span></p>
+    <button onclick="addPoint()">KLICK MICH!</button>
+</div>
+
+<!-- ZAHLEN RATEN -->
+<div id="guess" class="game">
+    <h2>🔢 Zahlen raten</h2>
+    <p>Ich denke an eine Zahl zwischen 1 und 10</p>
+    <input type="number" id="guessInput">
+    <button onclick="checkGuess()">Raten</button>
+    <p id="result"></p>
+</div>
+
+<script>
+let score = 0;
+let secretNumber = Math.floor(Math.random() * 10) + 1;
+
+function showGame(id) {
+    let games = document.querySelectorAll(".game");
+    games.forEach(g => g.classList.remove("active"));
+    document.getElementById(id).classList.add("active");
+
+    if (id === "guess") {
+        secretNumber = Math.floor(Math.random() * 10) + 1;
+        document.getElementById("result").innerText = "";
+    }
+}
+
+function addPoint() {
+    score++;
+    document.getElementById("score").innerText = score;
+}
+
+function checkGuess() {
+    let guess = Number(document.getElementById("guessInput").value);
+
+    if (guess === secretNumber) {
+        document.getElementById("result").innerText = "🎉 Richtig!";
+        secretNumber = Math.floor(Math.random() * 10) + 1;
+    } else {
+        document.getElementById("result").innerText = "❌ Falsch, versuch es nochmal!";
+    }
+}
+</script>
+
+</body>
+</html>
