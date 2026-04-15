@@ -229,11 +229,12 @@ function draw() {
 }
 
 
-window.addEventListener("keydown", function(e) {
-    if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)) {
+document.addEventListener("keydown", function(e) {
+    const keys = ["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"];
+    if (keys.includes(e.key)) {
         e.preventDefault();
     }
-});
+}, false);
 
 
     
