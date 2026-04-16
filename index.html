@@ -56,8 +56,6 @@ html, body {
 <h1>🎮 LGame 🎮</h1>
 
 <button onclick="showGame('menu')">Start</button>
-<button onclick="showGame('clicker')">Klick-Spiel</button>
-<button onclick="showGame('guess')">Zahlen raten</button>
 <button onclick="showGame('snake')">Snake 🐍</button>
 <button onclick="showGame('flappy')">Flappybird 🐦</button>
 <button onclick="showGame('nova')">Nova Blaster 🚀</button>
@@ -70,21 +68,7 @@ html, body {
     <p>Wähle ein Spiel oben aus 🎯</p>
 </div>
 
-<!-- KLICKER SPIEL -->
-<div id="clicker" class="game">
-    <h2>🖱️ Klick-Spiel</h2>
-    <p>Punkte: <span id="score">0</span></p>
-    <button onclick="addPoint()">KLICK MICH!</button>
-</div>
 
-<!-- ZAHLEN RATEN -->
-<div id="guess" class="game">
-    <h2>🔢 Zahlen raten</h2>
-    <p>Ich denke an eine Zahl zwischen 1 und 10</p>
-    <input type="number" id="guessInput">
-    <button onclick="checkGuess()">Raten</button>
-    <p id="result"></p>
-</div>
 
 <!-- SNAKE SPIEL -->
 <div id="snake" class="game">
@@ -143,23 +127,6 @@ function showGame(id) {
     }
 }
 
-// ---------------- CLICKER ----------------
-function addPoint() {
-    score++;
-    document.getElementById("score").innerText = score;
-}
-
-// ---------------- GUESS ----------------
-function checkGuess() {
-    let guess = Number(document.getElementById("guessInput").value);
-
-    if (guess === secretNumber) {
-        document.getElementById("result").innerText = "🎉 Richtig!";
-        secretNumber = Math.floor(Math.random() * 10) + 1;
-    } else {
-        document.getElementById("result").innerText = "❌ Falsch, versuch es nochmal!";
-    }
-}
 
 
 
