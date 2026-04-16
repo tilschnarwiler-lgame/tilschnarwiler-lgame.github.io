@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Tower Defense Waves</title>
+  <title>Tower Defense</title>
   <style>
-    canvas { background: #1b1f24; display: block; margin: auto; }
+    canvas { display: block; margin: auto; background: #4caf50; }
   </style>
 </head>
 <body>
@@ -23,17 +23,48 @@ const CENTER = { x: Math.floor(COLS/2), y: Math.floor(ROWS/2) };
 let baseHP = 100;
 let money = 120;
 
+let gameOver = false;
+
 let enemies = [];
 let towers = [];
 let arrows = [];
 
 let buildMode = false;
-let towerCost = 50;
+let showGrid = false;
+
+let message = "";
+let messageTimer = 0;
+
+/* REMOVE BUTTON */
+let removeButton = null;
+
+/* ---------------- TERRAIN ---------------- */
+
+const terrain = [];
+
+function randomTerrain() {
+  for (let y = 0; y < ROWS; y++) {
+    terrain[y] = [];
+    for (let x = 0; x < COLS; x++) {
+
+      if (x === CENTER.x && y === CENTER.y) {
+        terrain[y][x] = 0;
+        continue;
+      }
+
+      const r = Math.random();
+      if (r < 0.55) terrain[y][x] = 0; // grass
+      else if (r < 0.70) terrain[y][x] = 1; // bush
+      else if (r < 0.88) terrain[y][x] = 2; // tree
+      else terrain[y][x] = 3; // rock
+    }
+  }
+}
+randomTerrain();
+
+/* ---------------- GRID ---------------- */
 
 let grid = Array.from({ length: ROWS }, () => Array(COLS).fill(null));
-
-/* ---------------- MONEY BALANCE ---------------- */
-let killReward = 5; // 👈 HALBIERTES GELD
 
 /* ---------------- WAVES ---------------- */
 
@@ -42,11 +73,9 @@ let enemiesToSpawn = 0;
 let spawnTimer = 0;
 let waveCooldown = 0;
 
-startWave();
-
 function startWave() {
   enemiesToSpawn = 5 + wave * 2;
-  spawnTimer = 0;
+  spawnTimer = 30;
   waveCooldown = 0;
 }
 
@@ -54,16 +83,38 @@ function spawnEnemy() {
   const side = Math.floor(Math.random() * 4);
 
   let x, y;
+
   if (side === 0) { x = 0; y = Math.floor(Math.random() * ROWS); }
   if (side === 1) { x = COLS - 1; y = Math.floor(Math.random() * ROWS); }
   if (side === 2) { x = Math.floor(Math.random() * COLS); y = 0; }
   if (side === 3) { x = Math.floor(Math.random() * COLS); y = ROWS - 1; }
 
   enemies.push({
-    x, y,
+    x,
+    y,
     hp: 1 + Math.floor(wave / 2),
-    speed: 0.04 + wave * 0.002
+    speed: 0.03 + wave * 0.002
   });
+}
+
+/* ---------------- MESSAGE ---------------- */
+
+function showMessage(text) {
+  message = text;
+  messageTimer = 80;
+}
+
+/* ---------------- REMOVE BUTTON ---------------- */
+
+function createRemoveButton(mx, my, gx, gy, type) {
+  removeButton = {
+    x: mx,
+    y: my,
+    gx,
+    gy,
+    type,
+    cost: type === 2 ? 40 : 20
+  };
 }
 
 /* ---------------- INPUT ---------------- */
@@ -73,21 +124,63 @@ canvas.addEventListener("click", (e) => {
   const mx = e.offsetX;
   const my = e.offsetY;
 
+  const gx = Math.floor(mx / GRID_SIZE);
+  const gy = Math.floor(my / GRID_SIZE);
+
+  if (gameOver) {
+    if (mx > 200 && mx < 400 && my > 260 && my < 320) {
+      location.reload();
+    }
+    return;
+  }
+
+  /* REMOVE BUTTON CLICK */
+  if (removeButton) {
+    if (mx > removeButton.x && mx < removeButton.x + 180 &&
+        my > removeButton.y && my < removeButton.y + 40) {
+
+      if (money >= removeButton.cost) {
+        money -= removeButton.cost;
+        terrain[removeButton.gy][removeButton.gx] = 0;
+      }
+
+      removeButton = null;
+      return;
+    }
+  }
+
+  /* CLICK TREE / BUSH -> SHOW REMOVE */
+  const t = terrain[gy][gx];
+
+  if (t === 1 || t === 2) {
+    createRemoveButton(mx, my, gx, gy, t);
+    return;
+  }
+
+  /* BUILD MODE */
   if (mx >= 10 && mx <= 160 && my >= 60 && my <= 100) {
-    if (money >= towerCost) buildMode = !buildMode;
+    buildMode = !buildMode;
+    showGrid = buildMode;
     return;
   }
 
   if (!buildMode) return;
 
-  const gx = Math.floor(mx / GRID_SIZE);
-  const gy = Math.floor(my / GRID_SIZE);
+  const blocked = terrain[gy][gx] !== 0;
+  const hasTower = grid[gy][gx] !== null;
 
-  if (grid[gy][gx] === null && money >= towerCost) {
+  if (blocked || hasTower) {
+    showMessage("❌ Feld ist besetzt!");
+    return;
+  }
+
+  if (money >= 50) {
     grid[gy][gx] = true;
     towers.push({ x: gx, y: gy, cooldown: 0 });
-    money -= towerCost;
+    money -= 50;
+
     buildMode = false;
+    showGrid = false;
   }
 });
 
@@ -95,17 +188,30 @@ canvas.addEventListener("click", (e) => {
 
 function update() {
 
-  /* WAVE SYSTEM */
+  if (messageTimer > 0) messageTimer--;
+
+  if (gameOver) return;
+
+  if (baseHP <= 0) {
+    gameOver = true;
+    return;
+  }
+
+  /* WAVES */
   if (enemiesToSpawn > 0) {
+
+    spawnTimer--;
+
     if (spawnTimer <= 0) {
       spawnEnemy();
       enemiesToSpawn--;
-      spawnTimer = Math.max(30 - wave * 2, 8);
-    } else {
-      spawnTimer--;
+      spawnTimer = Math.max(25 - wave * 2, 8);
     }
+
   } else if (enemies.length === 0) {
+
     waveCooldown++;
+
     if (waveCooldown > 120) {
       wave++;
       startWave();
@@ -186,7 +292,7 @@ function update() {
 
       if (a.target.hp <= 0) {
         enemies = enemies.filter(en => en !== a.target);
-        money += killReward; // 👈 HIER FIX
+        money += 5;
       }
     }
   });
@@ -195,30 +301,104 @@ function update() {
 /* ---------------- DRAW ---------------- */
 
 function draw() {
+
   ctx.clearRect(0, 0, 600, 600);
 
+  /* TERRAIN */
   for (let y = 0; y < ROWS; y++) {
     for (let x = 0; x < COLS; x++) {
-      ctx.strokeStyle = "#2a2f36";
-      ctx.strokeRect(x * GRID_SIZE, y * GRID_SIZE, GRID_SIZE, GRID_SIZE);
 
-      if (grid[y][x]) {
-        ctx.fillStyle = "#8b6b3f";
-        ctx.fillRect(x * GRID_SIZE + 8, y * GRID_SIZE + 8, 24, 24);
+      const t = terrain[y][x];
+      const px = x * GRID_SIZE;
+      const py = y * GRID_SIZE;
 
-        ctx.fillStyle = "#5a3a1b";
+      ctx.fillStyle = "#4caf50";
+      ctx.fillRect(px, py, GRID_SIZE, GRID_SIZE);
+
+      if (t === 1) {
+        ctx.fillStyle = "#2e7d32";
         ctx.beginPath();
-        ctx.moveTo(x * GRID_SIZE + 5, y * GRID_SIZE + 8);
-        ctx.lineTo(x * GRID_SIZE + 35, y * GRID_SIZE + 8);
-        ctx.lineTo(x * GRID_SIZE + 20, y * GRID_SIZE - 5);
+        ctx.arc(px + 20, py + 25, 10, 0, Math.PI * 2);
         ctx.fill();
+      }
+
+      if (t === 2) {
+        ctx.fillStyle = "#1b5e20";
+        ctx.beginPath();
+        ctx.arc(px + 20, py + 15, 10, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = "#6d4c41";
+        ctx.fillRect(px + 18, py + 20, 4, 12);
+      }
+
+      if (t === 3) {
+        ctx.fillStyle = "#9e9e9e";
+        ctx.fillRect(px + 10, py + 10, 20, 20);
       }
     }
   }
 
-  ctx.fillStyle = "#c2a36b";
-  ctx.fillRect(CENTER.x * GRID_SIZE, CENTER.y * GRID_SIZE, GRID_SIZE, GRID_SIZE);
+  /* GRID */
+  if (showGrid) {
+    ctx.strokeStyle = "rgba(0,0,0,0.25)";
+    for (let y = 0; y < ROWS; y++) {
+      for (let x = 0; x < COLS; x++) {
+        ctx.strokeRect(x * GRID_SIZE, y * GRID_SIZE, GRID_SIZE, GRID_SIZE);
+      }
+    }
+  }
 
+  /* CASTLE */
+  const cx = CENTER.x * GRID_SIZE;
+  const cy = CENTER.y * GRID_SIZE;
+
+  ctx.fillStyle = "#cfc7b0";
+  ctx.fillRect(cx, cy, GRID_SIZE, GRID_SIZE);
+
+  ctx.fillStyle = "#6b2e1a";
+  ctx.fillRect(cx, cy - 10, GRID_SIZE, 10);
+
+  ctx.fillStyle = "#4a2a16";
+  ctx.fillRect(cx + 16, cy + 18, 8, 22);
+
+  /* TOWERS */
+  towers.forEach(t => {
+    const x = t.x * GRID_SIZE;
+    const y = t.y * GRID_SIZE;
+
+    ctx.fillStyle = "#8b5a2b";
+    ctx.fillRect(x + 12, y + 12, 16, 20);
+  });
+
+  /* ENEMIES */
+  ctx.fillStyle = "#c62828";
+  enemies.forEach(e => {
+    ctx.beginPath();
+    ctx.arc(e.x * GRID_SIZE + 20, e.y * GRID_SIZE + 20, 6, 0, Math.PI * 2);
+    ctx.fill();
+  });
+
+  /* ARROWS */
+  ctx.fillStyle = "#ffeb3b";
+  arrows.forEach(a => {
+    ctx.fillRect(a.x - 2, a.y - 2, 4, 4);
+  });
+
+  /* REMOVE BUTTON */
+  if (removeButton) {
+    ctx.fillStyle = "#e74c3c";
+    ctx.fillRect(removeButton.x, removeButton.y, 180, 40);
+
+    ctx.fillStyle = "white";
+    ctx.fillText(
+      removeButton.type === 2 ? "Remove Tree (40$)" : "Remove Bush (20$)",
+      removeButton.x + 10,
+      removeButton.y + 25
+    );
+  }
+
+  /* UI */
   ctx.fillStyle = "white";
   ctx.fillText("HP: " + baseHP, 10, 20);
   ctx.fillText("Money: " + money, 10, 40);
@@ -227,25 +407,30 @@ function draw() {
   ctx.fillStyle = buildMode ? "#2ecc71" : "#555";
   ctx.fillRect(10, 80, 150, 40);
   ctx.fillStyle = "white";
-  ctx.fillText("TOWER (50$)", 25, 105);
+  ctx.fillText("ARCHER (50$)", 25, 105);
 
-  ctx.fillStyle = "red";
-  enemies.forEach(e => {
-    ctx.beginPath();
-    ctx.arc(
-      e.x * GRID_SIZE + GRID_SIZE/2,
-      e.y * GRID_SIZE + GRID_SIZE/2,
-      6, 0, Math.PI * 2
-    );
-    ctx.fill();
-  });
+  /* MESSAGE */
+  if (messageTimer > 0) {
+    ctx.fillStyle = "rgba(0,0,0,0.7)";
+    ctx.fillRect(180, 520, 240, 40);
 
-  ctx.fillStyle = "yellow";
-  arrows.forEach(a => {
-    ctx.beginPath();
-    ctx.arc(a.x, a.y, 3, 0, Math.PI * 2);
-    ctx.fill();
-  });
+    ctx.fillStyle = "white";
+    ctx.fillText(message, 220, 545);
+  }
+
+  /* GAME OVER */
+  if (gameOver) {
+    ctx.fillStyle = "rgba(0,0,0,0.7)";
+    ctx.fillRect(0, 0, 600, 600);
+
+    ctx.fillStyle = "white";
+    ctx.font = "30px Arial";
+    ctx.fillText("GAME OVER", 200, 260);
+
+    ctx.fillRect(200, 280, 200, 60);
+    ctx.fillStyle = "black";
+    ctx.fillText("RESTART", 235, 320);
+  }
 }
 
 function loop() {
@@ -254,6 +439,7 @@ function loop() {
   requestAnimationFrame(loop);
 }
 
+startWave();
 loop();
 </script>
 
