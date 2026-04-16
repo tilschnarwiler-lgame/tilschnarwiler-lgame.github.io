@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>Snake</title>
+
+<style>
+body {
+    margin: 0;
+    background: black;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+canvas {
+    background: black;
+}
+</style>
+</head>
+
+<body>
+
+<canvas id="game" width="600" height="400"></canvas>
+
+<script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+const BLOCK = 20;
+const WIDTH = 600;
+const HEIGHT = 400;
+
+let snake, direction, food, score, highscore, gameSpeed;
+
+highscore = localStorage.getItem("highscore") || 0;
+
+function reset() {
+    snake = [{x: 200, y: 200}];
+    direction = "RIGHT";
+    score = 0;
+    gameSpeed = 8;
+    food = randomFood();
+}
+
+function randomFood() {
+    return {
+        x: Math.floor(Math.random() * (WIDTH / BLOCK)) * BLOCK,
+        y: Math.floor(Math.random() * (HEIGHT / BLOCK)) * BLOCK
+    };
+}
+
+document.addEventListener("keydown", (e) => {
+    if (e.key === "ArrowLeft" && direction !== "RIGHT") direction = "LEFT";
+    if (e.key === "ArrowRight" && direction !== "LEFT") direction = "RIGHT";
+    if (e.key === "ArrowUp" && direction !== "DOWN") direction = "UP";
+    if (e.key === "ArrowDown" && direction !== "UP") direction = "DOWN";
+});
+
+function drawSnake() {
+    snake.forEach((s, i) => {
+        if (i === 0) {
+            ctx.fillStyle = "darkgreen";
+        } else {
+            ctx.fillStyle = "lime";
+        }
+
+        ctx.fillRect(s.x, s.y, BLOCK, BLOCK);
+
+        // Augen am Kopf
+        if (i === 0) {
+            ctx.fillStyle = "white";
+
+            if (direction === "RIGHT") {
+                ctx.fillRect(s.x + 12, s.y + 4, 4, 4);
+                ctx.fillRect(s.x + 12, s.y + 12, 4, 4);
+            }
+            if (direction === "LEFT") {
+                ctx.fillRect(s.x + 4, s.y + 4, 4, 4);
+                ctx.fillRect(s.x + 4, s.y + 12, 4, 4);
+            }
+            if (direction === "UP") {
+                ctx.fillRect(s.x + 4, s.y + 4, 4, 4);
+                ctx.fillRect(s.x + 12, s.y + 4, 4, 4);
+            }
+            if (direction === "DOWN") {
+                ctx.fillRect(s.x + 4, s.y + 12, 4, 4);
+                ctx.fillRect(s.x + 12, s.y + 12, 4, 4);
+            }
+        }
+    });
+}
+
+function update() {
+    let head = {x: snake[0].x, y: snake[0].y};
+
+    if (direction === "LEFT") head.x -= BLOCK;
+    if (direction === "RIGHT") head.x += BLOCK;
+    if (direction === "UP") head.y -= BLOCK;
+    if (direction === "DOWN") head.y += BLOCK;
+
+    // Kollision
+    if (
+        head.x < 0 || head.x >= WIDTH ||
+        head.y < 0 || head.y >= HEIGHT ||
+        snake.some(s => s.x === head.x && s.y === head.y)
+    ) {
+        if (score > highscore) {
+            highscore = score;
+            localStorage.setItem("highscore", highscore);
+        }
+        reset();
+        return;
+    }
+
+    snake.unshift(head);
+
+    if (head.x === food.x && head.y === food.y) {
+        score++;
+
+        // ⚡ schneller werden
+        gameSpeed = 8 + Math.floor(score / 3);
+
+        food = randomFood();
+    } else {
+        snake.pop();
+    }
+}
+
+function draw() {
+    ctx.fillStyle = "black";
+    ctx.fillRect(0, 0, WIDTH, HEIGHT);
+
+    ctx.fillStyle = "red";
+    ctx.fillRect(food.x, food.y, BLOCK, BLOCK);
+
+    drawSnake();
+
+    ctx.fillStyle = "white";
+    ctx.font = "20px Arial";
+    ctx.fillText("Score: " + score, 10, 20);
+    ctx.fillText("Highscore: " + highscore, 10, 45);
+}
+
+function loop() {
+    update();
+    draw();
+    setTimeout(loop, 1000 / gameSpeed);
+}
+
+reset();
+loop();
+</script>
+
+</body>
+</html>
