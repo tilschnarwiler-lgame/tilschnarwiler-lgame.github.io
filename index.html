@@ -20,33 +20,37 @@ header {
     background: rgba(0,0,0,0.6);
     backdrop-filter: blur(10px);
     color: white;
-    padding: 15px;
+    padding: 20px;
     text-align: center;
     border-bottom: 1px solid rgba(255,255,255,0.1);
 }
 
+/* 🔥 TITEL GRÖSSER */
 h1 {
-    font-size: 56px;
+    font-size: 64px;
     margin: 10px 0;
+    letter-spacing: 2px;
 }
 
+/* BUTTONS CONTAINER */
 #menuButtons {
-    margin-top: 10px;
+    margin-top: 15px;
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
-    gap: 10px;
+    gap: 12px;
 }
 
-/* BUTTONS */
+/* 🔘 BUTTONS GRÖSSER */
 button {
-    padding: 10px 16px;
+    padding: 14px 22px;
     cursor: pointer;
     border: none;
-    border-radius: 12px;
+    border-radius: 14px;
     background: linear-gradient(135deg, #007bff, #00c6ff);
     color: white;
     font-weight: bold;
+    font-size: 16px;
     box-shadow: 0 4px 15px rgba(0,0,0,0.3);
     transition: all 0.2s ease;
 }
@@ -77,12 +81,12 @@ button:active {
     top: 15px;
     left: 15px;
     background: rgba(0,0,0,0.6);
-    padding: 8px 12px;
+    padding: 10px 14px;
     border-radius: 10px;
     font-size: 14px;
 }
 
-/* CANVAS / GAME BOX */
+/* GAME BOX */
 canvas, iframe {
     border-radius: 14px;
     box-shadow: 0 10px 30px rgba(0,0,0,0.5);
@@ -108,7 +112,6 @@ canvas, iframe {
     <h1>🎮 LGame 🎮</h1>
 
     <div id="menuButtons">
-        <button onclick="showGame('menu')">Start</button>
         <button onclick="showGame('snake')">Snake 🐍</button>
         <button onclick="showGame('flappy')">Flappybird 🐦</button>
         <button onclick="showGame('nova')">Nova Blaster 🚀</button>
@@ -147,18 +150,14 @@ canvas, iframe {
 <div id="tetris" class="game">
     <button class="backBtn" onclick="showGame('menu')">⬅ Zurück</button>
     <h2>Tetris</h2>
-    <iframe src="tetris.html" width="420" height="600"></iframe>
+    <iframe src="tetris.html" width="420" height="550"></iframe>
 </div>
 
 <script>
 function showGame(id) {
-    // alle verstecken
     document.querySelectorAll(".game").forEach(g => g.classList.remove("active"));
-
-    // ausgewähltes anzeigen
     document.getElementById(id).classList.add("active");
 
-    // nur Buttons ein-/ausblenden (Titel bleibt!)
     if (id === "menu") {
         document.getElementById("menuButtons").style.display = "flex";
     } else {
@@ -166,7 +165,6 @@ function showGame(id) {
     }
 }
 
-// Pfeiltasten Scroll verhindern
 document.addEventListener("keydown", function(e) {
     const keys = ["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"];
     if (keys.includes(e.key)) {
