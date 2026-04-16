@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>Neon Tetris 360</title>
+
+<style>
+body {
+ margin:0;
+ background: radial-gradient(circle at top, #0b0f2a, #050510);
+ display:flex;
+ justify-content:center;
+ align-items:center;
+ height:100vh;
+ font-family: Arial, sans-serif;
+ color:white;
+}
+
+.wrapper {
+ display:flex;
+ gap:20px;
+ padding:18px;
+ background: rgba(255,255,255,0.05);
+ border:1px solid rgba(0,255,255,0.15);
+ border-radius:16px;
+ backdrop-filter: blur(12px);
+}
+
+canvas {
+ background: linear-gradient(to bottom, #000814, #001d3d);
+ border-radius:10px;
+ box-shadow: 0 0 25px rgba(0,255,255,0.15);
+}
+</style>
+
+</head>
+<body>
+
+<div class="wrapper">
+
+<canvas id="game" width="240" height="600"></canvas>
+
+<div style="width:150px">
+ <h2 style="color:#00eaff;text-shadow:0 0 10px #00eaff;">NEON TETRIS</h2>
+
+ <p>Score: <span id="score">0</span></p>
+ <p>Lines: <span id="lines">0</span></p>
+ <p>Level: <span id="level">1</span></p>
+
+ <p style="font-size:12px;opacity:0.7">
+   ← → move<br>
+   ↓ faster<br>
+   ↑ rotate (360°)
+ </p>
+</div>
+
+</div>
+
+<script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+const COLS = 8;
+const ROWS = 20;
+const SIZE = 30;
+
+let board = Array.from({length:ROWS},()=>Array(COLS).fill(0));
+
+const COLORS=[
+null,"#00f5ff","#3a86ff","#ff9f1c",
+"#ffe66d","#2ef7a5","#a29bfe","#ff4d6d"
+];
+
+const SHAPES=[
+[],
+[[1,1,1,1]],
+[[2,0,0],[2,2,2]],
+[[0,0,3],[3,3,3]],
+[[4,4],[4,4]],
+[[0,5,5],[5,5,0]],
+[[0,6,0],[6,6,6]],
+[[7,7,0],[0,7,7]]
+];
+
+let piece=createPiece();
+
+let dropCounter=0;
+let lastTime=0;
+
+let score=0;
+let lines=0;
+let level=1;
+
+// ⚡ STRONG SPEED CURVE (wird wirklich schnell!)
+let dropInterval=600;
+
+function createPiece(){
+let id=Math.floor(Math.random()*7)+1;
+return {x:2,y:0,shape:SHAPES[id],id};
+}
+
+// 💥 collision
+function collide(board,p){
+return p.shape.some((r,y)=>
+ r.some((v,x)=>{
+  if(!v)return false;
+  let bx=x+p.x;
+  let by=y+p.y;
+  return bx<0||bx>=COLS||by>=ROWS||board[by][bx];
+ })
+);
+}
+
+// 🔗 merge
+function merge(board,p){
+p.shape.forEach((r,y)=>{
+ r.forEach((v,x)=>{
+  if(v) board[y+p.y][x+p.x]=v;
+ });
+});
+}
+
+// 🧹 rows
+function clearRows(){
+outer:
+for(let y=ROWS-1;y>=0;y--){
+ for(let x=0;x<COLS;x++){
+  if(!board[y][x]) continue outer;
+ }
+
+ board.splice(y,1);
+ board.unshift(Array(COLS).fill(0));
+
+ score+=10;
+ lines++;
+
+ updateLevel();
+}
+}
+
+// ⚡ SPEED SYSTEM (JETZT STARKES ESCALATION CURVE)
+function updateLevel(){
+level=Math.floor(lines/4)+1;
+
+// exponential feeling instead of linear
+dropInterval=Math.max(60,600*Math.pow(0.88,level));
+
+updateUI();
+}
+
+// 🔄 ROTATION (360° SAUBER)
+function rotate(p){
+let m=p.shape;
+
+// transpose + reverse = rotation
+let r=m[0].map((_,i)=>m.map(row=>row[i])).reverse();
+p.shape=r;
+}
+
+// 🎨 draw
+function drawMatrix(m,o){
+m.forEach((r,y)=>{
+ r.forEach((v,x)=>{
+  if(v){
+   let px=(x+o.x)*SIZE;
+   let py=(y+o.y)*SIZE;
+
+   ctx.shadowColor=COLORS[v];
+   ctx.shadowBlur=18;
+
+   ctx.fillStyle=COLORS[v];
+   ctx.fillRect(px,py,SIZE,SIZE);
+
+   ctx.shadowBlur=0;
+
+   ctx.strokeStyle="rgba(0,0,0,0.7)";
+   ctx.lineWidth=2;
+   ctx.strokeRect(px,py,SIZE,SIZE);
+
+   ctx.strokeStyle="rgba(255,255,255,0.12)";
+   ctx.lineWidth=1;
+   ctx.strokeRect(px+2,py+2,SIZE-4,SIZE-4);
+  }
+ });
+});
+}
+
+// 📊 UI
+function updateUI(){
+document.getElementById("score").textContent=score;
+document.getElementById("lines").textContent=lines;
+document.getElementById("level").textContent=level;
+}
+
+// 🔄 update
+function update(t=0){
+let delta=t-lastTime;
+lastTime=t;
+dropCounter+=delta;
+
+if(dropCounter>dropInterval){
+ piece.y++;
+
+ if(collide(board,piece)){
+  piece.y--;
+  merge(board,piece);
+  piece=createPiece();
+  clearRows();
+
+  if(collide(board,piece)){
+   board=Array.from({length:ROWS},()=>Array(COLS).fill(0));
+   score=0;lines=0;level=1;
+   dropInterval=600;
+   updateUI();
+  }
+ }
+
+ dropCounter=0;
+}
+
+draw();
+requestAnimationFrame(update);
+}
+
+// 🖼 draw
+function draw(){
+ctx.clearRect(0,0,canvas.width,canvas.height);
+drawMatrix(board,{x:0,y:0});
+drawMatrix(piece.shape,piece);
+}
+
+// 🎮 controls
+document.addEventListener("keydown",e=>{
+if(e.key==="ArrowLeft"){piece.x--;if(collide(board,piece))piece.x++;}
+if(e.key==="ArrowRight"){piece.x++;if(collide(board,piece))piece.x--;}
+if(e.key==="ArrowDown"){piece.y++;if(collide(board,piece))piece.y--;}
+
+// 🔄 REAL 360 ROTATION (kein Limit mehr durch Revert-Block)
+if(e.key==="ArrowUp"){
+ rotate(piece);
+}
+});
+
+updateUI();
+update();
+</script>
+
+</body>
+</html>
