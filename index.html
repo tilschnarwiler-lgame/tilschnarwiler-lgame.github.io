@@ -89,9 +89,13 @@ html, body {
 <div id="snake" class="game">
     <h2>🐍 Snake</h2>
     
-    <p>Steuerung: Pfeiltasten</p>
-    <div id="snakeScore">Score: 0</div>
-    <canvas id="game" width="400" height="400"></canvas>
+   <iframe
+src="snake.html"
+width="640"
+height="640"
+style="border:none;">
+</iframe>
+
 </div>
 
 <!-- FLAPPY -->
@@ -144,95 +148,6 @@ function checkGuess() {
     }
 }
 
-// ---------------- SNAKE ----------------
-const canvas = document.getElementById("game");
-const ctx = canvas.getContext("2d");
-const box = 20;
-
-let snake, direction, food, game, snakeScore;
-let gameOver = false;
-
-document.addEventListener("keydown", changeDirection);
-
-function startSnake() {
-    clearInterval(game);
-    gameOver = false;
-
-    snake = [{x: 200, y: 200}];
-    direction = "RIGHT";
-    food = randomFood();
-    snakeScore = 0;
-
-    document.getElementById("snakeScore").innerText = "Score: 0";
-
-    game = setInterval(draw, 120);
-}
-
-function changeDirection(e) {
-    if (e.key === "ArrowLeft" && direction !== "RIGHT") direction = "LEFT";
-    if (e.key === "ArrowRight" && direction !== "LEFT") direction = "RIGHT";
-    if (e.key === "ArrowUp" && direction !== "DOWN") direction = "UP";
-    if (e.key === "ArrowDown" && direction !== "UP") direction = "DOWN";
-}
-
-function randomFood() {
-    return {
-        x: Math.floor(Math.random() * 20) * box,
-        y: Math.floor(Math.random() * 20) * box
-    };
-}
-
-function collision(head, arr) {
-    return arr.some(seg => seg.x === head.x && seg.y === head.y);
-}
-
-function draw() {
-    ctx.fillStyle = "black";
-    ctx.fillRect(0, 0, 400, 400);
-
-    snake.forEach(s => {
-        ctx.fillStyle = "lime";
-        ctx.fillRect(s.x, s.y, box, box);
-    });
-
-    ctx.fillStyle = "red";
-    ctx.fillRect(food.x, food.y, box, box);
-
-    let head = {x: snake[0].x, y: snake[0].y};
-
-    if (direction === "LEFT") head.x -= box;
-    if (direction === "RIGHT") head.x += box;
-    if (direction === "UP") head.y -= box;
-    if (direction === "DOWN") head.y += box;
-
-    if (
-        head.x < 0 || head.x >= 400 ||
-        head.y < 0 || head.y >= 400 ||
-        collision(head, snake)
-    ) {
-        clearInterval(game);
-        gameOver = true;
-
-        ctx.fillStyle = "white";
-        ctx.font = "30px Arial";
-        ctx.textAlign = "center";
-
-        ctx.fillText("Game Over!", 200, 180);
-        ctx.fillText("Score: " + snakeScore, 200, 220);
-
-        return;
-    }
-
-    snake.unshift(head);
-
-    if (head.x === food.x && head.y === food.y) {
-        snakeScore++;
-        document.getElementById("snakeScore").innerText = "Score: " + snakeScore;
-        food = randomFood();
-    } else {
-        snake.pop();
-    }
-}
 
 
 // ---------------- SCROLLBLOCK ----------------
