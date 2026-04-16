@@ -32,7 +32,11 @@ let towerCost = 50;
 
 let grid = Array.from({ length: ROWS }, () => Array(COLS).fill(null));
 
-/* WAVES */
+/* ---------------- MONEY BALANCE ---------------- */
+let killReward = 5; // 👈 HALBIERTES GELD
+
+/* ---------------- WAVES ---------------- */
+
 let wave = 1;
 let enemiesToSpawn = 0;
 let spawnTimer = 0;
@@ -62,6 +66,8 @@ function spawnEnemy() {
   });
 }
 
+/* ---------------- INPUT ---------------- */
+
 canvas.addEventListener("click", (e) => {
 
   const mx = e.offsetX;
@@ -84,6 +90,8 @@ canvas.addEventListener("click", (e) => {
     buildMode = false;
   }
 });
+
+/* ---------------- UPDATE ---------------- */
 
 function update() {
 
@@ -178,16 +186,17 @@ function update() {
 
       if (a.target.hp <= 0) {
         enemies = enemies.filter(en => en !== a.target);
-        money += 10;
+        money += killReward; // 👈 HIER FIX
       }
     }
   });
 }
 
+/* ---------------- DRAW ---------------- */
+
 function draw() {
   ctx.clearRect(0, 0, 600, 600);
 
-  /* GRID */
   for (let y = 0; y < ROWS; y++) {
     for (let x = 0; x < COLS; x++) {
       ctx.strokeStyle = "#2a2f36";
@@ -207,23 +216,19 @@ function draw() {
     }
   }
 
-  /* BASE */
   ctx.fillStyle = "#c2a36b";
   ctx.fillRect(CENTER.x * GRID_SIZE, CENTER.y * GRID_SIZE, GRID_SIZE, GRID_SIZE);
 
-  /* UI */
   ctx.fillStyle = "white";
   ctx.fillText("HP: " + baseHP, 10, 20);
   ctx.fillText("Money: " + money, 10, 40);
   ctx.fillText("Wave: " + wave, 10, 60);
 
-  /* SHOP */
   ctx.fillStyle = buildMode ? "#2ecc71" : "#555";
   ctx.fillRect(10, 80, 150, 40);
   ctx.fillStyle = "white";
   ctx.fillText("TOWER (50$)", 25, 105);
 
-  /* ENEMIES */
   ctx.fillStyle = "red";
   enemies.forEach(e => {
     ctx.beginPath();
@@ -235,7 +240,6 @@ function draw() {
     ctx.fill();
   });
 
-  /* ARROWS */
   ctx.fillStyle = "yellow";
   arrows.forEach(a => {
     ctx.beginPath();
