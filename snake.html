@@ -2,25 +2,45 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<title>Snake</title>
+<title>Snake Game</title>
 
 <style>
 body {
     margin: 0;
     background: black;
     display: flex;
-    justify-content: center;
+    flex-direction: column;
     align-items: center;
-    height: 100vh;
+    font-family: Arial;
+    color: white;
+}
+
+h2 {
+    margin: 10px;
+}
+
+button {
+    padding: 10px 15px;
+    margin-bottom: 10px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    background: #007bff;
+    color: white;
+    font-size: 16px;
 }
 
 canvas {
     background: black;
+    border: 2px solid white;
 }
 </style>
 </head>
 
 <body>
+
+<h2>🐍 Snake</h2>
+<button onclick="restartGame()">🔁 Restart</button>
 
 <canvas id="game" width="600" height="400"></canvas>
 
@@ -28,29 +48,33 @@ canvas {
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
-const BLOCK = 20;
 const WIDTH = 600;
 const HEIGHT = 400;
+const BLOCK = 20;
 
-let snake, direction, food, score, highscore, gameSpeed;
+let snake, direction, food, score, highscore, gameOver;
 
-highscore = localStorage.getItem("highscore") || 0;
+highscore = localStorage.getItem("snake_highscore");
+highscore = highscore ? parseInt(highscore) : 0;
 
-function reset() {
+// ---------------- START GAME ----------------
+function startGame() {
     snake = [{x: 200, y: 200}];
     direction = "RIGHT";
     score = 0;
-    gameSpeed = 8;
-    food = randomFood();
+    gameOver = false;
+    food = spawnFood();
 }
 
-function randomFood() {
+// ---------------- FOOD ----------------
+function spawnFood() {
     return {
         x: Math.floor(Math.random() * (WIDTH / BLOCK)) * BLOCK,
         y: Math.floor(Math.random() * (HEIGHT / BLOCK)) * BLOCK
     };
 }
 
+// ---------------- CONTROLS ----------------
 document.addEventListener("keydown", (e) => {
     if (e.key === "ArrowLeft" && direction !== "RIGHT") direction = "LEFT";
     if (e.key === "ArrowRight" && direction !== "LEFT") direction = "RIGHT";
@@ -58,41 +82,15 @@ document.addEventListener("keydown", (e) => {
     if (e.key === "ArrowDown" && direction !== "UP") direction = "DOWN";
 });
 
-function drawSnake() {
-    snake.forEach((s, i) => {
-        if (i === 0) {
-            ctx.fillStyle = "darkgreen";
-        } else {
-            ctx.fillStyle = "lime";
-        }
-
-        ctx.fillRect(s.x, s.y, BLOCK, BLOCK);
-
-        // Augen am Kopf
-        if (i === 0) {
-            ctx.fillStyle = "white";
-
-            if (direction === "RIGHT") {
-                ctx.fillRect(s.x + 12, s.y + 4, 4, 4);
-                ctx.fillRect(s.x + 12, s.y + 12, 4, 4);
-            }
-            if (direction === "LEFT") {
-                ctx.fillRect(s.x + 4, s.y + 4, 4, 4);
-                ctx.fillRect(s.x + 4, s.y + 12, 4, 4);
-            }
-            if (direction === "UP") {
-                ctx.fillRect(s.x + 4, s.y + 4, 4, 4);
-                ctx.fillRect(s.x + 12, s.y + 4, 4, 4);
-            }
-            if (direction === "DOWN") {
-                ctx.fillRect(s.x + 4, s.y + 12, 4, 4);
-                ctx.fillRect(s.x + 12, s.y + 12, 4, 4);
-            }
-        }
-    });
+// ---------------- RESTART ----------------
+function restartGame() {
+    startGame();
 }
 
+// ---------------- UPDATE ----------------
 function update() {
+    if (gameOver) return;
+
     let head = {x: snake[0].x, y: snake[0].y};
 
     if (direction === "LEFT") head.x -= BLOCK;
@@ -100,56 +98,97 @@ function update() {
     if (direction === "UP") head.y -= BLOCK;
     if (direction === "DOWN") head.y += BLOCK;
 
-    // Kollision
-    if (
-        head.x < 0 || head.x >= WIDTH ||
-        head.y < 0 || head.y >= HEIGHT ||
-        snake.some(s => s.x === head.x && s.y === head.y)
-    ) {
-        if (score > highscore) {
-            highscore = score;
-            localStorage.setItem("highscore", highscore);
+    // 🌍 WRAP AROUND
+    if (head.x < 0) head.x = WIDTH - BLOCK;
+    else if (head.x >= WIDTH) head.x = 0;
+
+    if (head.y < 0) head.y = HEIGHT - BLOCK;
+    else if (head.y >= HEIGHT) head.y = 0;
+
+    // 💀 SELF COLLISION
+    for (let part of snake) {
+        if (part.x === head.x && part.y === head.y) {
+            gameOver = true;
+            saveHighscore();
+            return;
         }
-        reset();
-        return;
     }
 
     snake.unshift(head);
 
+    // 🍎 FOOD
     if (head.x === food.x && head.y === food.y) {
         score++;
-
-        // ⚡ schneller werden
-        gameSpeed = 8 + Math.floor(score / 3);
-
-        food = randomFood();
+        if (score > highscore) highscore = score;
+        food = spawnFood();
     } else {
         snake.pop();
     }
 }
 
+// ---------------- HIGH SCORE ----------------
+function saveHighscore() {
+    if (score > highscore) {
+        highscore = score;
+        localStorage.setItem("snake_highscore", highscore);
+    }
+}
+
+// ---------------- DRAW SNAKE ----------------
+function drawSnake() {
+    snake.forEach((s, i) => {
+        ctx.fillStyle = i === 0 ? "darkgreen" : "lime";
+        ctx.fillRect(s.x, s.y, BLOCK, BLOCK);
+
+        // 👀 Augen am Kopf
+        if (i === 0) {
+            ctx.fillStyle = "white";
+            ctx.fillRect(s.x + 5, s.y + 5, 4, 4);
+            ctx.fillRect(s.x + 12, s.y + 5, 4, 4);
+        }
+    });
+}
+
+// ---------------- DRAW ----------------
 function draw() {
     ctx.fillStyle = "black";
     ctx.fillRect(0, 0, WIDTH, HEIGHT);
 
+    // FOOD
     ctx.fillStyle = "red";
     ctx.fillRect(food.x, food.y, BLOCK, BLOCK);
 
     drawSnake();
 
+    // UI
     ctx.fillStyle = "white";
-    ctx.font = "20px Arial";
+    ctx.font = "18px Arial";
     ctx.fillText("Score: " + score, 10, 20);
     ctx.fillText("Highscore: " + highscore, 10, 45);
+
+    // GAME OVER SCREEN
+    if (gameOver) {
+        ctx.fillStyle = "rgba(0,0,0,0.7)";
+        ctx.fillRect(0, 0, WIDTH, HEIGHT);
+
+        ctx.fillStyle = "white";
+        ctx.font = "30px Arial";
+        ctx.fillText("GAME OVER", 200, 180);
+
+        ctx.font = "18px Arial";
+        ctx.fillText("Klick Restart oder drücke den Button", 140, 220);
+    }
 }
 
+// ---------------- LOOP ----------------
 function loop() {
     update();
     draw();
-    setTimeout(loop, 1000 / gameSpeed);
+    setTimeout(loop, 100);
 }
 
-reset();
+// START
+startGame();
 loop();
 </script>
 
