@@ -13,6 +13,7 @@ body {
     overflow: hidden;
     color: white;
 
+    /* 🌌 EINHEITLICHER DARK BLUE BACKGROUND */
     background: linear-gradient(180deg, #0a0f2c, #050814);
 }
 
@@ -24,16 +25,11 @@ header {
     text-align: center;
 }
 
-/* TITEL */
+/* 🎮 TITEL GRÖSSER */
 h1 {
     font-size: 64px;
-    margin: 10px 0 0 0;
+    margin: 10px 0;
     letter-spacing: 2px;
-}
-
-/* 📏 ABSTAND UNTER TITEL (JETZT GRÖSSER) */
-#content {
-    margin-top: 100px;
 }
 
 /* BUTTONS CONTAINER */
@@ -45,7 +41,7 @@ h1 {
     gap: 12px;
 }
 
-/* BUTTONS */
+/* 🔘 BUTTONS GRÖSSER */
 button {
     padding: 14px 22px;
     cursor: pointer;
@@ -70,11 +66,12 @@ button:active {
 /* GAME AREA */
 .game {
     display: none;
+    margin-top: 20px;
     animation: fadeIn 0.3s ease;
     position: relative;
 }
 
-.game.active {
+.active {
     display: block;
 }
 
@@ -95,6 +92,12 @@ canvas, iframe {
     box-shadow: 0 10px 30px rgba(0,0,0,0.5);
 }
 
+/* MENU TEXT */
+#menu {
+    margin-top: 60px;
+    font-size: 20px;
+}
+
 /* ANIMATION */
 @keyframes fadeIn {
     from { opacity: 0; transform: scale(0.98); }
@@ -109,50 +112,46 @@ canvas, iframe {
     <h1>🎮 LGame 🎮</h1>
 
     <div id="menuButtons">
-        <button onclick="showGame('menu')">Snake 🐍</button>
+        <button onclick="showGame('menu')">Start</button>
+        <button onclick="showGame('snake')">Snake 🐍</button>
         <button onclick="showGame('flappy')">Flappybird 🐦</button>
         <button onclick="showGame('nova')">Nova Blaster 🚀</button>
         <button onclick="showGame('tetris')">Tetris</button>
     </div>
 </header>
 
-<!-- CONTENT -->
-<div id="content">
+<!-- MENU -->
+<div id="menu" class="game active">
+    <h2>Willkommen!</h2>
+    <p>Wähle ein Spiel oben aus 🎯</p>
+</div>
 
-    <!-- MENU -->
-    <div id="menu" class="game active">
-        <h2>Willkommen!</h2>
-        <p>Wähle ein Spiel oben aus 🎯</p>
-    </div>
+<!-- SNAKE -->
+<div id="snake" class="game">
+    <button class="backBtn" onclick="showGame('menu')">⬅ Zurück</button>
+    <h2>🐍 Snake</h2>
+    <iframe src="snake.html" width="600" height="500"></iframe>
+</div>
 
-    <!-- SNAKE -->
-    <div id="snake" class="game">
-        <button class="backBtn" onclick="showGame('menu')">⬅ Zurück</button>
-        <h2>🐍 Snake</h2>
-        <iframe src="snake.html" width="600" height="500"></iframe>
-    </div>
+<!-- FLAPPY -->
+<div id="flappy" class="game">
+    <button class="backBtn" onclick="showGame('menu')">⬅ Zurück</button>
+    <h2>🐦 Flappy Bird</h2>
+    <iframe src="flappybird.html" width="420" height="640"></iframe>
+</div>
 
-    <!-- FLAPPY -->
-    <div id="flappy" class="game">
-        <button class="backBtn" onclick="showGame('menu')">⬅ Zurück</button>
-        <h2>🐦 Flappy Bird</h2>
-        <iframe src="flappybird.html" width="420" height="640"></iframe>
-    </div>
+<!-- NOVA -->
+<div id="nova" class="game">
+    <button class="backBtn" onclick="showGame('menu')">⬅ Zurück</button>
+    <h2>🚀 Nova Blaster</h2>
+    <iframe src="novablaster.html" width="600" height="600"></iframe>
+</div>
 
-    <!-- NOVA -->
-    <div id="nova" class="game">
-        <button class="backBtn" onclick="showGame('menu')">⬅ Zurück</button>
-        <h2>🚀 Nova Blaster</h2>
-        <iframe src="novablaster.html" width="600" height="600"></iframe>
-    </div>
-
-    <!-- TETRIS -->
-    <div id="tetris" class="game">
-        <button class="backBtn" onclick="showGame('menu')">⬅ Zurück</button>
-        <h2>Tetris</h2>
-        <iframe src="tetris.html" width="420" height="550"></iframe>
-    </div>
-
+<!-- TETRIS -->
+<div id="tetris" class="game">
+    <button class="backBtn" onclick="showGame('menu')">⬅ Zurück</button>
+    <h2>Tetris</h2>
+    <iframe src="tetris.html" width="420" height="550"></iframe>
 </div>
 
 <script>
@@ -167,6 +166,7 @@ function showGame(id) {
     }
 }
 
+// Pfeiltasten blockieren (für Games)
 document.addEventListener("keydown", function(e) {
     const keys = ["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"];
     if (keys.includes(e.key)) {
