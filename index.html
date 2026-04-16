@@ -11,8 +11,6 @@ body {
     margin: 0;
     height: 100vh;
     overflow: hidden;
-
-    /* cooler Gaming-Background */
     background: radial-gradient(circle at top, #1b1f3a, #0b0f1f);
     color: white;
 }
@@ -23,11 +21,16 @@ header {
     backdrop-filter: blur(10px);
     color: white;
     padding: 15px;
+    text-align: center;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+#menuButtons {
+    margin-top: 10px;
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
     gap: 10px;
-    border-bottom: 1px solid rgba(255,255,255,0.1);
 }
 
 /* BUTTONS */
@@ -36,18 +39,15 @@ button {
     cursor: pointer;
     border: none;
     border-radius: 12px;
-
     background: linear-gradient(135deg, #007bff, #00c6ff);
     color: white;
     font-weight: bold;
-
     box-shadow: 0 4px 15px rgba(0,0,0,0.3);
     transition: all 0.2s ease;
 }
 
 button:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(0,0,0,0.5);
 }
 
 button:active {
@@ -59,10 +59,22 @@ button:active {
     display: none;
     margin-top: 20px;
     animation: fadeIn 0.3s ease;
+    position: relative;
 }
 
 .active {
     display: block;
+}
+
+/* BACK BUTTON */
+.backBtn {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    background: rgba(0,0,0,0.6);
+    padding: 8px 12px;
+    border-radius: 10px;
+    font-size: 14px;
 }
 
 /* CANVAS / GAME BOX */
@@ -73,130 +85,89 @@ canvas, iframe {
 
 /* MENU TEXT */
 #menu {
-    margin-top: 80px;
+    margin-top: 60px;
     font-size: 20px;
-    opacity: 0.9;
 }
 
-/* FADE ANIMATION */
+/* ANIMATION */
 @keyframes fadeIn {
     from { opacity: 0; transform: scale(0.98); }
     to { opacity: 1; transform: scale(1); }
 }
 </style>
 </head>
+
 <body>
 
 <header>
-<h1>🎮 LGame 🎮</h1>
+    <h1>🎮 LGame 🎮</h1>
 
-<button onclick="showGame('menu')">Start</button>
-<button onclick="showGame('snake')">Snake 🐍</button>
-<button onclick="showGame('flappy')">Flappybird 🐦</button>
-<button onclick="showGame('nova')">Nova Blaster 🚀</button>
-<button onclick="showGame('tetris')">Tetris</button>
-       
+    <div id="menuButtons">
+        <button onclick="showGame('menu')">Start</button>
+        <button onclick="showGame('snake')">Snake 🐍</button>
+        <button onclick="showGame('flappy')">Flappybird 🐦</button>
+        <button onclick="showGame('nova')">Nova Blaster 🚀</button>
+        <button onclick="showGame('tetris')">Tetris</button>
+    </div>
 </header>
 
-<!-- MENÜ -->
+<!-- MENU -->
 <div id="menu" class="game active">
     <h2>Willkommen!</h2>
     <p>Wähle ein Spiel oben aus 🎯</p>
 </div>
 
-
-
-<!-- SNAKE SPIEL -->
+<!-- SNAKE -->
 <div id="snake" class="game">
-<h2>🐍 Snake</h2>
-
-<iframe 
-src="snake.html"
-width="600"
-height="500"
-style="border:none;">
-</iframe>
-
+    <button class="backBtn" onclick="showGame('menu')">⬅ Zurück</button>
+    <h2>🐍 Snake</h2>
+    <iframe src="snake.html" width="600" height="500"></iframe>
 </div>
 
 <!-- FLAPPY -->
 <div id="flappy" class="game">
-<h2>🐦 Flappy Bird</h2>
-
-<iframe
-src="flappybird.html"
-width="420"
-height="640"
-style="border:none;">
-</iframe>
-
+    <button class="backBtn" onclick="showGame('menu')">⬅ Zurück</button>
+    <h2>🐦 Flappy Bird</h2>
+    <iframe src="flappybird.html" width="420" height="640"></iframe>
 </div>
 
-<!-- NOVA BLASTER -->
+<!-- NOVA -->
 <div id="nova" class="game">
-<h2>🚀 Nova Blaster</h2>
-
-<iframe 
-src="novablaster.html"
-width="600"
-height="600"
-style="border:none;">
-</iframe>
-
+    <button class="backBtn" onclick="showGame('menu')">⬅ Zurück</button>
+    <h2>🚀 Nova Blaster</h2>
+    <iframe src="novablaster.html" width="600" height="600"></iframe>
 </div>
-
 
 <!-- TETRIS -->
 <div id="tetris" class="game">
-<h2>Tetris</h2>
-
-<iframe 
-src="tetris.html"
-width="420"
-height="550"
-style="border:none;">
-</iframe>
-
+    <button class="backBtn" onclick="showGame('menu')">⬅ Zurück</button>
+    <h2>Tetris</h2>
+    <iframe src="tetris.html" width="420" height="550"></iframe>
 </div>
 
-    
-
 <script>
-// ---------------- MENU ----------------
-let score = 0;
-let secretNumber = Math.floor(Math.random() * 10) + 1;
-
 function showGame(id) {
+    // alle verstecken
     document.querySelectorAll(".game").forEach(g => g.classList.remove("active"));
+
+    // ausgewähltes anzeigen
     document.getElementById(id).classList.add("active");
 
-    if (id === "guess") {
-        secretNumber = Math.floor(Math.random() * 10) + 1;
-        document.getElementById("result").innerText = "";
-    }
-
-    if (id === "snake") {
-        startSnake();
+    // nur Buttons ein-/ausblenden (Titel bleibt!)
+    if (id === "menu") {
+        document.getElementById("menuButtons").style.display = "flex";
+    } else {
+        document.getElementById("menuButtons").style.display = "none";
     }
 }
 
-
-
-
-// ---------------- SCROLLBLOCK ----------------
-
-    
+// Pfeiltasten Scroll verhindern
 document.addEventListener("keydown", function(e) {
     const keys = ["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"];
-
     if (keys.includes(e.key)) {
         e.preventDefault();
     }
 }, true);
-    
-
-    
-    
 </script>
 
 </body>
