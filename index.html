@@ -8,47 +8,82 @@
 body {
     font-family: Arial, sans-serif;
     text-align: center;
-    background: #f0f0f0;
     margin: 0;
-}
+    height: 100vh;
+    overflow: hidden;
 
-header {
-    background: #222;
+    /* cooler Gaming-Background */
+    background: radial-gradient(circle at top, #1b1f3a, #0b0f1f);
     color: white;
-    padding: 20px;
 }
 
+/* HEADER */
+header {
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(10px);
+    color: white;
+    padding: 15px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+/* BUTTONS */
 button {
-    padding: 10px 15px;
-    margin: 10px;
+    padding: 10px 16px;
     cursor: pointer;
     border: none;
-    background: #007bff;
+    border-radius: 12px;
+
+    background: linear-gradient(135deg, #007bff, #00c6ff);
     color: white;
-    border-radius: 8px;
+    font-weight: bold;
+
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    transition: all 0.2s ease;
 }
 
+button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.5);
+}
+
+button:active {
+    transform: scale(0.95);
+}
+
+/* GAME AREA */
 .game {
     display: none;
-    margin-top: 30px;
+    margin-top: 20px;
+    animation: fadeIn 0.3s ease;
 }
 
 .active {
     display: block;
 }
 
-canvas {
-    background: black;
-    display: block;
-    margin: 20px auto;
+/* CANVAS / GAME BOX */
+canvas, iframe {
+    border-radius: 14px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
 }
-html, body {
-    overflow: hidden;
-    height: 100%;
-}
-    
-</style>
 
+/* MENU TEXT */
+#menu {
+    margin-top: 80px;
+    font-size: 20px;
+    opacity: 0.9;
+}
+
+/* FADE ANIMATION */
+@keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.98); }
+    to { opacity: 1; transform: scale(1); }
+}
+</style>
 </head>
 <body>
 
