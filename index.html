@@ -116,6 +116,7 @@ canvas, iframe {
         <button onclick="showGame('flappy')">Flappybird 🐦</button>
         <button onclick="showGame('nova')">Nova Blaster 🚀</button>
         <button onclick="showGame('tetris')">Tetris</button>
+        <button onclick="showGame('auto')">Auto 🚗</button>
     </div>
 </header>
 
@@ -153,6 +154,18 @@ canvas, iframe {
     <iframe src="tetris.html" width="420" height="550"></iframe>
 </div>
 
+<!-- Auto -->
+<div id="auto" class="game">
+    <button class="backBtn" onclick="showGame('menu')">⬅ Zurück</button>
+    <h2>Tetris</h2>
+    <iframe src="auto.html" width="420" height="550"></iframe>
+</div>
+
+
+
+
+
+    
 <script>
 function showGame(id) {
     document.querySelectorAll(".game").forEach(g => g.classList.remove("active"));
