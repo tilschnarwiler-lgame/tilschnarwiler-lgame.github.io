@@ -2,20 +2,18 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<title>Jump and Run – Stabil</title>
+<title>Simple Jump and Run</title>
 <style>
     body {
         margin: 0;
         overflow: hidden;
-        background: #222;
+        background: #87CEEB;
     }
 
     #game {
         position: relative;
         width: 100vw;
         height: 100vh;
-        background: linear-gradient(#4cc9f0, #4361ee);
-        overflow: hidden;
     }
 
     #player {
@@ -23,13 +21,17 @@
         width: 40px;
         height: 40px;
         background: yellow;
-        border-radius: 8px;
+        border-radius: 5px;
+        left: 100px;
+        top: 100px;
     }
 
-    .platform {
+    #ground {
         position: absolute;
-        background: #333;
-        border-radius: 4px;
+        width: 100%;
+        height: 60px;
+        background: #444;
+        bottom: 0;
     }
 </style>
 </head>
@@ -37,56 +39,32 @@
 
 <div id="game">
     <div id="player"></div>
+    <div id="ground"></div>
 </div>
 
 <script>
-const game = document.getElementById("game");
-const player = document.getElementById("player");
-
-const gameWidth = window.innerWidth;
-const gameHeight = window.innerHeight;
-
 // SPIELER
-let playerWidth = 40;
-let playerHeight = 40;
-let x = 50;
-let y = gameHeight - 40 - playerHeight; // auf Boden
+let player = document.getElementById("player");
+let x = 100;
+let y = 100;
 let vx = 0;
 let vy = 0;
 
 const speed = 5;
-const jumpForce = 18;   // höherer Sprung
+const jumpForce = 18;
 const gravity = 0.9;
 
 let keys = {};
 let isGrounded = false;
 
-// PLATTFORMEN in SPIELKOORDINATEN
-const platforms = [
-    // Boden
-    { x: 0, y: gameHeight - 40, width: gameWidth, height: 40 },
-    // Weitere Plattformen
-    { x: 200, y: gameHeight - 150, width: 150, height: 20 },
-    { x: 450, y: gameHeight - 250, width: 150, height: 20 },
-    { x: 700, y: gameHeight - 350, width: 150, height: 20 },
-];
-
-// DOM-Elemente für Plattformen erzeugen
-platforms.forEach(p => {
-    const el = document.createElement("div");
-    el.className = "platform";
-    el.style.left = p.x + "px";
-    el.style.top = p.y + "px";
-    el.style.width = p.width + "px";
-    el.style.height = p.height + "px";
-    game.appendChild(el);
-});
+// BODEN
+const groundY = window.innerHeight - 60; // Höhe des Bodens
 
 document.addEventListener("keydown", e => keys[e.key] = true);
 document.addEventListener("keyup", e => keys[e.key] = false);
 
 function update() {
-    // Bewegung links/rechts
+    // Links/Rechts
     if (keys["ArrowLeft"] || keys["a"]) vx = -speed;
     else if (keys["ArrowRight"] || keys["d"]) vx = speed;
     else vx = 0;
@@ -100,46 +78,15 @@ function update() {
     // Schwerkraft
     vy += gravity;
 
-    // Alte Position merken (für Kollision von oben)
-    let oldY = y;
-
     // Position aktualisieren
     x += vx;
     y += vy;
 
-    // Begrenzung links/rechts
-    if (x < 0) x = 0;
-    if (x + playerWidth > gameWidth) x = gameWidth - playerWidth;
-
-    // Kollision mit Plattformen (nur vertikal, damit es stabil bleibt)
-    isGrounded = false;
-    platforms.forEach(p => {
-        // Achsenüberlappung horizontal?
-        const overlapX =
-            x < p.x + p.width &&
-            x + playerWidth > p.x;
-
-        // Achsenüberlappung vertikal?
-        const overlapY =
-            y < p.y + p.height &&
-            y + playerHeight > p.y;
-
-        if (overlapX && overlapY) {
-            // Prüfen, ob wir von oben kommen
-            if (oldY + playerHeight <= p.y && vy > 0) {
-                // Auf Plattform landen
-                y = p.y - playerHeight;
-                vy = 0;
-                isGrounded = true;
-            }
-        }
-    });
-
-    // Falls Spieler runterfällt → zurücksetzen
-    if (y > gameHeight + 200) {
-        x = 50;
-        y = gameHeight - 40 - playerHeight;
+    // Boden-Kollision
+    if (y + 40 >= groundY) {
+        y = groundY - 40;
         vy = 0;
+        isGrounded = true;
     }
 
     // Spielerposition setzen
@@ -154,3 +101,5 @@ update();
 
 </body>
 </html>
+
+
