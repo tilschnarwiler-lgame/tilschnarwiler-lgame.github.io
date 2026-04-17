@@ -2,49 +2,73 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<title>Simple Jump and Run</title>
+<title>Jump and Run</title>
+
 <style>
-    body {
-        margin: 0;
-        overflow: hidden;
-        background: #87CEEB;
-    }
+body {
+    margin: 0;
+    overflow: hidden;
+    background: #87CEEB;
+}
 
-    #game {
-        position: relative;
-        width: 100vw;
-        height: 100vh;
-    }
+#game {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+}
 
-    #player {
-        position: absolute;
-        width: 40px;
-        height: 40px;
-        background: yellow;
-        border-radius: 5px;
-        left: 100px;
-        top: 100px;
-    }
+#player {
+    position: absolute;
+    width: 40px;
+    height: 40px;
+    background: yellow;
+    left: 100px;
+    top: 100px;
+}
 
-    #ground {
-        position: absolute;
-        width: 100%;
-        height: 60px;
-        background: #444;
-        bottom: 0;
-    }
+#ground {
+    position: absolute;
+    width: 100%;
+    height: 60px;
+    background: #444;
+    bottom: 0;
+}
+
+.platform {
+    position: absolute;
+    width: 120px;
+    height: 20px;
+    background: brown;
+}
+
+#enemy {
+    position: absolute;
+    width: 40px;
+    height: 40px;
+    background: red;
+}
 </style>
 </head>
+
 <body>
 
 <div id="game">
     <div id="player"></div>
     <div id="ground"></div>
+
+    <!-- Plattformen -->
+    <div class="platform" style="left:300px; top:400px;"></div>
+    <div class="platform" style="left:550px; top:300px;"></div>
+
+    <!-- Gegner -->
+    <div id="enemy" style="left:500px; top:100px;"></div>
 </div>
 
 <script>
-// SPIELER
 let player = document.getElementById("player");
+let enemy = document.getElementById("enemy");
+let platforms = document.querySelectorAll(".platform");
+
 let x = 100;
 let y = 100;
 let vx = 0;
@@ -57,17 +81,17 @@ const gravity = 0.9;
 let keys = {};
 let isGrounded = false;
 
-// BODEN
-const groundY = window.innerHeight - 60; // Höhe des Bodens
+const groundY = window.innerHeight - 60;
 
 document.addEventListener("keydown", e => keys[e.key] = true);
 document.addEventListener("keyup", e => keys[e.key] = false);
 
 function update() {
-    // Links/Rechts
+
+    // Bewegung
     if (keys["ArrowLeft"] || keys["a"]) vx = -speed;
     else if (keys["ArrowRight"] || keys["d"]) vx = speed;
-    else vx = 0;
+    else vx *= 0.8;
 
     // Springen
     if ((keys["ArrowUp"] || keys["w"] || keys[" "]) && isGrounded) {
@@ -78,18 +102,55 @@ function update() {
     // Schwerkraft
     vy += gravity;
 
-    // Position aktualisieren
     x += vx;
     y += vy;
 
-    // Boden-Kollision
+    // Bildschirmgrenzen
+    if (x < 0) x = 0;
+    if (x + 40 > window.innerWidth) x = window.innerWidth - 40;
+
+    // Boden
     if (y + 40 >= groundY) {
         y = groundY - 40;
         vy = 0;
         isGrounded = true;
     }
 
-    // Spielerposition setzen
+    // Plattformen (OHNE getBoundingClientRect)
+    platforms.forEach(p => {
+        let px = p.offsetLeft;
+        let py = p.offsetTop;
+
+        if (
+            x + 40 > px &&
+            x < px + 120 &&
+            y + 40 > py &&
+            y + 40 < py + 20 &&
+            vy >= 0
+        ) {
+            y = py - 40;
+            vy = 0;
+            isGrounded = true;
+        }
+    });
+
+    // Gegner
+    let ex = enemy.offsetLeft;
+    let ey = enemy.offsetTop;
+
+    if (
+        x < ex + 40 &&
+        x + 40 > ex &&
+        y < ey + 40 &&
+        y + 40 > ey
+    ) {
+        alert("Game Over!");
+        x = 100;
+        y = 100;
+        vx = 0;
+        vy = 0;
+    }
+
     player.style.left = x + "px";
     player.style.top = y + "px";
 
@@ -101,5 +162,3 @@ update();
 
 </body>
 </html>
-
-
