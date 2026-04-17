@@ -81,7 +81,7 @@ function drawRoad(){
   ctx.fillStyle='#252525';ctx.fillRect(RL,0,RR-RL,H);
   ctx.fillStyle='#3a7a3a';ctx.fillRect(0,0,RL,H);ctx.fillRect(RR,0,W-RR,H);
   ctx.fillStyle='#2e682e';
-  for(let i=0;i<H+40;i+=40){const yo=(i+roadOff*0.35)%H;ctx.fillRect(2,yo,RL-2,20);ctx.fillRect(RR+2,yo,W-RR-4,20);}
+  for(let i=0;i<H+40;i+=40){const yo=(i+roadOff*0.6)%H;ctx.fillRect(2,yo,RL-2,20);ctx.fillRect(RR+2,yo,W-RR-4,20);}
   ctx.strokeStyle='rgba(255,255,255,0.8)';ctx.lineWidth=2.5;ctx.setLineDash([28,20]);ctx.lineDashOffset=-roadOff;
   for(let i=1;i<3;i++){const x=RL+LW*i;ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
   ctx.setLineDash([]);ctx.strokeStyle='#fff';ctx.lineWidth=4;
