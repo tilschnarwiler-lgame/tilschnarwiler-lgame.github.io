@@ -16,6 +16,7 @@ export default function JumpAndRun() {
     vx: 0,
     vy: 0,
     onGround: false,
+    hidden: false
   });
 
   const gravity = 0.5;
@@ -26,26 +27,21 @@ export default function JumpAndRun() {
     { x: 0, y: 350, w: 500, h: 20 },
     { x: 120, y: 280, w: 100, h: 10 },
     { x: 260, y: 220, w: 100, h: 10 },
-    { x: 380, y: 160, w: 100, h: 10 },
+    { x: 380, y: 160, w: 100, h: 10 }
   ];
 
-  const portal = { x: 440, y: 110, w: 30, h: 50 };
+  const portal = useRef({ x: 440, y: 110, w: 30, h: 50, active: true });
 
   useEffect(() => {
-    const handleKeyDown = (e) => {
-      keys.current[e.code] = true;
-    };
+    const down = (e) => (keys.current[e.code] = true);
+    const up = (e) => (keys.current[e.code] = false);
 
-    const handleKeyUp = (e) => {
-      keys.current[e.code] = false;
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    window.addEventListener("keyup", handleKeyUp);
+    window.addEventListener("keydown", down);
+    window.addEventListener("keyup", up);
 
     return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-      window.removeEventListener("keyup", handleKeyUp);
+      window.removeEventListener("keydown", down);
+      window.removeEventListener("keyup", up);
     };
   }, []);
 
@@ -54,90 +50,83 @@ export default function JumpAndRun() {
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
 
-    const resetPlayer = () => {
-      const p = player.current;
-      p.x = 50;
-      p.y = 300;
-      p.vx = 0;
-      p.vy = 0;
-      p.onGround = false;
+    const reset = () => {
+      const state = player.current;
+      state.x = 50;
+      state.y = 300;
+      state.vx = 0;
+      state.vy = 0;
+      state.onGround = false;
+      state.hidden = false;
     };
 
+    const collision = (a, b) =>
+      a.x < b.x + b.w &&
+      a.x + a.w > b.x &&
+      a.y < b.y + b.h &&
+      a.y + a.h > b.y;
+
     const loop = () => {
-      const p = player.current;
+      const playerState = player.current;
       const k = keys.current;
+      const port = portal.current;
 
       if (!wonRef.current) {
-        if (k["ArrowLeft"]) p.vx = -moveSpeed;
-        else if (k["ArrowRight"]) p.vx = moveSpeed;
-        else p.vx *= 0.8;
+        if (k["ArrowLeft"]) playerState.vx = -moveSpeed;
+        else if (k["ArrowRight"]) playerState.vx = moveSpeed;
+        else playerState.vx *= 0.8;
 
-        if (k["ArrowUp"] && p.onGround) {
-          p.vy = jumpPower;
-          p.onGround = false;
+        if (k["ArrowUp"] && playerState.onGround) {
+          playerState.vy = jumpPower;
+          playerState.onGround = false;
         }
 
-        p.vy += gravity;
-        p.x += p.vx;
-        p.y += p.vy;
+        playerState.vy += gravity;
+        playerState.x += playerState.vx;
+        playerState.y += playerState.vy;
 
-        p.onGround = false;
-        for (let plat of platforms) {
-          const hit =
-            p.x < plat.x + plat.w &&
-            p.x + p.w > plat.x &&
-            p.y < plat.y + plat.h &&
-            p.y + p.h > plat.y;
+        playerState.onGround = false;
 
-          if (hit && p.vy > 0) {
-            p.y = plat.y - p.h;
-            p.vy = 0;
-            p.onGround = true;
+        for (let pl of platforms) {
+          if (collision(playerState, pl) && playerState.vy > 0) {
+            playerState.y = pl.y - playerState.h;
+            playerState.vy = 0;
+            playerState.onGround = true;
           }
         }
 
-        const win =
-          p.x < portal.x + portal.w &&
-          p.x + p.w > portal.x &&
-          p.y < portal.y + portal.h &&
-          p.y + p.h > portal.y;
-
-        if (win) {
+        if (port.active && collision(playerState, port)) {
           wonRef.current = true;
           setWon(true);
+          port.active = false;
 
-          // cube disappears on win
-          p.w = 0;
-          p.h = 0;
-          p.vx = 0;
-          p.vy = 0;
+          playerState.hidden = true;
+          playerState.vx = 0;
+          playerState.vy = 0;
         }
 
-        if (p.x < 0) p.x = 0;
-        if (p.x + p.w > canvas.width) p.x = canvas.width - p.w;
-        if (p.y > canvas.height) resetPlayer();
+        if (playerState.x < 0) playerState.x = 0;
+        if (playerState.x + playerState.w > canvas.width) {
+          playerState.x = canvas.width - playerState.w;
+        }
+
+        if (playerState.y > canvas.height) reset();
       }
 
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       ctx.fillStyle = "#444";
-      platforms.forEach((plat) => ctx.fillRect(plat.x, plat.y, plat.w, plat.h));
+      platforms.forEach((pl) => ctx.fillRect(pl.x, pl.y, pl.w, pl.h));
 
-      ctx.fillStyle = "purple";
-      ctx.fillRect(portal.x, portal.y, portal.w, portal.h);
-
-      const p = player.current;
-
-      // draw player only if not vanished
-      if (!wonRef.current) {
-        ctx.fillStyle = "blue";
-        ctx.fillRect(p.x, p.y, p.w, p.h);
+      if (portal.current.active) {
+        ctx.fillStyle = "purple";
+        ctx.fillRect(portal.current.x, portal.current.y, portal.current.w, portal.current.h);
       }
 
-      if (wonRef.current) {
-        ctx.fillStyle = "black";
-        ctx.font = "20px Arial";
-        ctx.fillText("Level geschafft!", 150, 100);
+      const playerState = player.current;
+      if (!playerState.hidden) {
+        ctx.fillStyle = "blue";
+        ctx.fillRect(playerState.x, playerState.y, playerState.w, playerState.h);
       }
 
       rafId.current = requestAnimationFrame(loop);
@@ -149,26 +138,22 @@ export default function JumpAndRun() {
   }, []);
 
   return (
-    <div className="flex flex-col items-center gap-2">
+    <div style={{ textAlign: "center" }}>
       <canvas
         ref={canvasRef}
         width={500}
         height={400}
-        className="border"
-        tabIndex={0}
-        onClick={() => canvasRef.current?.focus()}
+        style={{ border: "2px solid black" }}
       />
-      <div>Steuerung: Pfeiltasten (← → ↑)</div>
-      {won && <div className="text-green-600 font-bold">Level geschafft!</div>}
+      <p>Steuerung: Pfeiltasten</p>
+      {won && <h2 style={{ color: "green" }}>Level geschafft!</h2>}
     </div>
   );
 }
 
-// --------------------
-// Simple test cases
-// --------------------
+// ---------------- TESTS ----------------
 
-export function checkCollision(a, b) {
+export function collision(a, b) {
   return (
     a.x < b.x + b.w &&
     a.x + a.w > b.x &&
@@ -177,20 +162,19 @@ export function checkCollision(a, b) {
   );
 }
 
-export function checkWin(p, portal) {
-  return checkCollision(p, portal);
-}
-
 function runTests() {
-  const p = { x: 0, y: 0, w: 10, h: 10 };
-  const plat = { x: 5, y: 5, w: 10, h: 10 };
-  const portal = { x: 0, y: 0, w: 10, h: 10 };
+  const a = { x: 0, y: 0, w: 10, h: 10 };
+  const b = { x: 5, y: 5, w: 10, h: 10 };
+  const c = { x: 100, y: 100, w: 10, h: 10 };
+  const edge = { x: 10, y: 10, w: 10, h: 10 };
 
-  console.assert(checkCollision(p, plat) === true, "Collision test failed");
-  console.assert(checkWin(p, portal) === true, "Win test failed");
+  console.assert(collision(a, b) === true, "Collision overlap failed");
+  console.assert(collision(a, c) === false, "Collision miss failed");
 
-  const p2 = { x: 100, y: 100, w: 10, h: 10 };
-  console.assert(checkCollision(p2, plat) === false, "No collision test failed");
+  // edge touching case
+  console.assert(collision(a, edge) === false, "Edge collision failed");
+
+  console.log("All tests passed");
 }
 
 runTests();
