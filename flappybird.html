@@ -50,10 +50,7 @@ let gameOver = false;
 // effects
 let slowMo = 0;
 let shield = 0;
-let invincible = 0;
 
-let highscore = localStorage.getItem("flappyHighscore") || 0;
-  
 // ======================
 // CONTROLS
 // ======================
@@ -156,27 +153,14 @@ function update() {
      p.passed = true;
    }
 
-  if (
-  hit(bird.x,bird.y,bird.r,p.x,0,p.w,p.top) ||
-  hit(bird.x,bird.y,bird.r,p.x,canvas.height-p.bottom,p.w,p.bottom)
-) {
-  if (invincible > 0) {
-    // nichts passiert (kurzer Schutz)
-  }
-  else if (shield > 0) {
-    shield--;
-    invincible = 40;
-  }
-  else {
-    gameOver = true;
-
-    // Highscore speichern
-    if (score > highscore) {
-      highscore = score;
-      localStorage.setItem("flappyHighscore", highscore);
-    }
-  }
-}
+   if (
+     hit(bird.x,bird.y,bird.r,p.x,0,p.w,p.top) ||
+     hit(bird.x,bird.y,bird.r,p.x,canvas.height-p.bottom,p.w,p.bottom)
+   ) {
+     if (shield > 0) shield--;
+     else gameOver = true;
+   }
+ }
 
  pipes = pipes.filter(p => p.x > -80);
 
@@ -195,7 +179,6 @@ function update() {
  powerups = powerups.filter(p => !p.taken && p.x > -60);
 
  if (slowMo > 0) slowMo--;
- if (invincible > 0) invincible--;
 
  bird.wing += 0.25;
  frame++;
@@ -281,10 +264,9 @@ function draw() {
  ctx.fillStyle = "white";
  ctx.font = "20px Arial";
  ctx.fillText("Score: " + score, 10, 30);
- ctx.fillText("Highscore: " + highscore, 10, 55);
 
  let names = ["TAG","NACHT","SUNSET","SPACE"];
- ctx.fillText("Welt: " + names[w], 10, 80);
+ ctx.fillText("Welt: " + names[w], 10, 55);
 
  if (slowMo > 0) ctx.fillText("SLOW", 10, 80);
 
