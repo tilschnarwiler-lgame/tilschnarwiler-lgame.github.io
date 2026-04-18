@@ -2,9 +2,11 @@ import React, { useEffect, useRef, useState } from "react";
 
 export default function JumpAndRun() {
   const canvasRef = useRef(null);
-
   const keys = useRef({});
+  const rafId = useRef(null);
+
   const [won, setWon] = useState(false);
+  const wonRef = useRef(false);
 
   const player = useRef({
     x: 50,
@@ -16,20 +18,18 @@ export default function JumpAndRun() {
     onGround: false,
   });
 
-  const rafId = useRef(null);
-
   const gravity = 0.5;
   const moveSpeed = 3;
   const jumpPower = -10;
 
   const platforms = [
-    { x: 0, y: 350, w: 400, h: 20 },
+    { x: 0, y: 350, w: 500, h: 20 },
     { x: 120, y: 280, w: 100, h: 10 },
     { x: 260, y: 220, w: 100, h: 10 },
     { x: 380, y: 160, w: 100, h: 10 },
   ];
 
-  const portal = { x: 420, y: 110, w: 30, h: 50 };
+  const portal = { x: 440, y: 110, w: 30, h: 50 };
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -51,82 +51,90 @@ export default function JumpAndRun() {
 
   useEffect(() => {
     const canvas = canvasRef.current;
+    if (!canvas) return;
     const ctx = canvas.getContext("2d");
+
+    const resetPlayer = () => {
+      const p = player.current;
+      p.x = 50;
+      p.y = 300;
+      p.vx = 0;
+      p.vy = 0;
+      p.onGround = false;
+    };
 
     const loop = () => {
       const p = player.current;
       const k = keys.current;
 
-      if (!won) {
-        // movement
+      if (!wonRef.current) {
         if (k["ArrowLeft"]) p.vx = -moveSpeed;
         else if (k["ArrowRight"]) p.vx = moveSpeed;
         else p.vx *= 0.8;
 
-        // jump
         if (k["ArrowUp"] && p.onGround) {
           p.vy = jumpPower;
           p.onGround = false;
         }
 
-        // gravity
         p.vy += gravity;
-
-        // update position
         p.x += p.vx;
         p.y += p.vy;
 
-        // collision
         p.onGround = false;
         for (let plat of platforms) {
-          if (
+          const hit =
             p.x < plat.x + plat.w &&
             p.x + p.w > plat.x &&
             p.y < plat.y + plat.h &&
-            p.y + p.h > plat.y
-          ) {
-            if (p.vy > 0) {
-              p.y = plat.y - p.h;
-              p.vy = 0;
-              p.onGround = true;
-            }
+            p.y + p.h > plat.y;
+
+          if (hit && p.vy > 0) {
+            p.y = plat.y - p.h;
+            p.vy = 0;
+            p.onGround = true;
           }
         }
 
-        // portal collision
-        const overlap =
+        const win =
           p.x < portal.x + portal.w &&
           p.x + p.w > portal.x &&
           p.y < portal.y + portal.h &&
           p.y + p.h > portal.y;
 
-        if (overlap) setWon(true);
+        if (win) {
+          wonRef.current = true;
+          setWon(true);
 
-        // bounds
-        if (p.x < 0) p.x = 0;
-        if (p.x + p.w > canvas.width) p.x = canvas.width - p.w;
-        if (p.y > canvas.height) {
-          p.x = 50;
-          p.y = 300;
+          // cube disappears on win
+          p.w = 0;
+          p.h = 0;
           p.vx = 0;
           p.vy = 0;
         }
+
+        if (p.x < 0) p.x = 0;
+        if (p.x + p.w > canvas.width) p.x = canvas.width - p.w;
+        if (p.y > canvas.height) resetPlayer();
       }
 
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       ctx.fillStyle = "#444";
-      platforms.forEach((plat) => {
-        ctx.fillRect(plat.x, plat.y, plat.w, plat.h);
-      });
+      platforms.forEach((plat) => ctx.fillRect(plat.x, plat.y, plat.w, plat.h));
 
       ctx.fillStyle = "purple";
       ctx.fillRect(portal.x, portal.y, portal.w, portal.h);
 
-      ctx.fillStyle = "blue";
-      ctx.fillRect(p.x, p.y, p.w, p.h);
+      const p = player.current;
 
-      if (won) {
+      // draw player only if not vanished
+      if (!wonRef.current) {
+        ctx.fillStyle = "blue";
+        ctx.fillRect(p.x, p.y, p.w, p.h);
+      }
+
+      if (wonRef.current) {
         ctx.fillStyle = "black";
         ctx.font = "20px Arial";
         ctx.fillText("Level geschafft!", 150, 100);
@@ -138,13 +146,51 @@ export default function JumpAndRun() {
     rafId.current = requestAnimationFrame(loop);
 
     return () => cancelAnimationFrame(rafId.current);
-  }, [won]);
+  }, []);
 
   return (
     <div className="flex flex-col items-center gap-2">
-      <canvas ref={canvasRef} width={500} height={400} className="border" tabIndex={0} />
-      <div>Steuerung: Pfeiltasten</div>
+      <canvas
+        ref={canvasRef}
+        width={500}
+        height={400}
+        className="border"
+        tabIndex={0}
+        onClick={() => canvasRef.current?.focus()}
+      />
+      <div>Steuerung: Pfeiltasten (← → ↑)</div>
       {won && <div className="text-green-600 font-bold">Level geschafft!</div>}
     </div>
   );
 }
+
+// --------------------
+// Simple test cases
+// --------------------
+
+export function checkCollision(a, b) {
+  return (
+    a.x < b.x + b.w &&
+    a.x + a.w > b.x &&
+    a.y < b.y + b.h &&
+    a.y + a.h > b.y
+  );
+}
+
+export function checkWin(p, portal) {
+  return checkCollision(p, portal);
+}
+
+function runTests() {
+  const p = { x: 0, y: 0, w: 10, h: 10 };
+  const plat = { x: 5, y: 5, w: 10, h: 10 };
+  const portal = { x: 0, y: 0, w: 10, h: 10 };
+
+  console.assert(checkCollision(p, plat) === true, "Collision test failed");
+  console.assert(checkWin(p, portal) === true, "Win test failed");
+
+  const p2 = { x: 100, y: 100, w: 10, h: 10 };
+  console.assert(checkCollision(p2, plat) === false, "No collision test failed");
+}
+
+runTests();
