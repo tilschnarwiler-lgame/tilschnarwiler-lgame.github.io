@@ -1,204 +1,719 @@
 <!DOCTYPE html>
+
 <html lang="de">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>LGame</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;500;600&display=swap" rel="stylesheet">
 
 <style>
-body {
-    font-family: Arial, sans-serif;
-    text-align: center;
+:root {
+    --neon-blue: #00d4ff;
+    --neon-pink: #ff2d78;
+    --neon-green: #00ff88;
+    --neon-purple: #b44eff;
+    --dark-bg: #06040f;
+    --card-bg: rgba(8, 4, 24, 0.75);
+    --border-glow: rgba(0, 212, 255, 0.2);
+}
+
+* {
     margin: 0;
-    height: 100vh;
-    overflow: hidden;
-    color: white;
-
-    /* 🌌 EINHEITLICHER DARK BLUE BACKGROUND */
-    background: linear-gradient(180deg, #0a0f2c, #050814);
+    padding: 0;
+    box-sizing: border-box;
 }
 
-/* HEADER */
-header {
-    background: transparent;
+html, body {
+    height: 100%;
+    overflow-x: hidden;
+}
+
+body {
+    font-family: 'Rajdhani', sans-serif;
+    background: var(--dark-bg);
     color: white;
-    padding: 20px;
+    min-height: 100vh;
+    overflow-y: auto;
+}
+
+/* ── BACKGROUND ── */
+.bg-grid {
+    position: fixed;
+    inset: 0;
+    background-image:
+        linear-gradient(rgba(0,212,255,0.09) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,212,255,0.09) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+    animation: gridPulse 4s ease-in-out infinite;
+}
+
+@keyframes gridPulse {
+    0%, 100% { opacity: 0.5; }
+    50%       { opacity: 1; }
+}
+
+.bg-glow {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    overflow: hidden;
+}
+
+.bg-glow::before {
+    content: '';
+    position: absolute;
+    width: 80vw; height: 80vw;
+    top: -25%; left: -15%;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(180,78,255,0.55) 0%, rgba(80,0,200,0.25) 40%, transparent 70%);
+    animation: blobA 9s ease-in-out infinite alternate;
+    filter: blur(50px);
+}
+
+.bg-glow::after {
+    content: '';
+    position: absolute;
+    width: 70vw; height: 70vw;
+    bottom: -15%; right: -15%;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(0,212,255,0.5) 0%, rgba(0,80,200,0.25) 40%, transparent 70%);
+    animation: blobB 11s ease-in-out infinite alternate;
+    filter: blur(50px);
+}
+
+.bg-blob3 {
+    position: fixed;
+    width: 55vw; height: 55vw;
+    top: 35%; left: 35%;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,45,120,0.35) 0%, transparent 70%);
+    animation: blobC 13s ease-in-out infinite alternate;
+    filter: blur(60px);
+    pointer-events: none;
+    z-index: 0;
+}
+
+@keyframes blobA {
+    0%   { transform: translate(0,0) scale(1); }
+    50%  { transform: translate(12vw,10vh) scale(1.2); }
+    100% { transform: translate(5vw,18vh) scale(0.85); }
+}
+@keyframes blobB {
+    0%   { transform: translate(0,0) scale(1); }
+    50%  { transform: translate(-10vw,-12vh) scale(1.25); }
+    100% { transform: translate(-18vw,-5vh) scale(0.8); }
+}
+@keyframes blobC {
+    0%   { transform: translate(0,0) scale(1); }
+    100% { transform: translate(-12vw,12vh) scale(1.4); }
+}
+
+#particles {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+}
+
+/* ── SCANLINES overlay ── */
+body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0,0,0,0.07) 2px,
+        rgba(0,0,0,0.07) 4px
+    );
+    pointer-events: none;
+    z-index: 999;
+}
+
+/* ── WRAPPER ── */
+.wrapper {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0 16px 40px;
+}
+
+/* ── HEADER ── */
+header {
+    width: 100%;
+    max-width: 900px;
+    text-align: center;
+    padding: 20px 16px 12px;
+}
+
+.logo-wrap {
+    position: relative;
+    display: inline-block;
+}
+
+h1 {
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 900;
+    font-size: clamp(36px, 10vw, 80px);
+    letter-spacing: 4px;
+    color: white;
+    text-shadow:
+        0 0 10px var(--neon-blue),
+        0 0 30px var(--neon-blue),
+        0 0 60px rgba(0,212,255,0.4);
+    animation: flicker 6s infinite;
+    line-height: 1.1;
+}
+
+.subtitle {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: clamp(12px, 3vw, 16px);
+    letter-spacing: 6px;
+    color: var(--neon-pink);
+    text-transform: uppercase;
+    margin-top: 6px;
+    opacity: 0.85;
+}
+
+/* horizontal neon line */
+.divider {
+    width: 100%;
+    max-width: 600px;
+    height: 1px;
+    margin: 20px auto;
+    background: linear-gradient(90deg, transparent, var(--neon-blue), var(--neon-pink), transparent);
+    box-shadow: 0 0 8px var(--neon-blue);
+}
+
+/* ── GAME GRID ── */
+#menuButtons {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 14px;
+    width: 100%;
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 0 4px;
+}
+
+/* ── GAME CARDS ── */
+.game-card {
+    position: relative;
+    background: var(--card-bg);
+    border: 1px solid var(--border-glow);
+    border-radius: 16px;
+    padding: 22px 12px 18px;
+    cursor: pointer;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+    backdrop-filter: blur(12px) brightness(0.6);
+    -webkit-backdrop-filter: blur(12px) brightness(0.6);
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.game-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(var(--accent-raw, 0,212,255), 0.08) 0%, transparent 60%);
+    pointer-events: none;
+}
+
+.game-card:hover,
+.game-card:active {
+    transform: translateY(-4px) scale(1.02);
+}
+
+/* individual accent colors per card */
+.game-card:nth-child(1) { --accent: #00ff88; }
+.game-card:nth-child(2) { --accent: #ffcc00; }
+.game-card:nth-child(3) { --accent: #00d4ff; }
+.game-card:nth-child(4) { --accent: #ff2d78; }
+.game-card:nth-child(5) { --accent: #ff7700; }
+.game-card:nth-child(6) { --accent: #b44eff; }
+.game-card:nth-child(7) { --accent: #00ffcc; }
+
+.game-card:hover {
+    border-color: var(--accent);
+    box-shadow: 0 0 20px rgba(var(--accent-rgb), 0.3), inset 0 0 20px rgba(0,0,0,0.2);
+    box-shadow: 0 0 24px color-mix(in srgb, var(--accent) 50%, transparent);
+}
+
+.card-icon {
+    font-size: clamp(28px, 7vw, 40px);
+    line-height: 1;
+    filter: drop-shadow(0 0 8px var(--accent));
+    transition: transform 0.3s ease;
+}
+
+.game-card:hover .card-icon {
+    transform: scale(1.15) rotate(-5deg);
+}
+
+.card-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: clamp(9px, 2.5vw, 13px);
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--accent);
+    text-shadow: 0 0 8px var(--accent);
     text-align: center;
 }
 
-/* 🎮 TITEL GRÖSSER */
-h1 {
-    font-size: 64px;
-    margin: 10px 0;
-    letter-spacing: 2px;
+/* corner brackets */
+.game-card::after {
+    content: '';
+    position: absolute;
+    top: 6px; right: 6px;
+    width: 12px; height: 12px;
+    border-top: 2px solid var(--accent);
+    border-right: 2px solid var(--accent);
+    border-radius: 0 4px 0 0;
+    opacity: 0;
+    transition: opacity 0.25s;
 }
+.game-card:hover::after { opacity: 1; }
 
-/* BUTTONS CONTAINER */
-#menuButtons {
-    margin-top: 15px;
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 12px;
-}
-
-/* 🔘 BUTTONS GRÖSSER */
-button {
-    padding: 14px 22px;
-    cursor: pointer;
-    border: none;
-    border-radius: 14px;
-    background: linear-gradient(135deg, #007bff, #00c6ff);
-    color: white;
-    font-weight: bold;
-    font-size: 16px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-    transition: all 0.2s ease;
-}
-
-button:hover {
-    transform: translateY(-2px);
-}
-
-button:active {
-    transform: scale(0.95);
-}
-
-/* GAME AREA */
+/* ── GAME AREAS ── */
 .game {
     display: none;
-    margin-top: 20px;
-    animation: fadeIn 0.3s ease;
-    position: relative;
+    width: 100%;
+    max-width: 900px;
+    animation: fadeSlide 0.3s ease;
+    padding: 0 4px;
 }
 
-.active {
+.game.active {
     display: block;
 }
 
-/* BACK BUTTON */
+.game-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 20px 0 16px;
+}
+
 .backBtn {
-    position: absolute;
-    top: 15px;
-    left: 15px;
-    background: rgba(0,0,0,0.6);
-    padding: 10px 14px;
+    background: rgba(0,0,0,0.5);
+    border: 1px solid rgba(255,255,255,0.15);
     border-radius: 10px;
+    color: white;
+    font-family: 'Rajdhani', sans-serif;
     font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    padding: 10px 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+    flex-shrink: 0;
+    -webkit-tap-highlight-color: transparent;
 }
 
-/* GAME BOX */
-canvas, iframe {
-    border-radius: 14px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+.backBtn:hover {
+    background: rgba(0,212,255,0.15);
+    border-color: var(--neon-blue);
+    box-shadow: 0 0 12px rgba(0,212,255,0.2);
 }
 
-/* MENU TEXT */
+.game-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: clamp(16px, 4vw, 26px);
+    font-weight: 700;
+    color: var(--neon-blue);
+    text-shadow: 0 0 12px var(--neon-blue);
+}
+
+/* ── IFRAME WRAPPER ── */
+.iframe-wrap {
+    width: 100%;
+    position: relative;
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid var(--border-glow);
+    box-shadow:
+        0 0 40px rgba(0,212,255,0.12),
+        0 20px 60px rgba(0,0,0,0.6);
+    background: #000;
+}
+
+/* Corner decorations */
+.iframe-wrap::before,
+.iframe-wrap::after {
+    content: '';
+    position: absolute;
+    width: 20px; height: 20px;
+    z-index: 2;
+    pointer-events: none;
+}
+.iframe-wrap::before {
+    top: 0; left: 0;
+    border-top: 2px solid var(--neon-blue);
+    border-left: 2px solid var(--neon-blue);
+    border-radius: 16px 0 0 0;
+}
+.iframe-wrap::after {
+    bottom: 0; right: 0;
+    border-bottom: 2px solid var(--neon-pink);
+    border-right: 2px solid var(--neon-pink);
+    border-radius: 0 0 16px 0;
+}
+
+iframe {
+    display: block;
+    width: 100%;
+    border: none;
+}
+
+/* ── WELCOME SCREEN ── */
 #menu {
-    margin-top: 60px;
-    font-size: 20px;
+    text-align: center;
+    padding: 0;
 }
 
-/* ANIMATION */
-@keyframes fadeIn {
-    from { opacity: 0; transform: scale(0.98); }
-    to { opacity: 1; transform: scale(1); }
+.welcome-text {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: clamp(15px, 3.5vw, 20px);
+    color: rgba(255,255,255,0.55);
+    letter-spacing: 2px;
+    margin-top: 4px;
+    margin-bottom: 16px;
+    display: block;
+    visibility: visible;
+    opacity: 1;
+}
+
+/* ── ANIMATIONS ── */
+@keyframes flicker {
+    0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% {
+        text-shadow:
+            0 0 10px var(--neon-blue),
+            0 0 30px var(--neon-blue),
+            0 0 60px rgba(0,212,255,0.4);
+    }
+    20%, 24%, 55% {
+        text-shadow: none;
+    }
+}
+
+@keyframes fadeSlide {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes cardIn {
+    from { opacity: 0; transform: translateY(20px) scale(0.95); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.game-card {
+    animation: cardIn 0.4s ease both;
+}
+.game-card:nth-child(1) { animation-delay: 0.05s; }
+.game-card:nth-child(2) { animation-delay: 0.10s; }
+.game-card:nth-child(3) { animation-delay: 0.15s; }
+.game-card:nth-child(4) { animation-delay: 0.20s; }
+.game-card:nth-child(5) { animation-delay: 0.25s; }
+.game-card:nth-child(6) { animation-delay: 0.30s; }
+.game-card:nth-child(7) { animation-delay: 0.35s; }
+
+/* ── RESPONSIVE ── */
+
+/* Large screens: iframe at natural size, centered */
+@media (min-width: 700px) {
+    .iframe-wrap iframe {
+        height: var(--iframe-h, 500px);
+    }
+}
+
+/* Mobile: scale iframe with padding-trick */
+@media (max-width: 699px) {
+    #menuButtons {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+    }
+
+    .game-card {
+        padding: 18px 10px 14px;
+    }
+
+    /* For mobile, make iframes fill width */
+    .iframe-wrap {
+        aspect-ratio: var(--mobile-ratio, 4/5);
+        height: auto;
+    }
+
+    .iframe-wrap iframe {
+        width: 100%;
+        height: 100%;
+        position: absolute;
+        top: 0; left: 0;
+        transform-origin: top left;
+    }
+}
+
+@media (max-width: 400px) {
+    h1 { letter-spacing: 2px; }
+    #menuButtons {
+        grid-template-columns: repeat(2, 1fr);
+    }
 }
 </style>
-</head>
 
+</head>
 <body>
 
-<header>
-    <h1>🎮 LGame 🎮</h1>
+<div class="bg-grid"></div>
+<div class="bg-glow"></div>
+<div class="bg-blob3"></div>
+<canvas id="particles"></canvas>
+
+<div class="wrapper">
+
+```
+<!-- HEADER + MENU -->
+<div id="menu" class="game active">
+    <header>
+        <div class="logo-wrap">
+            <h1>LGAME</h1>
+            <div class="subtitle">Select Your Game</div>
+        </div>
+        <div class="divider"></div>
+    </header>
 
     <div id="menuButtons">
-        <button onclick="showGame('snake')">Snake 🐍</button>
-        <button onclick="showGame('flappy')">Flappybird 🐦</button>
-        <button onclick="showGame('nova')">Nova Blaster 🚀</button>
-        <button onclick="showGame('tetris')">Tetris</button>
-        <button onclick="showGame('auto')">Auto 🚗</button>
-        <button onclick="showGame('tower')">Tower Defense 🏰</button>
-        <button onclick="showGame('jump')">Jump and Run</button>
+        <div class="game-card" onclick="showGame('snake')">
+            <span class="card-icon">🐍</span>
+            <span class="card-title">Snake</span>
+        </div>
+        <div class="game-card" onclick="showGame('flappy')">
+            <span class="card-icon">🐦</span>
+            <span class="card-title">Flappy Bird</span>
+        </div>
+        <div class="game-card" onclick="showGame('nova')">
+            <span class="card-icon">🚀</span>
+            <span class="card-title">Nova Blaster</span>
+        </div>
+        <div class="game-card" onclick="showGame('tetris')">
+            <span class="card-icon">🟦</span>
+            <span class="card-title">Tetris</span>
+        </div>
+        <div class="game-card" onclick="showGame('auto')">
+            <span class="card-icon">🚗</span>
+            <span class="card-title">Auto</span>
+        </div>
+        <div class="game-card" onclick="showGame('tower')">
+            <span class="card-icon">🏰</span>
+            <span class="card-title">Tower Defense</span>
+        </div>
+        <div class="game-card" onclick="showGame('jump')">
+            <span class="card-icon">🦘</span>
+            <span class="card-title">Jump & Run</span>
+        </div>
     </div>
-</header>
-
-<!-- MENU -->
-<div id="menu" class="game active">
-    <h2>Willkommen!</h2>
-    <p>Wähle ein Spiel oben aus 🎯</p>
 </div>
 
 <!-- SNAKE -->
 <div id="snake" class="game">
-    <button class="backBtn" onclick="showGame('menu')">⬅ Zurück</button>
-    <h2>🐍 Snake</h2>
-    <iframe src="snake.html" width="600" height="500"></iframe>
+    <div class="game-header">
+        <button class="backBtn" onclick="showGame('menu')">⬅ Zurück</button>
+        <span class="game-title">🐍 Snake</span>
+    </div>
+    <div class="iframe-wrap" style="--iframe-h:500px; --mobile-ratio:6/5;">
+        <iframe src="snake.html" width="600" height="500" scrolling="no"></iframe>
+    </div>
 </div>
 
 <!-- FLAPPY -->
 <div id="flappy" class="game">
-    <button class="backBtn" onclick="showGame('menu')">⬅ Zurück</button>
-    <h2>🐦 Flappy Bird</h2>
-    <iframe src="flappybird.html" width="420" height="640"></iframe>
+    <div class="game-header">
+        <button class="backBtn" onclick="showGame('menu')">⬅ Zurück</button>
+        <span class="game-title">🐦 Flappy Bird</span>
+    </div>
+    <div class="iframe-wrap" style="--iframe-h:640px; --mobile-ratio:2/3;">
+        <iframe src="flappybird.html" width="420" height="640" scrolling="no"></iframe>
+    </div>
 </div>
 
 <!-- NOVA -->
 <div id="nova" class="game">
-    <button class="backBtn" onclick="showGame('menu')">⬅ Zurück</button>
-    <h2>🚀 Nova Blaster</h2>
-    <iframe src="novablaster.html" width="600" height="600"></iframe>
+    <div class="game-header">
+        <button class="backBtn" onclick="showGame('menu')">⬅ Zurück</button>
+        <span class="game-title">🚀 Nova Blaster</span>
+    </div>
+    <div class="iframe-wrap" style="--iframe-h:600px; --mobile-ratio:1/1;">
+        <iframe src="novablaster.html" width="600" height="600" scrolling="no"></iframe>
+    </div>
 </div>
 
 <!-- TETRIS -->
 <div id="tetris" class="game">
-    <button class="backBtn" onclick="showGame('menu')">⬅ Zurück</button>
-    <h2>Tetris</h2>
-    <iframe src="tetris.html" width="420" height="600"></iframe>
+    <div class="game-header">
+        <button class="backBtn" onclick="showGame('menu')">⬅ Zurück</button>
+        <span class="game-title">🟦 Tetris</span>
+    </div>
+    <div class="iframe-wrap" style="--iframe-h:600px; --mobile-ratio:2/3;">
+        <iframe src="tetris.html" width="420" height="600" scrolling="no"></iframe>
+    </div>
 </div>
 
 <!-- AUTO -->
 <div id="auto" class="game">
-    <button class="backBtn" onclick="showGame('menu')">⬅ Zurück</button>
-    <h2>Auto 🚗</h2>
-    <iframe src="auto.html" width="600" height="700"></iframe>
+    <div class="game-header">
+        <button class="backBtn" onclick="showGame('menu')">⬅ Zurück</button>
+        <span class="game-title">🚗 Auto</span>
+    </div>
+    <div class="iframe-wrap" style="--iframe-h:700px; --mobile-ratio:5/6;">
+        <iframe src="auto.html" width="600" height="700" scrolling="no"></iframe>
+    </div>
 </div>
 
-<!-- TOWERDEFENSE -->
+<!-- TOWER DEFENSE -->
 <div id="tower" class="game">
-    <button class="backBtn" onclick="showGame('menu')">⬅ Zurück</button>
-    <h2>Towerdefense 🏰</h2>
-    <iframe src="tower_defense.html" width="600" height="600"></iframe>
+    <div class="game-header">
+        <button class="backBtn" onclick="showGame('menu')">⬅ Zurück</button>
+        <span class="game-title">🏰 Tower Defense</span>
+    </div>
+    <div class="iframe-wrap" style="--iframe-h:600px; --mobile-ratio:1/1;">
+        <iframe src="tower_defense.html" width="600" height="600" scrolling="no"></iframe>
+    </div>
 </div>
 
 <!-- JUMP AND RUN -->
 <div id="jump" class="game">
-    <button class="backBtn" onclick="showGame('menu')">⬅ Zurück</button>
-    <h2>Jump and Run</h2>
-    <iframe src="jump_run.html" width="600" height="600"></iframe>
+    <div class="game-header">
+        <button class="backBtn" onclick="showGame('menu')">⬅ Zurück</button>
+        <span class="game-title">🦘 Jump & Run</span>
+    </div>
+    <div class="iframe-wrap" style="--iframe-h:600px; --mobile-ratio:1/1;">
+        <iframe src="jump_run.html" width="600" height="600" scrolling="no"></iframe>
+    </div>
+</div>
+```
+
 </div>
 
-
-
-    
 <script>
 function showGame(id) {
     document.querySelectorAll(".game").forEach(g => g.classList.remove("active"));
     document.getElementById(id).classList.add("active");
 
-    if (id === "menu") {
-        document.getElementById("menuButtons").style.display = "flex";
-    } else {
-        document.getElementById("menuButtons").style.display = "none";
+    // On mobile: scale iframe to fill container
+    if (id !== 'menu') {
+        scaleMobileIframe(id);
     }
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-// Pfeiltasten blockieren (für Games)
+function scaleMobileIframe(gameId) {
+    if (window.innerWidth >= 700) return;
+
+    const wrap = document.querySelector(`#${gameId} .iframe-wrap`);
+    const iframe = wrap?.querySelector('iframe');
+    if (!iframe) return;
+
+    const origW = parseInt(iframe.getAttribute('width')) || 600;
+    const origH = parseInt(iframe.getAttribute('height')) || 500;
+    const containerW = wrap.clientWidth;
+    const scale = containerW / origW;
+
+    // Make wrap tall enough
+    wrap.style.height = (origH * scale) + 'px';
+    wrap.style.position = 'relative';
+
+    iframe.style.width  = origW + 'px';
+    iframe.style.height = origH + 'px';
+    iframe.style.position = 'absolute';
+    iframe.style.top  = '0';
+    iframe.style.left = '0';
+    iframe.style.transform = `scale(${scale})`;
+    iframe.style.transformOrigin = 'top left';
+}
+
+window.addEventListener('resize', () => {
+    const active = document.querySelector('.game.active');
+    if (active && active.id !== 'menu') scaleMobileIframe(active.id);
+});
+
+// Block arrow keys from scrolling page (hand to games)
 document.addEventListener("keydown", function(e) {
-    const keys = ["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"];
-    if (keys.includes(e.key)) {
+    if (["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"," "].includes(e.key)) {
         e.preventDefault();
     }
 }, true);
+
+// ── PARTICLES ──
+(function(){
+    const canvas = document.getElementById('particles');
+    const ctx = canvas.getContext('2d');
+    const colors = ['#00d4ff','#b44eff','#ff2d78','#00ff88','#ffcc00'];
+    let W, H, particles = [];
+
+    function resize(){
+        W = canvas.width  = window.innerWidth;
+        H = canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    class Particle {
+        constructor(){
+            this.reset(true);
+        }
+        reset(init){
+            this.x = Math.random() * W;
+            this.y = init ? Math.random() * H : H + 10;
+            this.r = Math.random() * 2 + 0.5;
+            this.color = colors[Math.floor(Math.random()*colors.length)];
+            this.vy = -(Math.random() * 0.6 + 0.2);
+            this.vx = (Math.random() - 0.5) * 0.3;
+            this.alpha = Math.random() * 0.6 + 0.2;
+            this.life = Math.random() * 200 + 100;
+            this.age = init ? Math.floor(Math.random()*this.life) : 0;
+        }
+        update(){
+            this.x += this.vx;
+            this.y += this.vy;
+            this.age++;
+            if(this.age > this.life || this.y < -10) this.reset(false);
+        }
+        draw(){
+            ctx.save();
+            ctx.globalAlpha = this.alpha * (1 - this.age/this.life);
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.r, 0, Math.PI*2);
+            ctx.fillStyle = this.color;
+            ctx.shadowColor = this.color;
+            ctx.shadowBlur = 6;
+            ctx.fill();
+            ctx.restore();
+        }
+    }
+
+    for(let i=0;i<80;i++) particles.push(new Particle());
+
+    function loop(){
+        ctx.clearRect(0,0,W,H);
+        particles.forEach(p=>{ p.update(); p.draw(); });
+        requestAnimationFrame(loop);
+    }
+    loop();
+})();
+
 </script>
 
 </body>
