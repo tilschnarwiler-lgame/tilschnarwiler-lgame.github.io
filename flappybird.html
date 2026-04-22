@@ -2,313 +2,413 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<title>Flappy Final Stable</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Flappy Final</title>
 <style>
-body {
- margin:0;
- display:flex;
- justify-content:center;
- align-items:center;
- height:100vh;
- background:#87ceeb;
-}
-canvas {
- border:2px solid black;
-}
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background: #1a1a2e;
+    overflow: hidden;
+    touch-action: none;
+  }
+  #wrapper {
+    position: relative;
+    display: inline-block;
+  }
+  canvas {
+    display: block;
+    border: 3px solid rgba(255,255,255,0.2);
+    border-radius: 8px;
+    box-shadow: 0 0 40px rgba(0,0,0,0.6);
+    max-width: 100vw;
+    max-height: 100vh;
+  }
+  #overlay {
+    display: none;
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.65);
+    border-radius: 6px;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 14px;
+  }
+  #overlay.visible { display: flex; }
+  #overlay h1 {
+    font-size: 42px;
+    color: #fff;
+    text-shadow: 0 2px 12px rgba(0,0,0,0.8);
+    letter-spacing: 2px;
+    font-family: sans-serif;
+  }
+  #overlay .score-line { font-size: 22px; color: #ffe082; font-family: sans-serif; }
+  #overlay .hs-line    { font-size: 18px; color: #80cbc4; font-family: sans-serif; }
+  #restart-btn {
+    margin-top: 10px;
+    padding: 14px 44px;
+    font-size: 20px;
+    font-weight: 700;
+    background: linear-gradient(135deg, #43e97b, #38f9d7);
+    color: #1a1a2e;
+    border: none;
+    border-radius: 50px;
+    cursor: pointer;
+    box-shadow: 0 4px 20px rgba(67,233,123,0.4);
+    transition: transform 0.1s;
+    touch-action: manipulation;
+    font-family: sans-serif;
+  }
+  #restart-btn:hover  { transform: scale(1.05); }
+  #restart-btn:active { transform: scale(0.96); }
+
+  #countdown-overlay {
+    display: none;
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    border-radius: 6px;
+    justify-content: center;
+    align-items: center;
+  }
+  #countdown-overlay.visible { display: flex; }
+  #countdown-num {
+    font-size: 130px;
+    font-weight: 900;
+    color: #fff;
+    font-family: sans-serif;
+    text-shadow: 0 0 50px rgba(255,255,255,0.8);
+    animation: cdpop 0.85s ease-out forwards;
+  }
+  @keyframes cdpop {
+    0%   { transform: scale(2.0); opacity: 0; }
+    25%  { transform: scale(1.0); opacity: 1; }
+    75%  { transform: scale(1.0); opacity: 1; }
+    100% { transform: scale(0.4); opacity: 0; }
+  }
 </style>
 </head>
 <body>
+<div id="wrapper">
+  <canvas id="game" width="420" height="640"></canvas>
 
-<canvas id="game" width="420" height="640"></canvas>
+  <div id="overlay">
+    <h1>💀 Game Over</h1>
+    <div class="score-line" id="final-score">Score: 0</div>
+    <div class="hs-line"    id="final-hs">🏆 Highscore: 0</div>
+    <button id="restart-btn">▶ Neustart</button>
+  </div>
+
+  <div id="countdown-overlay">
+    <span id="countdown-num">3</span>
+  </div>
+</div>
 
 <script>
-const canvas = document.getElementById("game");
-const ctx = canvas.getContext("2d");
+const canvas     = document.getElementById("game");
+const ctx        = canvas.getContext("2d");
+const overlay    = document.getElementById("overlay");
+const cdOverlay  = document.getElementById("countdown-overlay");
+const cdNum      = document.getElementById("countdown-num");
+const finalScore = document.getElementById("final-score");
+const finalHs    = document.getElementById("final-hs");
+const restartBtn = document.getElementById("restart-btn");
 
-// ======================
-// 🐦 PLAYER
-// ======================
-let bird = {
- x: 80,
- y: 200,
- r: 14,
- v: 0,
- g: 0.45,
- jump: -8,
- wing: 0
-};
+// ── Highscore (localStorage) ──────────────────────────────
+let highscore = parseInt(localStorage.getItem("flappy_hs") || "0");
 
-// ======================
-// GAME STATE
-// ======================
-let pipes = [];
-let powerups = [];
-let score = 0;
-let frame = 0;
-let gameOver = false;
+// ── Game state ────────────────────────────────────────────
+let bird, pipes, powerups, score, frame, gameOver, slowMo, shield, invincible, counting;
+// shield   = 1 means the powerup is active (not yet consumed by a hit)
+// invincible = frames remaining of post-hit invincibility (120 = 2 sec at 60fps)
 
-// effects
-let slowMo = 0;
-let shield = 0;
+function initState() {
+  bird = { x: 80, y: 200, r: 14, v: 0, g: 0.45, jump: -8, wing: 0 };
+  pipes = []; powerups = [];
+  score = 0; frame = 0;
+  gameOver = false; counting = false;
+  slowMo = 0; shield = 0; invincible = 0;
+}
+initState();
 
-// ======================
-// CONTROLS
-// ======================
-document.addEventListener("keydown", () => {
- if (!gameOver) bird.v = bird.jump;
- else reset();
-});
+// ── Controls ──────────────────────────────────────────────
+function flap() {
+  if (!gameOver && !counting) bird.v = bird.jump;
+}
+document.addEventListener("keydown", flap);
+canvas.addEventListener("touchstart", e => { e.preventDefault(); flap(); }, { passive: false });
 
-// ======================
-// 🌍 WORLD SYSTEM
-// ======================
-function getWorld() {
- return Math.floor(score / 10) % 4;
+// ── Restart & countdown ───────────────────────────────────
+function startCountdown() {
+  overlay.classList.remove("visible");
+  initState();
+  counting = true;
+
+  function showCount(n) {
+    cdNum.textContent = n;
+    // retrigger CSS animation
+    cdNum.style.animation = "none";
+    void cdNum.offsetWidth;
+    cdNum.style.animation = "cdpop 0.85s ease-out forwards";
+    cdOverlay.classList.add("visible");
+  }
+
+  showCount(3);
+  setTimeout(() => showCount(2), 900);
+  setTimeout(() => showCount(1), 1800);
+  setTimeout(() => {
+    cdOverlay.classList.remove("visible");
+    counting = false;
+  }, 2700);
 }
 
-function background(w) {
- if (w === 0) return "#4fc3f7";   // day
- if (w === 1) return "#0d1b2a";   // night
- if (w === 2) return "#ff6f00";   // sunset
- return "#000814";               // space
+restartBtn.addEventListener("click",    startCountdown);
+restartBtn.addEventListener("touchend", e => { e.preventDefault(); startCountdown(); }, { passive: false });
+
+// ── World ─────────────────────────────────────────────────
+function getWorld() { return Math.floor(score / 10) % 4; }
+const BG = ["#4fc3f7","#0d1b2a","#c2440e","#000814"];
+
+// ── Difficulty ────────────────────────────────────────────
+function diff() {
+  let lvl = Math.floor(score / 10);
+  return {
+    speed:       2 + lvl * 0.4,
+    gap:         Math.max(90, 160 - lvl * 10),
+    spawn:       Math.max(90, 120 - lvl * 6),
+    powerChance: Math.max(0.08, 0.25 - lvl * 0.03)
+  };
 }
 
-// ======================
-// 📈 DIFFICULTY
-// ======================
-function difficulty() {
- let lvl = Math.floor(score / 10);
-
- return {
-   speed: 2 + lvl * 0.4,
-   gap: Math.max(90, 160 - lvl * 10),
-   spawn: Math.max(90, 120 - lvl * 6),
-   powerChance: Math.max(0.08, 0.25 - lvl * 0.03)
- };
-}
-
-// ======================
-// PIPE
-// ======================
+// ── Pipe spawn ────────────────────────────────────────────
 function addPipe() {
- let d = difficulty();
- let gap = d.gap;
-
- let top = Math.random() * 240 + 60;
-
- pipes.push({
-   x: canvas.width,
-   w: 50,
-   top: top,
-   bottom: canvas.height - top - gap,
-   passed: false
- });
-
- // powerups (rare + controlled)
- if (Math.random() < d.powerChance) {
-   powerups.push({
-     x: canvas.width + 40,
-     y: top + gap / 2,
-     type: Math.random() < 0.5 ? "slow" : "shield",
-     taken: false
-   });
- }
+  let d = diff();
+  let top = Math.random() * 240 + 60;
+  pipes.push({ x: canvas.width, w: 50, top, bottom: canvas.height - top - d.gap, passed: false });
+  if (Math.random() < d.powerChance) {
+    powerups.push({
+      x: canvas.width + 40,
+      y: top + d.gap / 2,
+      type: Math.random() < 0.5 ? "slow" : "shield",
+      taken: false
+    });
+  }
 }
 
-// ======================
-// COLLISION
-// ======================
-function hit(cx,cy,r,rx,ry,rw,rh) {
- let x = Math.max(rx, Math.min(cx, rx+rw));
- let y = Math.max(ry, Math.min(cy, ry+rh));
- let dx = cx - x;
- let dy = cy - y;
- return dx*dx + dy*dy < r*r;
+// ── Collision: circle vs rect ─────────────────────────────
+function circRect(cx, cy, r, rx, ry, rw, rh) {
+  let nx = Math.max(rx, Math.min(cx, rx + rw));
+  let ny = Math.max(ry, Math.min(cy, ry + rh));
+  let dx = cx - nx, dy = cy - ny;
+  return dx*dx + dy*dy < r*r;
 }
 
-// ======================
-// UPDATE
-// ======================
+// ── Update ────────────────────────────────────────────────
 function update() {
- if (gameOver) return;
+  if (gameOver || counting) return;
 
- let d = difficulty();
- let speed = slowMo > 0 ? d.speed * 0.6 : d.speed;
+  let d = diff();
+  let speed = slowMo > 0 ? d.speed * 0.5 : d.speed;
 
- // bird physics
- bird.v += bird.g;
- bird.y += bird.v;
+  bird.v += bird.g;
+  bird.y += bird.v;
 
- if (bird.y < 0 || bird.y > canvas.height) gameOver = true;
+  // floor / ceiling
+  if (bird.y - bird.r < 0 || bird.y + bird.r > canvas.height) {
+    return endGame();
+  }
 
- // spawn pipes
- if (frame % d.spawn === 0) addPipe();
+  if (frame % d.spawn === 0) addPipe();
 
- // pipes
- for (let p of pipes) {
-   p.x -= speed;
+  // pipe collisions
+  for (let p of pipes) {
+    p.x -= speed;
+    if (!p.passed && p.x + p.w < bird.x) { score++; p.passed = true; }
 
-   if (!p.passed && p.x + p.w < bird.x) {
-     score++;
-     p.passed = true;
-   }
+    let hitTop    = circRect(bird.x, bird.y, bird.r, p.x, 0,                        p.w, p.top);
+    let hitBottom = circRect(bird.x, bird.y, bird.r, p.x, canvas.height - p.bottom, p.w, p.bottom);
 
-   if (
-     hit(bird.x,bird.y,bird.r,p.x,0,p.w,p.top) ||
-     hit(bird.x,bird.y,bird.r,p.x,canvas.height-p.bottom,p.w,p.bottom)
-   ) {
-     if (shield > 0) shield--;
-     else gameOver = true;
-   }
- }
+    if (hitTop || hitBottom) {
+      if (invincible > 0) {
+        // still in grace period — ignore hit completely
+      } else if (shield > 0) {
+        // consume shield, start 2-sec invincibility + bounce up
+        shield = 0;
+        invincible = 120;          // 120 frames ≈ 2 seconds
+        bird.v = bird.jump * 0.6;  // bounce upward out of pipe
+      } else {
+        return endGame();
+      }
+    }
+  }
+  pipes = pipes.filter(p => p.x > -80);
 
- pipes = pipes.filter(p => p.x > -80);
+  // powerup collisions
+  for (let p of powerups) {
+    p.x -= speed;
+    if (!p.taken && circRect(bird.x, bird.y, bird.r, p.x - 10, p.y - 10, 20, 20)) {
+      p.taken = true;
+      if (p.type === "slow")   slowMo = 180;
+      if (p.type === "shield") { shield = 1; invincible = 0; } // reset grace on fresh pickup
+    }
+  }
+  powerups = powerups.filter(p => !p.taken && p.x > -60);
 
- // powerups
- for (let p of powerups) {
-   p.x -= speed;
-
-   if (!p.taken && hit(bird.x,bird.y,bird.r,p.x,p.y,20,20)) {
-     p.taken = true;
-
-     if (p.type === "slow") slowMo = 180;  // SHORT + balanced
-     if (p.type === "shield") shield = 1;  // single hit only
-   }
- }
-
- powerups = powerups.filter(p => !p.taken && p.x > -60);
-
- if (slowMo > 0) slowMo--;
-
- bird.wing += 0.25;
- frame++;
+  if (slowMo > 0) slowMo--;
+  if (invincible > 0) invincible--;
+  bird.wing += 0.25;
+  frame++;
 }
 
-// ======================
-// PIPE (MARIO STYLE)
-// ======================
+function endGame() {
+  gameOver = true;
+  if (score > highscore) {
+    highscore = score;
+    localStorage.setItem("flappy_hs", highscore);
+  }
+  finalScore.textContent = "Score: " + score;
+  finalHs.textContent    = "🏆 Highscore: " + highscore;
+  overlay.classList.add("visible");
+}
+
+// ── Draw ──────────────────────────────────────────────────
 function drawPipe(p) {
- ctx.fillStyle = "#2e7d32";
- ctx.fillRect(p.x,0,p.w,p.top);
- ctx.fillRect(p.x,canvas.height-p.bottom,p.w,p.bottom);
-
- ctx.fillStyle = "#1b5e20";
- ctx.fillRect(p.x-3,p.top-18,p.w+6,18);
- ctx.fillRect(p.x-3,canvas.height-p.bottom,p.w+6,18);
+  // body
+  ctx.fillStyle = "#388e3c";
+  ctx.fillRect(p.x, 0, p.w, p.top);
+  ctx.fillRect(p.x, canvas.height - p.bottom, p.w, p.bottom);
+  // cap
+  ctx.fillStyle = "#1b5e20";
+  ctx.fillRect(p.x - 4, p.top - 20,                   p.w + 8, 20);
+  ctx.fillRect(p.x - 4, canvas.height - p.bottom,      p.w + 8, 20);
+  // shine
+  ctx.fillStyle = "rgba(255,255,255,0.1)";
+  ctx.fillRect(p.x + 5, 0, 7, p.top);
+  ctx.fillRect(p.x + 5, canvas.height - p.bottom, 7, p.bottom);
 }
 
-// ======================
-// BIRD
-// ======================
 function drawBird() {
- let w = Math.sin(bird.wing)*6;
+  // flicker during invincibility: hide every other 4-frame block
+  if (invincible > 0 && Math.floor(invincible / 4) % 2 === 0) return;
 
- ctx.fillStyle="yellow";
- ctx.beginPath();
- ctx.arc(bird.x,bird.y,bird.r,0,Math.PI*2);
- ctx.fill();
-
- ctx.fillStyle="orange";
- ctx.beginPath();
- ctx.ellipse(bird.x-12,bird.y+w,10,6,0,0,Math.PI*2);
- ctx.fill();
-
- ctx.beginPath();
- ctx.ellipse(bird.x+12,bird.y-w,10,6,0,0,Math.PI*2);
- ctx.fill();
-
- ctx.fillStyle="black";
- ctx.beginPath();
- ctx.arc(bird.x+5,bird.y-4,3,0,Math.PI*2);
- ctx.fill();
+  let w = Math.sin(bird.wing) * 6;
+  // body
+  ctx.fillStyle = "#fdd835";
+  ctx.beginPath(); ctx.arc(bird.x, bird.y, bird.r, 0, Math.PI*2); ctx.fill();
+  // wings
+  ctx.fillStyle = "#f9a825";
+  ctx.beginPath(); ctx.ellipse(bird.x-12, bird.y+w, 10, 6, 0, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(bird.x+12, bird.y-w, 10, 6, 0, 0, Math.PI*2); ctx.fill();
+  // eye
+  ctx.fillStyle = "#111";
+  ctx.beginPath(); ctx.arc(bird.x+5, bird.y-4, 3, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = "white";
+  ctx.beginPath(); ctx.arc(bird.x+6, bird.y-5, 1.3, 0, Math.PI*2); ctx.fill();
 }
 
-// ======================
-// DRAW
-// ======================
 function draw() {
- let w = getWorld();
+  let w = getWorld();
+  ctx.fillStyle = BG[w];
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
 
- ctx.fillStyle = background(w);
- ctx.fillRect(0,0,canvas.width,canvas.height);
+  // space stars
+  if (w === 3) {
+    ctx.fillStyle = "white";
+    for (let i = 0; i < 55; i++) {
+      ctx.fillRect((i*37 + frame*0.4|0) % 420, (i*91)%640, i%4===0?2:1, i%4===0?2:1);
+    }
+  }
+  // night moon
+  if (w === 1) {
+    ctx.fillStyle = "#fff9c4";
+    ctx.beginPath(); ctx.arc(360, 60, 28, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = BG[1];
+    ctx.beginPath(); ctx.arc(372, 51, 24, 0, Math.PI*2); ctx.fill();
+  }
 
- // space stars
- if (w === 3) {
-   ctx.fillStyle = "white";
-   for (let i=0;i<40;i++) {
-     ctx.fillRect((i*37)%420,(i*91)%640,2,2);
-   }
- }
+  pipes.forEach(drawPipe);
 
- pipes.forEach(drawPipe);
+  // powerups
+  for (let p of powerups) {
+    if (p.taken) continue;
+    ctx.save();
+    ctx.shadowBlur = 14;
+    ctx.shadowColor = p.type === "slow" ? "#00e5ff" : "#ffd600";
+    ctx.fillStyle   = p.type === "slow" ? "#00e5ff" : "#ffd600";
+    ctx.beginPath(); ctx.arc(p.x, p.y, 12, 0, Math.PI*2); ctx.fill();
+    ctx.restore();
+    ctx.font = "13px sans-serif";
+    ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.fillText(p.type === "slow" ? "⏱" : "🛡", p.x, p.y);
+    ctx.textAlign = "left"; ctx.textBaseline = "alphabetic";
+  }
 
- // powerups
- for (let p of powerups) {
-   ctx.fillStyle = p.type === "slow" ? "cyan" : "gold";
-   ctx.beginPath();
-   ctx.arc(p.x,p.y,10,0,Math.PI*2);
-   ctx.fill();
- }
+  drawBird();
 
- drawBird();
+  // shield ring — show when shield active OR during invincibility frames
+  if ((shield > 0 || invincible > 0) && !(invincible > 0 && Math.floor(invincible / 4) % 2 === 0)) {
+    ctx.save();
+    ctx.strokeStyle = "#00e5ff";
+    ctx.lineWidth = 3;
+    ctx.shadowBlur = 18; ctx.shadowColor = "#00e5ff";
+    ctx.beginPath(); ctx.arc(bird.x, bird.y, bird.r + 9, 0, Math.PI*2); ctx.stroke();
+    ctx.restore();
+  }
 
- // shield visual
- if (shield > 0) {
-   ctx.strokeStyle = "cyan";
-   ctx.beginPath();
-   ctx.arc(bird.x,bird.y,22,0,Math.PI*2);
-   ctx.stroke();
- }
+  // slow tint
+  if (slowMo > 0) {
+    ctx.fillStyle = "rgba(0,229,255,0.05)";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+  }
 
- // UI
- ctx.fillStyle = "white";
- ctx.font = "20px Arial";
- ctx.fillText("Score: " + score, 10, 30);
+  // ── HUD ──
+  // score box
+  ctx.fillStyle = "rgba(0,0,0,0.38)";
+  ctx.beginPath();
+  ctx.roundRect ? ctx.roundRect(6, 6, 150, 54, 8) : ctx.rect(6, 6, 150, 54);
+  ctx.fill();
+  ctx.fillStyle = "white";
+  ctx.font = "bold 22px sans-serif";
+  ctx.fillText("Score: " + score, 14, 30);
+  let names = ["☀️ TAG","🌙 NACHT","🌅 SUNSET","🚀 SPACE"];
+  ctx.font = "13px sans-serif";
+  ctx.fillText(names[w], 14, 50);
 
- let names = ["TAG","NACHT","SUNSET","SPACE"];
- ctx.fillText("Welt: " + names[w], 10, 55);
+  // highscore box (top right)
+  ctx.fillStyle = "rgba(0,0,0,0.38)";
+  ctx.fillRect(canvas.width - 138, 6, 132, 30);
+  ctx.fillStyle = "#ffd600";
+  ctx.font = "bold 15px sans-serif";
+  ctx.fillText("🏆 " + highscore, canvas.width - 130, 26);
 
- if (slowMo > 0) ctx.fillText("SLOW", 10, 80);
-
- if (gameOver) {
-   ctx.fillStyle = "rgba(0,0,0,0.5)";
-   ctx.fillRect(0,0,420,640);
-
-   ctx.fillStyle = "white";
-   ctx.font = "30px Arial";
-   ctx.fillText("Game Over", 110, 300);
-
-   ctx.font = "16px Arial";
-   ctx.fillText("Taste drücken zum Neustart", 80, 340);
- }
+  // badges
+  let by = 70;
+  if (slowMo > 0) {
+    ctx.fillStyle = "#00e5ff";
+    ctx.fillRect(6, by, 90, 22);
+    ctx.fillStyle = "#1a1a2e"; ctx.font = "bold 13px sans-serif";
+    ctx.fillText("⏱ SLOW-MO", 10, by+15);
+    by += 28;
+  }
+  if (shield > 0 || invincible > 0) {
+    ctx.fillStyle = invincible > 0 ? (frame % 8 < 4 ? "#ff6b6b" : "#ffd600") : "#ffd600";
+    ctx.fillRect(6, by, 110, 22);
+    ctx.fillStyle = "#1a1a2e"; ctx.font = "bold 13px sans-serif";
+    let label = invincible > 0 ? "🛡 UNBESIEGBAR" : "🛡 SHIELD";
+    ctx.fillText(label, 10, by+15);
+  }
 }
 
-// ======================
-// LOOP
-// ======================
-function loop() {
- update();
- draw();
- requestAnimationFrame(loop);
-}
-
-// ======================
-// RESET
-// ======================
-function reset() {
- bird.y = 200;
- bird.v = 0;
- pipes = [];
- powerups = [];
- score = 0;
- frame = 0;
- gameOver = false;
- slowMo = 0;
- shield = 0;
-}
-
-loop();
+// ── Loop ──────────────────────────────────────────────────
+(function loop() {
+  update();
+  draw();
+  requestAnimationFrame(loop);
+})();
 </script>
-
 </body>
 </html>
