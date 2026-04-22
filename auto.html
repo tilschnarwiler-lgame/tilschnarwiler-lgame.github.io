@@ -45,16 +45,16 @@ canvas{display:block;border-radius:12px;border:1px solid rgba(255,255,255,0.1);w
 <div id="wrap">
   <div id="hud">
     <div class="hc"><span class="hl">Punkte</span><span class="hv" id="hS">0</span></div>
-    <div class="hc"><span class="hl">Highscore</span><span class="hv" id="hB">—</span></div>
+    <div class="hc"><span class="hl">Highscore</span><span class="hv" id="hB">&#8212;</span></div>
     <div class="hc"><span class="hl">Level</span><span class="hv" id="hL">1</span></div>
-    <div class="hc"><span class="hl">Leben</span><span class="hv" id="hV">♥♥♥</span></div>
+    <div class="hc"><span class="hl">Leben</span><span class="hv" id="hV">&#9829;&#9829;&#9829;</span></div>
     <div class="hc"><span class="hl">Münzen</span><span class="hv hv-coin" id="hC">0</span></div>
   </div>
   <canvas id="gameCanvas" width="600" height="550"></canvas>
   <div id="ov">
     <div id="lobby-view">
       <p id="lobby-title">Autorennen</p>
-      <p id="lobby-coins">💰 <span id="lc-val">0</span> Münzen gesamt</p>
+      <p id="lobby-coins">&#128176; <span id="lc-val">0</span> Münzen gesamt</p>
       <div id="garage"></div>
       <button class="obtn" id="sBtn">Spiel starten</button>
     </div>
@@ -68,7 +68,7 @@ canvas{display:block;border-radius:12px;border:1px solid rgba(255,255,255,0.1);w
       </div>
     </div>
   </div>
-  <div id="ctrl">← → oder A / D zum Spurwechsel · Wischen auf dem Handy</div>
+  <div id="ctrl">&#8592; &#8594; oder A / D zum Spurwechsel &#183; Wischen auf dem Handy</div>
 </div>
 <script>
 const canvas=document.getElementById('gameCanvas');
@@ -117,6 +117,17 @@ function drawRoad(){
   ctx.beginPath();ctx.moveTo(RR,0);ctx.lineTo(RR,H);ctx.stroke();
 }
 
+/*
+  ORIENTIERUNG (unveraenderlich):
+  SPIELER faehrt NACH OBEN. Vorne = oben (kleine y).
+    Scheinwerfer oben (y+2), Ruecklichter unten (y+PH-6)
+    Motorhaube oben, Kofferraum unten
+  GEGNER fahren NACH UNTEN. Vorne = unten (grosse y).
+    Scheinwerfer unten (y+h-8), Ruecklichter oben (y+2)
+    Motorhaube unten, Kofferraum oben
+*/
+
+/* Reifen-Hilfsfunktion: zeichnet eine Achse bei y-Offset ya */
 function axle(x,w,ya){
   ctx.fillStyle='#0d0d0d';
   rr(x-6,ya,6,13,2);ctx.fill();rr(x+w,ya,6,13,2);ctx.fill();
@@ -124,26 +135,35 @@ function axle(x,w,ya){
   ctx.fillRect(x-5,ya+2,4,9);ctx.fillRect(x+w+1,ya+2,4,9);
 }
 
+/* ==========================================================
+   SPIELER-FAHRZEUGE  (Vorne=oben, Hinten=unten)
+   Scheinwerfer oben, Ruecklichter unten
+   Dach = BREITER DUNKLER BALKEN zwischen den Scheiben (realistisch)
+   ========================================================== */
 const CAR_DEFS=[
+
+  /* SEDAN — klassisch blau, 0 Gold */
   {id:'sedan',name:'Sedan',price:0,desc:'Dein Startwagen',
    col:{body:'#1e6db5',dark:'#134d80',glass:'rgba(180,220,255,0.88)',accent:'#4a9de0'},
    draw(x,y,c){
     axle(x,PW,y+8);axle(x,PW,y+PH-21);
     ctx.fillStyle='#0a1825';rr(x+2,y+3,PW-4,PH-3,5);ctx.fill();
     ctx.fillStyle=c.body;rr(x,y,PW,PH,5);ctx.fill();
-    ctx.fillStyle=c.dark;ctx.fillRect(x+2,y+2,PW-4,13);
-    ctx.fillStyle=c.glass;rr(x+3,y+15,PW-6,11,3);ctx.fill();
+    ctx.fillStyle=c.dark;ctx.fillRect(x+2,y+2,PW-4,13);       /* Motorhaube */
+    ctx.fillStyle=c.glass;rr(x+3,y+15,PW-6,10,3);ctx.fill();  /* Frontscheibe */
     ctx.fillStyle='rgba(255,255,255,0.3)';ctx.fillRect(x+5,y+15,PW-10,2);
-    ctx.fillStyle=c.dark;ctx.fillRect(x,y+26,PW,4);
-    ctx.fillStyle=c.dark;ctx.fillRect(x+PW/2-2,y+15,4,11);
-    ctx.fillStyle=c.glass;rr(x+3,y+30,PW-6,10,3);ctx.fill();
-    ctx.fillStyle=c.dark;ctx.fillRect(x+2,y+40,PW-4,14);
+    ctx.fillStyle=c.dark;ctx.fillRect(x,y+25,PW,9);            /* DACH — breit */
+    ctx.fillStyle=c.dark;ctx.fillRect(x+PW/2-2,y+15,4,10);    /* B-Saeule */
+    ctx.fillStyle=c.glass;rr(x+3,y+34,PW-6,9,3);ctx.fill();   /* Heckscheibe */
+    ctx.fillStyle=c.dark;ctx.fillRect(x+2,y+43,PW-4,11);       /* Kofferraum */
     ctx.fillStyle='#ffd700';rr(x+2,y+2,9,6,2);ctx.fill();rr(x+PW-11,y+2,9,6,2);ctx.fill();
     ctx.fillStyle='#fffacc';ctx.fillRect(x+3,y+3,6,3);ctx.fillRect(x+PW-9,y+3,6,3);
     ctx.fillStyle='#880000';ctx.fillRect(x+2,y+PH-6,9,5);ctx.fillRect(x+PW-11,y+PH-6,9,5);
     ctx.fillStyle='#ff4444';ctx.fillRect(x+3,y+PH-5,6,3);ctx.fillRect(x+PW-9,y+PH-5,6,3);
-    ctx.fillStyle=c.dark;ctx.fillRect(x-3,y+17,3,4);ctx.fillRect(x+PW,y+17,3,4);
+    ctx.fillStyle=c.dark;ctx.fillRect(x-3,y+17,3,5);ctx.fillRect(x+PW,y+17,3,5);
    }},
+
+  /* SPORTWAGEN — rot, 50 Gold */
   {id:'sports',name:'Sportwagen',price:50,desc:'Tief, flach & schnell',
    col:{body:'#b22222',dark:'#6b1010',glass:'rgba(255,190,170,0.82)',accent:'#e74c3c'},
    draw(x,y,c){
@@ -151,50 +171,108 @@ const CAR_DEFS=[
     axle(ox,SW,y+10);axle(ox,SW,y+PH-19);
     ctx.fillStyle='#0d0404';rr(ox+1,y+3,SW-2,PH-3,4);ctx.fill();
     ctx.fillStyle=c.body;rr(ox,y+2,SW,PH-2,4);ctx.fill();
-    ctx.fillStyle=c.dark;ctx.fillRect(ox+2,y+3,SW-4,20);
+    ctx.fillStyle=c.dark;ctx.fillRect(ox+2,y+3,SW-4,20);       /* lange Motorhaube */
     ctx.fillStyle='#111';
     ctx.fillRect(ox+4,y+7,4,6);ctx.fillRect(ox+SW/2-2,y+7,4,6);ctx.fillRect(ox+SW-8,y+7,4,6);
-    ctx.fillStyle=c.glass;rr(ox+3,y+23,SW-6,8,2);ctx.fill();
+    ctx.fillStyle=c.glass;rr(ox+3,y+23,SW-6,8,2);ctx.fill();   /* Frontscheibe flach */
     ctx.fillStyle='rgba(255,255,255,0.3)';ctx.fillRect(ox+5,y+23,SW-10,2);
-    ctx.fillStyle=c.dark;ctx.fillRect(ox+2,y+31,SW-4,4);
-    ctx.fillStyle=c.glass;rr(ox+3,y+35,SW-6,7,2);ctx.fill();
-    ctx.fillStyle=c.dark;ctx.fillRect(ox+2,y+42,SW-4,PH-44);
+    ctx.fillStyle=c.dark;ctx.fillRect(ox+2,y+31,SW-4,8);        /* DACH — breit */
+    ctx.fillStyle=c.glass;rr(ox+3,y+39,SW-6,6,2);ctx.fill();   /* Heckscheibe */
+    ctx.fillStyle=c.dark;ctx.fillRect(ox+2,y+45,SW-4,PH-47);
     ctx.fillStyle='#111';ctx.fillRect(ox+1,y+PH-10,SW-2,5);
-    ctx.fillStyle=c.accent;ctx.fillRect(ox-2,y+PH-11,SW+4,3);
+    ctx.fillStyle=c.accent;ctx.fillRect(ox-2,y+PH-11,SW+4,3);  /* Spoiler */
     ctx.fillStyle='#fffacc';ctx.fillRect(ox+2,y+3,14,3);ctx.fillRect(ox+SW-16,y+3,14,3);
-    ctx.fillStyle='rgba(255,255,150,0.4)';ctx.fillRect(ox+2,y+3,14,1);
     ctx.fillStyle=c.accent;ctx.fillRect(ox+2,y+PH-6,SW-4,5);
     ctx.fillStyle='#ff8080';ctx.fillRect(ox+3,y+PH-5,SW-6,3);
     ctx.fillStyle='#777';ctx.fillRect(ox+4,y+PH-2,5,2);ctx.fillRect(ox+SW-9,y+PH-2,5,2);
     ctx.fillStyle=c.dark;ctx.fillRect(ox-6,y+24,6,5);ctx.fillRect(ox+SW,y+24,6,5);
    }},
-  {id:'minivan',name:'Minivan',price:100,desc:'Fuer die ganze Familie',
+
+  /* MOTORRAD — 150 Gold — Draufsicht: Motorrad mit Fahrer */
+  {id:'moto',name:'Motorrad',price:150,desc:'Schnell & riskant',
+   col:{body:'#111111',dark:'#000000',glass:'rgba(180,220,255,0.9)',accent:'#ff6600'},
+   draw(x,y,c){
+    const mx=x+PW/2; /* horizontale Mitte */
+    /* Motorrad ist schmal: zentriert auf der Spur */
+    const bx=mx-7; /* linke Kante des Motorrads */
+
+    /* --- VORDERRAD oben (Fahrtrichtung) --- */
+    ctx.fillStyle='#0a0a0a';rr(bx+1,y+2,12,14,4);ctx.fill();
+    ctx.fillStyle='#1a1a1a';rr(bx+2,y+3,10,12,3);ctx.fill();
+    ctx.fillStyle='#888';ctx.beginPath();ctx.arc(mx,y+9,2,0,Math.PI*2);ctx.fill(); /* Nabe */
+    /* Scheinwerfer vorne */
+    ctx.fillStyle='#fffde0';rr(bx+3,y,8,4,2);ctx.fill();
+    ctx.fillStyle='rgba(255,255,200,0.8)';ctx.fillRect(bx+4,y,6,2);
+
+    /* --- GABEL (Verbindung Vorderrad zu Rahmen) --- */
+    ctx.fillStyle='#666';ctx.fillRect(mx-1,y+14,2,8);
+    ctx.fillStyle='#999';ctx.fillRect(mx-4,y+15,3,6);ctx.fillRect(mx+1,y+15,3,6);
+
+    /* --- RAHMEN / MOTOR --- */
+    ctx.fillStyle='#222';rr(bx+2,y+22,10,8,3);ctx.fill(); /* Motor-Block */
+    ctx.fillStyle=c.body;rr(bx+1,y+20,12,10,3);ctx.fill(); /* Tankbereich */
+    ctx.fillStyle=c.accent;ctx.fillRect(bx+2,y+21,10,3);  /* Tankstreifen */
+    ctx.fillStyle='#888';ctx.fillRect(bx+11,y+24,5,10);    /* Auspuff rechts */
+    ctx.fillStyle='#aaa';ctx.fillRect(bx+13,y+31,4,3);
+
+    /* --- SITZBANK --- */
+    ctx.fillStyle='#1a1a1a';rr(bx+1,y+30,12,6,3);ctx.fill();
+
+    /* --- FAHRER (sitzt auf dem Motorrad, Draufsicht) --- */
+    /* Rücken/Oberkörper */
+    ctx.fillStyle='#cc2200';rr(bx+1,y+32,12,10,3);ctx.fill();  /* Jacke rot */
+    ctx.fillStyle='#991a00';ctx.fillRect(bx+2,y+35,10,4);       /* Jacken-Naht */
+    /* Schultern/Arme zu den Lenkern */
+    ctx.fillStyle='#cc2200';ctx.fillRect(bx-4,y+34,5,4);        /* linker Arm */
+    ctx.fillStyle='#cc2200';ctx.fillRect(bx+13,y+34,5,4);       /* rechter Arm */
+    /* Lenker */
+    ctx.fillStyle='#555';ctx.fillRect(bx-5,y+22,24,3);
+    ctx.fillStyle='#333';ctx.fillRect(bx-6,y+22,3,5);ctx.fillRect(bx+17,y+22,3,5);
+    /* Helm (oben, Draufsicht = ovale Form) */
+    ctx.fillStyle='#cc2200';rr(bx+2,y+36,10,11,5);ctx.fill();
+    ctx.fillStyle=c.glass;rr(bx+3,y+37,8,5,2);ctx.fill();       /* Visier */
+    ctx.fillStyle='rgba(255,255,255,0.5)';ctx.fillRect(bx+4,y+37,6,1);
+    /* Hände an Lenker */
+    ctx.fillStyle='#1a1a1a';rr(bx-6,y+22,3,4,1);ctx.fill();rr(bx+17,y+22,3,4,1);ctx.fill();
+    /* Beine/Knie seitlich sichtbar */
+    ctx.fillStyle='#111';ctx.fillRect(bx-2,y+38,3,9);ctx.fillRect(bx+13,y+38,3,9); /* Knie */
+
+    /* --- HINTERRAD unten (hinten) --- */
+    ctx.fillStyle='#0a0a0a';rr(bx+1,y+PH-16,12,14,4);ctx.fill();
+    ctx.fillStyle='#1a1a1a';rr(bx+2,y+PH-15,10,12,3);ctx.fill();
+    ctx.fillStyle='#888';ctx.beginPath();ctx.arc(mx,y+PH-9,2,0,Math.PI*2);ctx.fill();
+    /* Rücklicht hinten */
+    ctx.fillStyle='#880000';rr(bx+3,y+PH-4,8,4,2);ctx.fill();
+    ctx.fillStyle='#ff3333';ctx.fillRect(bx+4,y+PH-3,6,2);
+   }},
+
+  /* MINIVAN — grau, 200 Gold */
+  {id:'minivan',name:'Minivan',price:200,desc:'Fuer die ganze Familie',
    col:{body:'#5d6d7e',dark:'#2e3c4a',glass:'rgba(200,230,255,0.88)',accent:'#85929e'},
    draw(x,y,c){
     const SW=PW+4,SH=PH+12,ox=x-2,oy=y-6;
     axle(ox,SW,oy+10);axle(ox,SW,oy+SH-22);
     ctx.fillStyle='#181f26';rr(ox+2,oy+2,SW-4,SH-2,4);ctx.fill();
     ctx.fillStyle=c.body;rr(ox,oy,SW,SH,4);ctx.fill();
-    ctx.fillStyle=c.dark;ctx.fillRect(ox+2,oy+2,SW-4,10);
-    ctx.fillStyle=c.glass;rr(ox+2,oy+12,SW-4,16,3);ctx.fill();
-    ctx.fillStyle='rgba(255,255,255,0.22)';ctx.fillRect(ox+4,oy+12,SW-8,3);
-    ctx.fillStyle=c.dark;ctx.fillRect(ox+SW/2-2,oy+12,4,16);
-    ctx.fillStyle=c.dark;ctx.fillRect(ox,oy+28,SW,4);
-    ctx.fillStyle=c.glass;rr(ox+2,oy+32,SW/2-3,14,2);ctx.fill();
-    ctx.fillStyle=c.glass;rr(ox+SW/2+1,oy+32,SW/2-3,14,2);ctx.fill();
-    ctx.fillStyle='rgba(255,255,255,0.18)';ctx.fillRect(ox+3,oy+32,SW/2-5,3);ctx.fillRect(ox+SW/2+2,oy+32,SW/2-5,3);
-    ctx.fillStyle=c.accent;ctx.fillRect(ox+2,oy+46,SW-4,2);
-    ctx.fillStyle=c.dark;ctx.fillRect(ox+2,oy+48,SW-4,SH-52);
-    ctx.fillStyle=c.glass;rr(ox+3,oy+49,SW-6,8,2);ctx.fill();
+    ctx.fillStyle=c.dark;ctx.fillRect(ox+2,oy+2,SW-4,11);      /* kurze Haube */
+    ctx.fillStyle=c.glass;rr(ox+2,oy+13,SW-4,16,3);ctx.fill(); /* grosse Frontscheibe */
+    ctx.fillStyle='rgba(255,255,255,0.22)';ctx.fillRect(ox+4,oy+13,SW-8,3);
+    ctx.fillStyle=c.dark;ctx.fillRect(ox+SW/2-2,oy+13,4,16);   /* Mittelpfosten */
+    ctx.fillStyle=c.dark;ctx.fillRect(ox,oy+29,SW,11);          /* DACH — breit */
+    ctx.fillStyle=c.accent;ctx.fillRect(ox+2,oy+40,SW-4,2);    /* Schiebetür-Schiene */
+    ctx.fillStyle=c.body;ctx.fillRect(ox+2,oy+42,SW-4,12);     /* Seitenwand massiv */
+    ctx.fillStyle=c.glass;rr(ox+3,oy+54,SW-6,8,2);ctx.fill();  /* Heckscheibe */
+    ctx.fillStyle=c.dark;ctx.fillRect(ox+2,oy+62,SW-4,SH-66);  /* Stosstange */
     ctx.fillStyle='#3a3a3a';ctx.fillRect(ox+3,oy+1,SW-6,3);
     ctx.fillStyle='#555';ctx.fillRect(ox+5,oy+2,5,2);ctx.fillRect(ox+SW-10,oy+2,5,2);
     ctx.fillStyle='#ffd700';rr(ox+2,oy+2,11,8,2);ctx.fill();rr(ox+SW-13,oy+2,11,8,2);ctx.fill();
-    ctx.fillStyle='#fffacc';ctx.fillRect(ox+3,oy+3,8,4);ctx.fillRect(ox+SW-11,oy+3,8,4);
     ctx.fillStyle='#880000';rr(ox+2,oy+SH-8,SW-4,7,2);ctx.fill();
     ctx.fillStyle='#ff4444';ctx.fillRect(ox+3,oy+SH-7,SW-6,4);
     ctx.fillStyle='#333';ctx.fillRect(ox+2,oy+SH-2,SW-4,2);
    }},
-  {id:'suv',name:'SUV',price:200,desc:'Hoch, breit & gelaendetauglich',
+
+  /* SUV — dunkelgrün, 350 Gold */
+  {id:'suv',name:'SUV',price:350,desc:'Hoch, breit & gelaendetauglich',
    col:{body:'#1a5c34',dark:'#0d3320',glass:'rgba(150,220,170,0.85)',accent:'#27ae60'},
    draw(x,y,c){
     const SW=PW+8,SH=PH+10,ox=x-4,oy=y-5;
@@ -203,18 +281,18 @@ const CAR_DEFS=[
     ctx.fillStyle='#333';ctx.fillRect(ox+4,oy+SH-3,SW-8,3);
     ctx.fillStyle='#071210';rr(ox+2,oy+2,SW-4,SH-5,4);ctx.fill();
     ctx.fillStyle=c.body;rr(ox,oy,SW,SH-3,4);ctx.fill();
-    ctx.fillStyle=c.dark;ctx.fillRect(ox+2,oy+2,SW-4,18);
+    ctx.fillStyle=c.dark;ctx.fillRect(ox+2,oy+2,SW-4,18);       /* Motorhaube + Hutze */
     ctx.fillStyle=c.body;ctx.fillRect(ox+SW/2-7,oy+4,14,13);
     ctx.fillStyle=c.dark;ctx.fillRect(ox+SW/2-5,oy+5,10,10);
     ctx.fillStyle='#111';ctx.fillRect(ox+SW/2-3,oy+7,6,6);
-    ctx.fillStyle=c.glass;rr(ox+3,oy+20,SW-6,16,3);ctx.fill();
+    ctx.fillStyle=c.glass;rr(ox+3,oy+20,SW-6,14,3);ctx.fill(); /* Frontscheibe */
     ctx.fillStyle='rgba(255,255,255,0.2)';ctx.fillRect(ox+5,oy+20,SW-10,3);
-    ctx.fillStyle=c.dark;ctx.fillRect(ox+SW/2-2,oy+20,4,16);
-    ctx.fillStyle=c.dark;ctx.fillRect(ox,oy+36,SW,5);
+    ctx.fillStyle=c.dark;ctx.fillRect(ox+SW/2-2,oy+20,4,14);
+    ctx.fillStyle=c.dark;ctx.fillRect(ox,oy+34,SW,11);          /* DACH — breit */
     ctx.fillStyle='#3a3a3a';ctx.fillRect(ox+3,oy+1,SW-6,3);
     ctx.fillStyle='#555';ctx.fillRect(ox+5,oy+2,6,2);ctx.fillRect(ox+SW-11,oy+2,6,2);
-    ctx.fillStyle=c.glass;rr(ox+3,oy+41,SW-6,13,3);ctx.fill();
-    ctx.fillStyle=c.dark;ctx.fillRect(ox+2,oy+54,SW-4,SH-59);
+    ctx.fillStyle=c.glass;rr(ox+3,oy+45,SW-6,11,3);ctx.fill(); /* Heckscheibe */
+    ctx.fillStyle=c.dark;ctx.fillRect(ox+2,oy+56,SW-4,SH-61);
     ctx.fillStyle='#ffd700';rr(ox+2,oy+2,13,9,2);ctx.fill();rr(ox+SW-15,oy+2,13,9,2);ctx.fill();
     ctx.fillStyle='#fffacc';ctx.fillRect(ox+3,oy+3,10,5);ctx.fillRect(ox+SW-13,oy+3,10,5);
     ctx.fillStyle=c.accent;ctx.fillRect(ox+2,oy+10,13,1);ctx.fillRect(ox+SW-15,oy+10,13,1);
@@ -222,43 +300,106 @@ const CAR_DEFS=[
     ctx.fillStyle='#ff3333';ctx.fillRect(ox+3,oy+SH-9,10,5);ctx.fillRect(ox+SW-13,oy+SH-9,10,5);
     ctx.fillStyle='#222';ctx.fillRect(ox+2,oy+SH-3,SW-4,3);
    }},
-  {id:'monster',name:'Monster Truck',price:350,desc:'Riesig & unaufhaltbar',
-   col:{body:'#7b0000',dark:'#3d0000',glass:'rgba(200,255,200,0.8)',accent:'#ff2222'},
+
+  /* MONSTER TRUCK — dunkelrot, 500 Gold — sehr grosse Reifen, hochgelegter Kasten */
+  {id:'monster',name:'Monster Truck',price:500,desc:'Riesig & unaufhaltbar',
+   col:{body:'#6b0000',dark:'#3a0000',glass:'rgba(200,255,200,0.8)',accent:'#ff2222'},
    draw(x,y,c){
-    const SW=PW+10,SH=PH+6,ox=x-5;
-    const tW=10,tH=18;
-    ctx.fillStyle='#0a0a0a';
-    rr(ox-tW,y+6,tW,tH,3);ctx.fill();rr(ox+SW,y+6,tW,tH,3);ctx.fill();
-    rr(ox-tW,y+SH-22,tW,tH,3);ctx.fill();rr(ox+SW,y+SH-22,tW,tH,3);ctx.fill();
-    ctx.fillStyle='#1a1a1a';
-    ctx.fillRect(ox-tW+1,y+8,tW-2,tH-4);ctx.fillRect(ox+SW+1,y+8,tW-2,tH-4);
-    ctx.fillRect(ox-tW+1,y+SH-20,tW-2,tH-4);ctx.fillRect(ox+SW+1,y+SH-20,tW-2,tH-4);
-    ctx.fillStyle='#555';ctx.fillRect(ox-tW+2,y+13,SW+tW*2-4,3);
-    ctx.fillStyle='#555';ctx.fillRect(ox-tW+2,y+SH-12,SW+tW*2-4,3);
-    ctx.fillStyle='#1a0000';rr(ox+2,y+3,SW-4,SH-4,5);ctx.fill();
-    ctx.fillStyle=c.body;rr(ox,y,SW,SH,5);ctx.fill();
-    ctx.fillStyle=c.dark;ctx.fillRect(ox+2,y+2,SW-4,20);
-    ctx.fillStyle='#300000';ctx.fillRect(ox+4,y+7,SW-8,8);
-    ctx.strokeStyle='#500000';ctx.lineWidth=1;
-    for(let i=0;i<5;i++){ctx.beginPath();ctx.moveTo(ox+5+i*((SW-10)/5),y+7);ctx.lineTo(ox+5+i*((SW-10)/5),y+15);ctx.stroke();}
-    ctx.fillStyle=c.glass;rr(ox+3,y+22,SW-6,12,3);ctx.fill();
-    ctx.fillStyle='rgba(255,255,255,0.2)';ctx.fillRect(ox+5,y+22,SW-10,3);
-    ctx.fillStyle=c.dark;ctx.fillRect(ox,y+34,SW,5);
-    ctx.fillStyle=c.glass;rr(ox+3,y+39,SW-6,9,2);ctx.fill();
-    ctx.fillStyle=c.dark;ctx.fillRect(ox+2,y+48,SW-4,SH-50);
-    ctx.fillStyle='#ff6600';ctx.fillRect(ox,y+25,3,20);ctx.fillRect(ox+SW-3,y+25,3,20);
-    ctx.fillStyle='#ffaa00';ctx.fillRect(ox,y+28,2,12);ctx.fillRect(ox+SW-2,y+28,2,12);
-    ctx.fillStyle='#ffe066';
-    rr(ox+2,y+2,8,8,4);ctx.fill();rr(ox+11,y+2,6,8,3);ctx.fill();
-    rr(ox+SW-10,y+2,8,8,4);ctx.fill();rr(ox+SW-17,y+2,6,8,3);ctx.fill();
-    ctx.fillStyle='#fffacc';
-    ctx.fillRect(ox+3,y+3,5,5);ctx.fillRect(ox+12,y+3,3,5);
-    ctx.fillRect(ox+SW-9,y+3,5,5);ctx.fillRect(ox+SW-16,y+3,3,5);
+    const SW=PW+8,SH=PH+4,ox=x-4;
+    const tW=14,tH=20;
+    /* ACHSSTANGEN ZUERST — dann Reifen darüber */
+    ctx.fillStyle='#444';
+    ctx.fillRect(ox-tW+2,y+6+tH/2-2,SW+tW*2-4,4);
+    ctx.fillRect(ox-tW+2,y+SH-tH-8+tH/2-2,SW+tW*2-4,4);
+    /* ALLE 4 REIFEN */
+    const drawTire=(tx,ty)=>{
+      ctx.fillStyle='#080808';rr(tx,ty,tW,tH,4);ctx.fill();
+      ctx.fillStyle='#181818';ctx.fillRect(tx+2,ty+2,tW-4,tH-4);
+      ctx.strokeStyle='#2e2e2e';ctx.lineWidth=1;ctx.strokeRect(tx+3,ty+3,tW-6,tH-6);
+      ctx.fillStyle='#555';ctx.beginPath();ctx.arc(tx+tW/2,ty+tH/2,2.5,0,Math.PI*2);ctx.fill();
+    };
+    drawTire(ox-tW, y+6);          /* links vorne */
+    drawTire(ox+SW,  y+6);          /* rechts vorne */
+    drawTire(ox-tW, y+SH-tH-8);    /* links hinten */
+    drawTire(ox+SW,  y+SH-tH-8);   /* rechts hinten */
+    /* Federung */
+    ctx.fillStyle='#666';
+    ctx.fillRect(ox+3,y+6+tH,5,6);ctx.fillRect(ox+SW-8,y+6+tH,5,6);
+    ctx.fillRect(ox+3,y+SH-tH-14,5,6);ctx.fillRect(ox+SW-8,y+SH-tH-14,5,6);
+    /* Karosserie */
+    ctx.fillStyle='#220000';rr(ox+2,y+3,SW-4,SH-4,4);ctx.fill();
+    ctx.fillStyle=c.body;rr(ox,y+2,SW,SH-2,4);ctx.fill();
+    ctx.fillStyle=c.dark;ctx.fillRect(ox+2,y+3,SW-4,18);
+    ctx.fillStyle='#280000';rr(ox+4,y+5,SW-8,10,2);ctx.fill();
+    ctx.strokeStyle='#440000';ctx.lineWidth=1;
+    for(let i=0;i<5;i++){ctx.beginPath();ctx.moveTo(ox+5+i*((SW-10)/5),y+5);ctx.lineTo(ox+5+i*((SW-10)/5),y+15);ctx.stroke();}
+    ctx.fillStyle=c.glass;rr(ox+3,y+21,SW-6,11,3);ctx.fill();
+    ctx.fillStyle='rgba(255,255,255,0.2)';ctx.fillRect(ox+5,y+21,SW-10,3);
+    ctx.fillStyle=c.dark;ctx.fillRect(ox,y+32,SW,10);
+    ctx.fillStyle='#555';ctx.fillRect(ox+3,y+32,3,10);ctx.fillRect(ox+SW-6,y+32,3,10);
+    ctx.fillStyle='#555';ctx.fillRect(ox+3,y+32,SW-6,3);
+    ctx.fillStyle=c.glass;rr(ox+3,y+42,SW-6,8,2);ctx.fill();
+    ctx.fillStyle=c.dark;ctx.fillRect(ox+2,y+50,SW-4,SH-52);
+    ctx.fillStyle='#ff4400';ctx.fillRect(ox,y+24,3,20);ctx.fillRect(ox+SW-3,y+24,3,20);
+    ctx.fillStyle='#ffaa00';ctx.fillRect(ox,y+27,2,14);ctx.fillRect(ox+SW-2,y+27,2,14);
+    ctx.fillStyle='#ffe066';rr(ox+2,y+3,8,7,3);ctx.fill();rr(ox+12,y+3,6,7,2);ctx.fill();
+    rr(ox+SW-10,y+3,8,7,3);ctx.fill();rr(ox+SW-18,y+3,6,7,2);ctx.fill();
+    ctx.fillStyle='#fffacc';ctx.fillRect(ox+3,y+4,5,4);ctx.fillRect(ox+13,y+4,3,4);
+    ctx.fillRect(ox+SW-9,y+4,5,4);ctx.fillRect(ox+SW-17,y+4,3,4);
     ctx.fillStyle='#550000';ctx.fillRect(ox+2,y+SH-7,SW-4,6);
     ctx.fillStyle='#cc1111';ctx.fillRect(ox+3,y+SH-6,SW-6,4);
-    ctx.fillStyle='#ff4444';ctx.fillRect(ox+4,y+SH-5,6,2);ctx.fillRect(ox+SW-10,y+SH-5,6,2);
-    ctx.fillStyle='#555';ctx.fillRect(ox+SW/2-4,y+SH-2,8,2);
    }},
+
+  /* PICKUP TRUCK — schwarz/silber, 600 Gold — offene Ladefläche hinten */
+  {id:'pickup',name:'Pickup Truck',price:600,desc:'Stark, praktisch & cool',
+   col:{body:'#1a1a1a',dark:'#0a0a0a',glass:'rgba(200,230,255,0.82)',accent:'#888888'},
+   draw(x,y,c){
+    const SW=PW+6,ox=x-3;
+    axle(ox,SW,y+9);axle(ox,SW,y+PH-20);
+    /* === LADEFLÄCHE (unten = hinten beim Spieler, y+30..y+PH) === */
+    /* Aussenrand der Ladeflaeche */
+    ctx.fillStyle='#282828';ctx.fillRect(ox+2,y+32,SW-4,PH-34);
+    /* Innenboden (offen sichtbar) */
+    ctx.fillStyle='#333';ctx.fillRect(ox+4,y+34,SW-8,PH-38);
+    /* Holzlatten auf dem Ladeflächenboden */
+    ctx.fillStyle='#5a3c10';
+    for(let i=0;i<4;i++){ctx.fillRect(ox+4,y+35+i*6,SW-8,4);}
+    ctx.strokeStyle='#4a3008';ctx.lineWidth=1;
+    for(let i=0;i<4;i++){ctx.strokeRect(ox+4,y+35+i*6,SW-8,4);}
+    /* Seitenwände der Ladeflaeche (hoch genug) */
+    ctx.fillStyle='#242424';ctx.fillRect(ox+2,y+32,3,PH-34);ctx.fillRect(ox+SW-5,y+32,3,PH-34);
+    ctx.fillStyle='#1e1e1e';ctx.fillRect(ox+2,y+32,SW-4,3); /* Oberkante vorne */
+    /* Heckklappe */
+    ctx.fillStyle='#303030';ctx.fillRect(ox+2,y+PH-6,SW-4,5);
+    ctx.strokeStyle='#444';ctx.lineWidth=1;ctx.strokeRect(ox+3,y+PH-5,SW-6,3);
+    /* Chromstoßstange */
+    ctx.fillStyle=c.accent;ctx.fillRect(ox+2,y+PH-2,SW-4,2);
+    /* === KABINE (oben = vorne beim Spieler, y..y+32) === */
+    ctx.fillStyle='#0d0d0d';rr(ox+2,y+3,SW-4,30,4);ctx.fill();
+    ctx.fillStyle=c.body;rr(ox,y+2,SW,30,4);ctx.fill();
+    /* Motorhaube */
+    ctx.fillStyle=c.dark;ctx.fillRect(ox+2,y+3,SW-4,15);
+    ctx.fillStyle='#111';ctx.fillRect(ox+5,y+8,SW-10,3);ctx.fillRect(ox+5,y+13,SW-10,2);
+    /* Windschutzscheibe */
+    ctx.fillStyle=c.glass;rr(ox+3,y+18,SW-6,11,3);ctx.fill();
+    ctx.fillStyle='rgba(255,255,255,0.25)';ctx.fillRect(ox+5,y+18,SW-10,3);
+    ctx.fillStyle=c.dark;ctx.fillRect(ox+SW/2-2,y+18,4,11);
+    /* DACH der Kabine — verbindet Windschutz zur Heckscheibe */
+    ctx.fillStyle=c.dark;ctx.fillRect(ox+1,y+29,SW-2,5);
+    /* Heckscheibe Kabine */
+    ctx.fillStyle=c.glass;rr(ox+3,y+29,SW-6,4,1);ctx.fill();
+    /* Scheinwerfer oben */
+    ctx.fillStyle='#ffe066';rr(ox+2,y+3,11,7,2);ctx.fill();rr(ox+SW-13,y+3,11,7,2);ctx.fill();
+    ctx.fillStyle='#fffacc';ctx.fillRect(ox+3,y+4,8,3);ctx.fillRect(ox+SW-11,y+4,8,3);
+    ctx.fillStyle=c.accent;ctx.fillRect(ox+2,y+9,11,1);ctx.fillRect(ox+SW-13,y+9,11,1);
+    /* Ruecklichter — an der Ladeflaeche */
+    ctx.fillStyle='#770000';rr(ox+2,y+PH-12,10,7,2);ctx.fill();rr(ox+SW-12,y+PH-12,10,7,2);ctx.fill();
+    ctx.fillStyle='#ff4444';ctx.fillRect(ox+3,y+PH-11,7,4);ctx.fillRect(ox+SW-10,y+PH-11,7,4);
+    /* Seitenspiegel */
+    ctx.fillStyle=c.accent;ctx.fillRect(ox-4,y+19,4,5);ctx.fillRect(ox+SW,y+19,4,5);
+   }},
+
+  /* GOLDFLITZER — gold, 1000 Gold */
   {id:'gold',name:'Goldflitzer',price:1000,desc:'Selten, edel & legendaer',
    col:{body:'#b8860b',dark:'#7a5500',glass:'rgba(255,248,180,0.92)',accent:'#ffd700'},
    draw(x,y,c){
@@ -266,186 +407,310 @@ const CAR_DEFS=[
     axle(x,PW,oy+9);axle(x,PW,oy+LH-22);
     ctx.fillStyle='#1a1000';rr(x+2,oy+3,PW-4,LH-3,7);ctx.fill();
     ctx.fillStyle=c.body;rr(x,oy,PW,LH,7);ctx.fill();
-    ctx.fillStyle=c.dark;rr(x+2,oy+2,PW-4,16,4);ctx.fill();
+    ctx.fillStyle=c.dark;rr(x+2,oy+2,PW-4,16,4);ctx.fill();   /* Motorhaube */
     ctx.fillStyle=c.accent;ctx.fillRect(x+2,oy+17,PW-4,1);
-    ctx.fillStyle=c.accent;rr(x+6,oy+3,PW-12,8,2);ctx.fill();
+    ctx.fillStyle=c.accent;rr(x+6,oy+3,PW-12,8,2);ctx.fill(); /* Grill */
     ctx.fillStyle='rgba(0,0,0,0.65)';ctx.fillRect(x+7,oy+4,PW-14,6);
     ctx.strokeStyle=c.accent;ctx.lineWidth=1;
     for(let i=0;i<4;i++){ctx.beginPath();ctx.moveTo(x+8+i*5,oy+4);ctx.lineTo(x+8+i*5,oy+10);ctx.stroke();}
-    ctx.fillStyle=c.glass;rr(x+3,oy+18,PW-6,13,3);ctx.fill();
+    ctx.fillStyle=c.glass;rr(x+3,oy+18,PW-6,11,3);ctx.fill(); /* Frontscheibe */
     ctx.fillStyle='rgba(255,255,180,0.3)';ctx.fillRect(x+5,oy+18,PW-10,3);
-    ctx.fillStyle=c.dark;ctx.fillRect(x,oy+31,PW,4);
-    ctx.fillStyle=c.accent;ctx.fillRect(x,oy+31,PW,1);
-    ctx.fillStyle=c.glass;rr(x+3,oy+35,PW-6,13,3);ctx.fill();
-    ctx.fillStyle=c.dark;ctx.fillRect(x+2,oy+48,PW-4,LH-52);
-    ctx.fillStyle=c.accent;ctx.fillRect(x+2,oy+48,PW-4,1);
-    ctx.fillStyle=c.accent;ctx.fillRect(x,oy+30,PW,2);
+    ctx.fillStyle=c.dark;ctx.fillRect(x,oy+29,PW,10);          /* DACH — breit */
+    ctx.fillStyle=c.accent;ctx.fillRect(x,oy+29,PW,1);
+    ctx.fillStyle=c.glass;rr(x+3,oy+39,PW-6,11,3);ctx.fill(); /* Heckscheibe */
+    ctx.fillStyle=c.dark;ctx.fillRect(x+2,oy+50,PW-4,LH-54);
+    ctx.fillStyle=c.accent;ctx.fillRect(x+2,oy+50,PW-4,1);
+    ctx.fillStyle=c.accent;ctx.fillRect(x,oy+28,PW,2);
     ctx.fillStyle='#fffde0';rr(x+2,oy+2,11,8,3);ctx.fill();rr(x+PW-13,oy+2,11,8,3);ctx.fill();
     ctx.fillStyle='rgba(255,255,200,0.85)';ctx.fillRect(x+3,oy+3,7,4);ctx.fillRect(x+PW-10,oy+3,7,4);
     ctx.fillStyle=c.accent;ctx.fillRect(x+2,oy+9,11,1);ctx.fillRect(x+PW-13,oy+9,11,1);
     ctx.fillStyle=c.accent;ctx.fillRect(x+2,oy+LH-8,PW-4,1);
     ctx.fillStyle='#770000';rr(x+2,oy+LH-8,11,7,2);ctx.fill();rr(x+PW-13,oy+LH-8,11,7,2);ctx.fill();
     ctx.fillStyle='#ff5555';ctx.fillRect(x+3,oy+LH-7,8,5);ctx.fillRect(x+PW-11,oy+LH-7,8,5);
-    ctx.fillStyle=c.accent;ctx.fillRect(x-3,oy+20,3,5);ctx.fillRect(x+PW,oy+20,3,5);
+    ctx.fillStyle=c.accent;ctx.fillRect(x-3,oy+21,3,5);ctx.fillRect(x+PW,oy+21,3,5);
    }},
 ];
 const CAR_MAP=Object.fromEntries(CAR_DEFS.map(d=>[d.id,d]));
 if(!CAR_MAP[activeCar]){activeCar='sedan';}
+/* Clean owned cars - remove IDs that no longer exist */
 ownedCars=new Set([...ownedCars].filter(id=>CAR_MAP[id]));
 if(ownedCars.size===0)ownedCars.add('sedan');
 
+/* ==========================================================
+   GEGNER-FAHRZEUGE  (Vorne=unten, Hinten=oben)
+   Scheinwerfer unten, Ruecklichter oben
+   DACH = breiter Balken (mind. 8px) zwischen Scheiben
+   ========================================================== */
 const ENEMY_MODELS=[
+
+  /* 0 - Sedan */
   {w:PW,h:PH,minLvl:1,draw(x,y,c){
     axle(x,PW,y+8);axle(x,PW,y+PH-21);
     ctx.fillStyle='#111';rr(x+2,y+3,PW-4,PH-3,5);ctx.fill();
     ctx.fillStyle=c.body;rr(x,y,PW,PH,5);ctx.fill();
-    ctx.fillStyle=c.dark;ctx.fillRect(x+2,y+2,PW-4,12);
-    ctx.fillStyle=c.glass;rr(x+3,y+14,PW-6,10,3);ctx.fill();
-    ctx.fillStyle=c.dark;ctx.fillRect(x,y+24,PW,4);
-    ctx.fillStyle=c.dark;ctx.fillRect(x+PW/2-2,y+14,4,10);
-    ctx.fillStyle=c.glass;rr(x+3,y+28,PW-6,11,3);ctx.fill();
-    ctx.fillStyle='rgba(255,255,255,0.2)';ctx.fillRect(x+5,y+28,PW-10,2);
-    ctx.fillStyle=c.dark;ctx.fillRect(x+2,y+39,PW-4,15);
+    ctx.fillStyle=c.dark;ctx.fillRect(x+2,y+2,PW-4,11);    /* Kofferraum oben */
+    ctx.fillStyle=c.glass;rr(x+3,y+13,PW-6,9,3);ctx.fill(); /* Heckscheibe */
+    ctx.fillStyle=c.dark;ctx.fillRect(x,y+22,PW,9);          /* DACH breit */
+    ctx.fillStyle=c.dark;ctx.fillRect(x+PW/2-2,y+13,4,9);
+    ctx.fillStyle=c.glass;rr(x+3,y+31,PW-6,9,3);ctx.fill(); /* Frontscheibe */
+    ctx.fillStyle='rgba(255,255,255,0.2)';ctx.fillRect(x+5,y+31,PW-10,2);
+    ctx.fillStyle=c.dark;ctx.fillRect(x+2,y+40,PW-4,14);    /* Motorhaube unten */
     ctx.fillStyle='#880000';ctx.fillRect(x+2,y+2,9,5);ctx.fillRect(x+PW-11,y+2,9,5);
     ctx.fillStyle='#ff4444';ctx.fillRect(x+3,y+3,6,3);ctx.fillRect(x+PW-9,y+3,6,3);
     ctx.fillStyle='#ffd700';rr(x+2,y+PH-8,9,7,2);ctx.fill();rr(x+PW-11,y+PH-8,9,7,2);ctx.fill();
     ctx.fillStyle='#fffacc';ctx.fillRect(x+3,y+PH-7,6,4);ctx.fillRect(x+PW-9,y+PH-7,6,4);
   }},
+
+  /* 1 - SUV */
   {w:PW+4,h:PH+6,minLvl:1,draw(x,y,c){
     const W2=PW+4,H2=PH+6,ox=x-2;
     axle(ox,W2,y+9);axle(ox,W2,y+H2-22);
     ctx.fillStyle='#111';rr(ox+2,y+3,W2-4,H2-3,5);ctx.fill();
     ctx.fillStyle=c.body;rr(ox,y,W2,H2,5);ctx.fill();
-    ctx.fillStyle=c.dark;ctx.fillRect(ox+2,y+2,W2-4,13);
+    ctx.fillStyle=c.dark;ctx.fillRect(ox+2,y+2,W2-4,12);
     ctx.fillStyle='#444';ctx.fillRect(ox+4,y+1,W2-8,3);
-    ctx.fillStyle=c.glass;rr(ox+3,y+15,W2-6,11,3);ctx.fill();
-    ctx.fillStyle=c.dark;ctx.fillRect(ox,y+26,W2,5);
-    ctx.fillStyle=c.glass;rr(ox+3,y+31,W2-6,14,3);ctx.fill();
-    ctx.fillStyle='rgba(255,255,255,0.2)';ctx.fillRect(ox+5,y+31,W2-10,2);
-    ctx.fillStyle=c.dark;ctx.fillRect(ox+2,y+45,W2-4,H2-45);
+    ctx.fillStyle=c.glass;rr(ox+3,y+14,W2-6,10,3);ctx.fill();
+    ctx.fillStyle=c.dark;ctx.fillRect(ox,y+24,W2,9);          /* DACH breit */
+    ctx.fillStyle=c.glass;rr(ox+3,y+33,W2-6,11,3);ctx.fill();
+    ctx.fillStyle='rgba(255,255,255,0.2)';ctx.fillRect(ox+5,y+33,W2-10,2);
+    ctx.fillStyle=c.dark;ctx.fillRect(ox+2,y+44,W2-4,H2-44);
     ctx.fillStyle='#880000';rr(ox+2,y+2,11,7,2);ctx.fill();rr(ox+W2-13,y+2,11,7,2);ctx.fill();
     ctx.fillStyle='#ff4444';ctx.fillRect(ox+3,y+3,8,4);ctx.fillRect(ox+W2-11,y+3,8,4);
     ctx.fillStyle='#ffd700';rr(ox+2,y+H2-9,11,8,2);ctx.fill();rr(ox+W2-13,y+H2-9,11,8,2);ctx.fill();
     ctx.fillStyle='#fffacc';ctx.fillRect(ox+3,y+H2-8,8,5);ctx.fillRect(ox+W2-11,y+H2-8,8,5);
     ctx.fillStyle='#222';ctx.fillRect(ox+2,y+H2-2,W2-4,2);
   }},
+
+  /* 2 - Sportwagen */
   {w:PW,h:PH,minLvl:1,draw(x,y,c){
     axle(x,PW,y+8);axle(x,PW,y+PH-21);
     ctx.fillStyle='#0d0d0d';rr(x+1,y+3,PW-2,PH-3,4);ctx.fill();
     ctx.fillStyle=c.body;rr(x,y+2,PW,PH-2,4);ctx.fill();
-    ctx.fillStyle=c.body;rr(x+2,y,PW-4,22,5);ctx.fill();
+    ctx.fillStyle=c.body;rr(x+2,y,PW-4,19,5);ctx.fill();
     ctx.fillStyle='#1a1a1a';ctx.fillRect(x+2,y+2,PW-4,3);
     ctx.fillStyle=c.accent;ctx.fillRect(x+2,y+4,PW-4,2);
-    ctx.fillStyle=c.dark;rr(x+3,y+7,PW-6,12,3);ctx.fill();
-    ctx.fillStyle=c.glass;rr(x+5,y+8,PW-10,9,2);ctx.fill();
-    ctx.fillStyle=c.dark;ctx.fillRect(x,y+19,PW,5);
-    ctx.fillStyle=c.glass;rr(x+3,y+24,PW-6,10,2);ctx.fill();
-    ctx.fillStyle='rgba(255,255,255,0.2)';ctx.fillRect(x+5,y+24,PW-10,2);
-    ctx.fillStyle=c.dark;ctx.fillRect(x+2,y+34,PW-4,PH-38);
+    ctx.fillStyle=c.dark;rr(x+3,y+7,PW-6,10,3);ctx.fill();
+    ctx.fillStyle=c.glass;rr(x+5,y+8,PW-10,8,2);ctx.fill();
+    ctx.fillStyle=c.dark;ctx.fillRect(x,y+18,PW,8);           /* DACH breit */
+    ctx.fillStyle=c.glass;rr(x+3,y+26,PW-6,9,2);ctx.fill();
+    ctx.fillStyle='rgba(255,255,255,0.2)';ctx.fillRect(x+5,y+26,PW-10,2);
+    ctx.fillStyle=c.dark;ctx.fillRect(x+2,y+35,PW-4,PH-37);
     ctx.fillStyle=c.accent;ctx.fillRect(x+2,y+2,PW-4,4);
     ctx.fillStyle='#ff7070';ctx.fillRect(x+3,y+3,PW-6,2);
     ctx.fillStyle='#fffacc';ctx.fillRect(x+2,y+PH-5,10,3);ctx.fillRect(x+PW-12,y+PH-5,10,3);
     ctx.fillStyle='#888';ctx.fillRect(x+5,y+PH-2,5,2);ctx.fillRect(x+PW-10,y+PH-2,5,2);
   }},
+
+  /* 3 - BUS (Level 4+)
+     EIN langer Kasten. Kein Dachblock. Kein Spalt.
+     Oben (hinten): schmaler Ruecklicht-Streifen, dann SOFORT die Fenster.
+     Fenster: durchgehende horizontale Glasleiste (wie echter Linienbus),
+              aufgeteilt durch senkrechte Rahmenholme alle ~10px.
+     Unten (vorne): Fahrerbereich mit breiter Scheibe, Stosstange, Scheinwerfer.
+  */
   {w:PW+6,h:PH+52,minLvl:4,draw(x,y,c){
     const BW=PW+6,BH=PH+52,ox=x-3;
+    /* EINZELACHSE hinten oben */
     ctx.fillStyle='#0d0d0d';
-    ctx.fillRect(ox-7,y+6,7,15);ctx.fillRect(ox+BW,y+6,7,15);
-    ctx.fillStyle='#252525';ctx.fillRect(ox-6,y+7,5,13);ctx.fillRect(ox+BW+1,y+7,5,13);
+    ctx.fillRect(ox-7,y+8,7,14);ctx.fillRect(ox+BW,y+8,7,14);
+    ctx.fillStyle='#252525';ctx.fillRect(ox-6,y+9,5,12);ctx.fillRect(ox+BW+1,y+9,5,12);
+    /* DOPPELACHSE vorne unten — eng beieinander (14px Abstand) */
     ctx.fillStyle='#0d0d0d';
-    ctx.fillRect(ox-7,y+BH-33,7,14);ctx.fillRect(ox+BW,y+BH-33,7,14);
-    ctx.fillRect(ox-7,y+BH-19,7,13);ctx.fillRect(ox+BW,y+BH-19,7,13);
+    ctx.fillRect(ox-7,y+BH-32,7,14);ctx.fillRect(ox+BW,y+BH-32,7,14);
+    ctx.fillRect(ox-7,y+BH-18,7,13);ctx.fillRect(ox+BW,y+BH-18,7,13);
     ctx.fillStyle='#252525';
-    ctx.fillRect(ox-6,y+BH-32,5,12);ctx.fillRect(ox+BW+1,y+BH-32,5,12);
-    ctx.fillRect(ox-6,y+BH-18,5,11);ctx.fillRect(ox+BW+1,y+BH-18,5,11);
-    ctx.fillStyle='#0d0d0d';rr(ox+2,y+2,BW-4,BH-2,3);ctx.fill();
+    ctx.fillRect(ox-6,y+BH-31,5,12);ctx.fillRect(ox+BW+1,y+BH-31,5,12);
+    ctx.fillRect(ox-6,y+BH-17,5,11);ctx.fillRect(ox+BW+1,y+BH-17,5,11);
+    /* EINHEITIGER BUSKOERPER */
+    ctx.fillStyle='#111';rr(ox+1,y+1,BW-2,BH-1,3);ctx.fill();
     ctx.fillStyle=c.body;rr(ox,y,BW,BH,3);ctx.fill();
-    ctx.fillStyle=c.dark;ctx.fillRect(ox+2,y+1,BW-4,4);
-    ctx.fillStyle='#880000';ctx.fillRect(ox+2,y+5,BW-4,5);
-    ctx.fillStyle='#cc2222';ctx.fillRect(ox+3,y+6,BW-6,3);
-    ctx.fillStyle=c.dark;ctx.fillRect(ox,y+10,BW,2);
-    const fTop=12,fH=11,fGap=2,numW=4;
-    for(let i=0;i<numW;i++){
-      const fy=y+fTop+i*(fH+fGap);
-      ctx.fillStyle=c.glass;rr(ox+3,fy,BW-6,fH,2);ctx.fill();
-      ctx.fillStyle='rgba(255,255,255,0.22)';ctx.fillRect(ox+4,fy,BW-8,2);
-      ctx.fillStyle=c.dark;ctx.fillRect(ox,fy+fH,BW,fGap);
+    /* --- HINTEN (oben) --- */
+    /* Ruecklicht-Band: direkt am obersten Rand */
+    ctx.fillStyle='#770000';ctx.fillRect(ox+1,y+1,BW-2,7);
+    ctx.fillStyle='#dd2222';ctx.fillRect(ox+2,y+2,BW-4,4);
+    /* Trennstreifen (dunkle Zierleiste) unter Rücklicht */
+    ctx.fillStyle=c.dark;ctx.fillRect(ox,y+8,BW,3);
+    /* --- FENSTERBAND --- 
+       Eine durchgehende Glasleiste von y+11 bis y+BH-22.
+       Senkrechte Holme teilen sie in Abschnitte.
+    */
+    const winTop=y+11,winBot=y+BH-22,winH=winBot-winTop;
+    /* Glasflaeche */
+    ctx.fillStyle=c.glass;ctx.fillRect(ox+2,winTop,BW-4,winH);
+    /* Glanzlinie */
+    ctx.fillStyle='rgba(255,255,255,0.25)';ctx.fillRect(ox+2,winTop,BW-4,2);
+    /* Senkrechte Holme alle ~10px */
+    ctx.fillStyle=c.dark;
+    const holeStep=10;
+    for(let hx=ox+2+holeStep;hx<ox+BW-2;hx+=holeStep){
+      ctx.fillRect(hx,winTop,2,winH);
     }
-    const tTop=y+fTop+numW*(fH+fGap);
-    ctx.fillStyle=c.body;ctx.fillRect(ox+2,tTop,BW-4,y+BH-16-tTop);
-    ctx.strokeStyle='rgba(0,0,0,0.35)';ctx.lineWidth=1.5;
-    const dH=y+BH-18-tTop;
-    if(dH>4){ctx.strokeRect(ox+BW/2-9,tTop+2,18,dH);}
-    ctx.fillStyle=c.dark;ctx.fillRect(ox,y+BH-16,BW,13);
-    ctx.fillStyle=c.glass;rr(ox+2,y+BH-15,BW-4,9,2);ctx.fill();
-    ctx.fillStyle='rgba(255,255,255,0.25)';ctx.fillRect(ox+4,y+BH-15,BW-8,2);
-    ctx.fillStyle='#111';ctx.fillRect(ox+3,y+BH-7,BW-6,5);
-    ctx.strokeStyle='#282828';ctx.lineWidth=1;
-    for(let i=0;i<4;i++){ctx.beginPath();ctx.moveTo(ox+4+i*((BW-8)/4),y+BH-7);ctx.lineTo(ox+4+i*((BW-8)/4),y+BH-2);ctx.stroke();}
-    ctx.fillStyle='#fffde0';rr(ox+2,y+BH-4,BW-4,3,1);ctx.fill();
-    ctx.fillStyle='rgba(255,255,220,0.6)';ctx.fillRect(ox+3,y+BH-3,BW-6,1);
+    /* Fensterband oben + unten begrenzen */
+    ctx.fillStyle=c.dark;ctx.fillRect(ox,winTop-1,BW,1);
+    ctx.fillStyle=c.dark;ctx.fillRect(ox,winBot,BW,3);
+    /* --- VORNE (unten) Fahrerbereich --- */
+    ctx.fillStyle=c.dark;ctx.fillRect(ox,y+BH-20,BW,17);
+    /* Fahrerwindschutzscheibe */
+    ctx.fillStyle=c.glass;rr(ox+2,y+BH-19,BW-4,11,2);ctx.fill();
+    ctx.fillStyle='rgba(255,255,255,0.22)';ctx.fillRect(ox+4,y+BH-19,BW-8,2);
+    /* Stossstange unten */
+    ctx.fillStyle='#222';ctx.fillRect(ox+1,y+BH-5,BW-2,4);
+    ctx.fillStyle='#444';ctx.fillRect(ox+2,y+BH-4,BW-4,2);
+    /* Scheinwerfer unten (links + rechts der Stosstange) */
+    ctx.fillStyle='#fffde0';rr(ox+2,y+BH-9,10,5,2);ctx.fill();rr(ox+BW-12,y+BH-9,10,5,2);ctx.fill();
+    ctx.fillStyle='rgba(255,255,200,0.7)';ctx.fillRect(ox+3,y+BH-8,7,2);ctx.fillRect(ox+BW-11,y+BH-8,7,2);
   }},
+
+  /* 4 - LKW Kastenwagen (Level 4+) - kompakter Lieferwagen */
   {w:PW+4,h:PH+22,minLvl:4,draw(x,y,c){
     const LW=PW+4,LH=PH+22,ox=x-2;
     axle(ox,LW,y+9);axle(ox,LW,y+LH-22);
     ctx.fillStyle='#0a0a0a';rr(ox+2,y+2,LW-4,LH-2,4);ctx.fill();
+    /* Ladekoerper oben (hinten) - kastig */
     ctx.fillStyle='#ccc';rr(ox,y,LW,LH-20,3);ctx.fill();
-    ctx.fillStyle='#b5b5b5';ctx.fillRect(ox+1,y+1,LW-2,4);
+    ctx.fillStyle='#b5b5b5';ctx.fillRect(ox+1,y+1,LW-2,4);         /* Dach */
     ctx.fillStyle='#aaa';ctx.fillRect(ox+1,y+1,4,LH-22);ctx.fillRect(ox+LW-5,y+1,4,LH-22);
     ctx.strokeStyle='#999';ctx.lineWidth=1;
     for(let i=1;i<5;i++){const ly=y+Math.round((LH-22)/5*i);ctx.beginPath();ctx.moveTo(ox+1,ly);ctx.lineTo(ox+LW-1,ly);ctx.stroke();}
     ctx.fillStyle=c.body;ctx.fillRect(ox+5,y+Math.round((LH-22)*.25),LW-10,Math.round((LH-22)*.5));
+    /* Ruecklichter oben */
     ctx.fillStyle='#770000';ctx.fillRect(ox+2,y+1,LW-4,5);
     ctx.fillStyle='#cc2222';ctx.fillRect(ox+3,y+2,LW-6,3);
+    /* Kabine unten (vorne) */
     ctx.fillStyle=c.dark;rr(ox,y+LH-22,LW,22,3);ctx.fill();
     ctx.fillStyle=c.glass;rr(ox+2,y+LH-20,LW-4,13,2);ctx.fill();
     ctx.fillStyle='rgba(255,255,255,0.2)';ctx.fillRect(ox+4,y+LH-20,LW-8,3);
-    ctx.fillStyle=c.dark;ctx.fillRect(ox+LW/2-2,y+LH-20,4,13);
-    ctx.fillStyle='#111';ctx.fillRect(ox+3,y+LH-8,LW-6,5);
+    ctx.fillStyle=c.dark;ctx.fillRect(ox+LW/2-2,y+LH-20,4,13);    /* Mittelholme */
+    ctx.fillStyle='#111';ctx.fillRect(ox+3,y+LH-8,LW-6,5);        /* Grill */
     ctx.strokeStyle='#222';ctx.lineWidth=1;
     for(let i=0;i<3;i++){ctx.beginPath();ctx.moveTo(ox+4+i*((LW-8)/3),y+LH-8);ctx.lineTo(ox+4+i*((LW-8)/3),y+LH-3);ctx.stroke();}
-    ctx.fillStyle='#fffde0';rr(ox+2,y+LH-5,LW-4,4,2);ctx.fill();
+    ctx.fillStyle='#fffde0';rr(ox+2,y+LH-5,LW-4,4,2);ctx.fill();  /* Scheinwerfer unten */
     ctx.fillStyle='rgba(255,255,220,0.7)';ctx.fillRect(ox+3,y+LH-4,LW-6,2);
   }},
+
+  /* 5 - Wohnwagen-Gespann (Level 5+)
+     Gegner fährt NACH UNTEN: PKW oben (hinten), Wohnwagen unten (vorne).
+     PKW: Rücklichter oben, Scheinwerfer unten.
+  */
   {w:PW+2,h:PH+58,minLvl:5,draw(x,y,c){
     const CW=PW+2,ox=x-1;
-    const carH=PH,vanH=50,gap=8,vanY=y+carH+gap;
+    const carH=PH,vanH=48,gap=10,vanY=y+carH+gap;
+    /* PKW Achsen */
     axle(ox,CW,y+9);axle(ox,CW,y+carH-21);
+    /* PKW Karosserie */
     ctx.fillStyle='#111';rr(ox+2,y+3,CW-4,carH-3,5);ctx.fill();
     ctx.fillStyle=c.body;rr(ox,y,CW,carH,5);ctx.fill();
-    ctx.fillStyle=c.dark;ctx.fillRect(ox+2,y+2,CW-4,12);
-    ctx.fillStyle=c.glass;rr(ox+3,y+14,CW-6,10,3);ctx.fill();
-    ctx.fillStyle=c.dark;ctx.fillRect(ox,y+24,CW,4);
-    ctx.fillStyle=c.glass;rr(ox+3,y+28,CW-6,10,3);ctx.fill();
+    /* Kofferraum oben */
+    ctx.fillStyle=c.dark;ctx.fillRect(ox+2,y+2,CW-4,10);
+    /* Heckscheibe */
+    ctx.fillStyle=c.glass;rr(ox+3,y+12,CW-6,8,3);ctx.fill();
+    ctx.fillStyle='rgba(255,255,255,0.2)';ctx.fillRect(ox+4,y+12,CW-8,2);
+    /* DACH breit */
+    ctx.fillStyle=c.dark;ctx.fillRect(ox,y+20,CW,8);
+    ctx.fillStyle=c.dark;ctx.fillRect(ox+CW/2-2,y+12,4,8);
+    /* Frontscheibe */
+    ctx.fillStyle=c.glass;rr(ox+3,y+28,CW-6,8,3);ctx.fill();
     ctx.fillStyle='rgba(255,255,255,0.2)';ctx.fillRect(ox+4,y+28,CW-8,2);
-    ctx.fillStyle=c.dark;ctx.fillRect(ox+2,y+38,CW-4,carH-38);
-    ctx.fillStyle='#880000';ctx.fillRect(ox+2,y+2,7,5);ctx.fillRect(ox+CW-9,y+2,7,5);
-    ctx.fillStyle='#ff4444';ctx.fillRect(ox+3,y+3,4,3);ctx.fillRect(ox+CW-7,y+3,4,3);
-    ctx.fillStyle='#ffe066';rr(ox+2,y+carH-8,8,7,2);ctx.fill();rr(ox+CW-10,y+carH-8,8,7,2);ctx.fill();
-    ctx.fillStyle='#fffacc';ctx.fillRect(ox+3,y+carH-7,5,4);ctx.fillRect(ox+CW-8,y+carH-7,5,4);
-    ctx.fillStyle='#555';ctx.fillRect(ox+CW/2-2,y+carH,4,gap+2);
-    ctx.fillStyle='#777';ctx.fillRect(ox+CW/2-4,y+carH+gap-2,8,4);
+    /* Motorhaube unten */
+    ctx.fillStyle=c.dark;ctx.fillRect(ox+2,y+36,CW-4,carH-36);
+    /* Rücklichter oben */
+    ctx.fillStyle='#990000';ctx.fillRect(ox+2,y+2,7,4);ctx.fillRect(ox+CW-9,y+2,7,4);
+    ctx.fillStyle='#ff4444';ctx.fillRect(ox+3,y+3,4,2);ctx.fillRect(ox+CW-7,y+3,4,2);
+    /* Scheinwerfer unten */
+    ctx.fillStyle='#ffe066';rr(ox+2,y+carH-7,7,5,2);ctx.fill();rr(ox+CW-9,y+carH-7,7,5,2);ctx.fill();
+    /* Anhängerkupplung */
+    ctx.fillStyle='#444';ctx.fillRect(ox+CW/2-2,y+carH,4,gap+1);
+    ctx.fillStyle='#666';ctx.fillRect(ox+CW/2-5,y+carH+gap-2,10,4);
+    /* Wohnwagen Reifen */
     ctx.fillStyle='#0d0d0d';
     ctx.fillRect(ox-6,vanY+Math.round(vanH*.52),6,13);ctx.fillRect(ox+CW,vanY+Math.round(vanH*.52),6,13);
-    ctx.fillStyle='#222';ctx.fillRect(ox-5,vanY+Math.round(vanH*.52)+1,4,11);ctx.fillRect(ox+CW+1,vanY+Math.round(vanH*.52)+1,4,11);
-    ctx.fillStyle='#999';rr(ox,vanY,CW,vanH,5);ctx.fill();
-    ctx.fillStyle='#e8e8e0';rr(ox+1,vanY+1,CW-2,vanH-2,4);ctx.fill();
-    ctx.fillStyle='#d0d0c8';rr(ox+1,vanY+1,CW-2,16,4);ctx.fill();
-    ctx.fillStyle='rgba(180,220,255,0.85)';
-    rr(ox+3,vanY+18,CW/2-5,13,2);ctx.fill();rr(ox+CW/2+2,vanY+18,CW/2-5,13,2);ctx.fill();
+    ctx.fillStyle='#252525';ctx.fillRect(ox-5,vanY+Math.round(vanH*.52)+1,4,11);ctx.fillRect(ox+CW+1,vanY+Math.round(vanH*.52)+1,4,11);
+    /* Wohnwagen Karosserie cremweiss */
+    ctx.fillStyle='#888';rr(ox,vanY,CW,vanH,5);ctx.fill();
+    ctx.fillStyle='#e8e8dc';rr(ox+1,vanY+1,CW-2,vanH-2,4);ctx.fill();
+    /* Dach Wohnwagen */
+    ctx.fillStyle='#d8d8cc';rr(ox+1,vanY+1,CW-2,12,4);ctx.fill();
+    /* 2 Fenster */
+    ctx.fillStyle='rgba(160,210,255,0.85)';
+    rr(ox+3,vanY+14,CW/2-5,11,2);ctx.fill();
+    rr(ox+CW/2+2,vanY+14,CW/2-5,11,2);ctx.fill();
     ctx.fillStyle='rgba(255,255,255,0.35)';
-    ctx.fillRect(ox+4,vanY+18,CW/2-7,3);ctx.fillRect(ox+CW/2+3,vanY+18,CW/2-7,3);
-    ctx.strokeStyle='#bbb';ctx.lineWidth=1;
-    ctx.strokeRect(ox+3,vanY+18,CW/2-5,13);ctx.strokeRect(ox+CW/2+2,vanY+18,CW/2-5,13);
-    ctx.fillStyle=c.body;ctx.fillRect(ox+1,vanY+32,CW-2,3);
-    ctx.strokeStyle='#aaa';ctx.lineWidth=1.5;
-    ctx.strokeRect(ox+Math.round(CW*.3),vanY+36,Math.round(CW*.4),vanH-40);
-    ctx.beginPath();ctx.moveTo(ox+Math.round(CW*.5),vanY+36);ctx.lineTo(ox+Math.round(CW*.5),vanY+vanH-4);ctx.stroke();
-    ctx.fillStyle='#880000';ctx.fillRect(ox+2,vanY+2,7,5);ctx.fillRect(ox+CW-9,vanY+2,7,5);
-    ctx.fillStyle='#ff4444';ctx.fillRect(ox+3,vanY+3,4,3);ctx.fillRect(ox+CW-7,vanY+3,4,3);
-    ctx.fillStyle='#ffe066';ctx.fillRect(ox+2,vanY+vanH-5,7,4);ctx.fillRect(ox+CW-9,vanY+vanH-5,7,4);
+    ctx.fillRect(ox+4,vanY+14,CW/2-7,3);ctx.fillRect(ox+CW/2+3,vanY+14,CW/2-7,3);
+    ctx.strokeStyle='#aaa';ctx.lineWidth=1;
+    ctx.strokeRect(ox+3,vanY+14,CW/2-5,11);ctx.strokeRect(ox+CW/2+2,vanY+14,CW/2-5,11);
+    /* Farbstreifen */
+    ctx.fillStyle=c.body;ctx.fillRect(ox+1,vanY+26,CW-2,3);
+    /* Tür */
+    ctx.strokeStyle='#999';ctx.lineWidth=1.5;
+    ctx.strokeRect(ox+Math.round(CW*.28),vanY+30,Math.round(CW*.44),vanH-34);
+    ctx.beginPath();ctx.moveTo(ox+Math.round(CW*.5),vanY+30);ctx.lineTo(ox+Math.round(CW*.5),vanY+vanH-4);ctx.stroke();
+    /* Rücklichter Wohnwagen oben */
+    ctx.fillStyle='#880000';ctx.fillRect(ox+2,vanY+2,6,4);ctx.fillRect(ox+CW-8,vanY+2,6,4);
+    ctx.fillStyle='#ff4444';ctx.fillRect(ox+3,vanY+3,3,2);ctx.fillRect(ox+CW-6,vanY+3,3,2);
+    /* Umrissleuchten unten */
+    ctx.fillStyle='#ffe066';ctx.fillRect(ox+2,vanY+vanH-5,6,4);ctx.fillRect(ox+CW-8,vanY+vanH-5,6,4);
     ctx.fillStyle='#888';ctx.fillRect(ox+2,vanY+vanH-2,CW-4,2);
   }},
+
+  /* 5b - LKW mit offenem Anhänger (Level 6+)
+     Zugmaschine oben (hinten), Flachbett-Anhänger unten (vorne).
+     Klarer optischer Unterschied zum Sattelschlepper.
+  */
+  {w:PW+4,h:PH+68,minLvl:6,draw(x,y,c){
+    const TW=PW+4,ox=x-2;
+    const cabH=36,trailerH=PH+28,gap=6,trailerY=y+cabH+gap;
+    /* Zugmaschine-Achsen */
+    axle(ox,TW,y+8);axle(ox,TW,y+cabH-22);axle(ox,TW,y+cabH-10);
+    /* Kabine */
+    ctx.fillStyle='#0a0a0a';rr(ox+2,y+2,TW-4,cabH,4);ctx.fill();
+    ctx.fillStyle=c.dark;rr(ox,y,TW,cabH,4);ctx.fill();
+    /* Ruecklichter Kabine oben */
+    ctx.fillStyle='#660000';ctx.fillRect(ox+2,y+2,8,5);ctx.fillRect(ox+TW-10,y+2,8,5);
+    ctx.fillStyle='#cc2222';ctx.fillRect(ox+3,y+3,5,3);ctx.fillRect(ox+TW-8,y+3,5,3);
+    ctx.fillStyle=c.dark;ctx.fillRect(ox+2,y+7,TW-4,7);/* Trenner */
+    /* Windschutzscheibe */
+    ctx.fillStyle=c.glass;rr(ox+3,y+14,TW-6,14,3);ctx.fill();
+    ctx.fillStyle='rgba(255,255,255,0.25)';ctx.fillRect(ox+5,y+14,TW-10,3);
+    /* Grill unten */
+    ctx.fillStyle='#181818';ctx.fillRect(ox+2,y+28,TW-4,cabH-28);
+    ctx.strokeStyle='#252525';ctx.lineWidth=1;
+    for(let i=0;i<4;i++){ctx.beginPath();ctx.moveTo(ox+3+i*((TW-6)/4),y+29);ctx.lineTo(ox+3+i*((TW-6)/4),y+cabH-2);ctx.stroke();}
+    /* Nebelscheinwerfer */
+    ctx.fillStyle='#ffe8a0';ctx.fillRect(ox+3,y+cabH-7,5,5);ctx.fillRect(ox+TW-8,y+cabH-7,5,5);
+    /* Hauptscheinwerfer unten */
+    ctx.fillStyle='#fffde0';ctx.fillRect(ox+2,y+cabH-4,8,3);ctx.fillRect(ox+TW-10,y+cabH-4,8,3);
+    /* Kupplung */
+    ctx.fillStyle='#555';ctx.fillRect(ox+TW/2-3,y+cabH,6,gap);
+    /* Anhänger-Achsen (Doppelachse unten) */
+    ctx.fillStyle='#0d0d0d';
+    ctx.fillRect(ox-7,trailerY+trailerH-28,7,13);ctx.fillRect(ox+TW,trailerY+trailerH-28,7,13);
+    ctx.fillRect(ox-7,trailerY+trailerH-15,7,12);ctx.fillRect(ox+TW,trailerY+trailerH-15,7,12);
+    ctx.fillStyle='#252525';
+    ctx.fillRect(ox-6,trailerY+trailerH-27,5,11);ctx.fillRect(ox+TW+1,trailerY+trailerH-27,5,11);
+    ctx.fillRect(ox-6,trailerY+trailerH-14,5,10);ctx.fillRect(ox+TW+1,trailerY+trailerH-14,5,10);
+    /* Flachbett-Anhänger: offene Ladeflaeche */
+    ctx.fillStyle='#3a3a3a';ctx.fillRect(ox,trailerY,TW,trailerH);/* Rahmen */
+    ctx.fillStyle='#8B6914';ctx.fillRect(ox+2,trailerY+2,TW-4,trailerH-4);/* Holzboden */
+    /* Holzmaserung */
+    ctx.strokeStyle='#7a5c10';ctx.lineWidth=1;
+    for(let i=1;i<6;i++){const ly=trailerY+2+Math.round((trailerH-4)/6*i);ctx.beginPath();ctx.moveTo(ox+2,ly);ctx.lineTo(ox+TW-2,ly);ctx.stroke();}
+    /* Seitenwaende niedrig */
+    ctx.fillStyle='#555';ctx.fillRect(ox,trailerY,TW,4);ctx.fillRect(ox,trailerY+trailerH-4,TW,4);
+    ctx.fillStyle='#555';ctx.fillRect(ox,trailerY,3,trailerH);ctx.fillRect(ox+TW-3,trailerY,3,trailerH);
+    /* Ladung: Kisten-Silhouetten */
+    ctx.fillStyle='#6b4c10';
+    ctx.fillRect(ox+3,trailerY+5,9,10);ctx.fillRect(ox+TW-12,trailerY+5,9,10);
+    ctx.fillRect(ox+3,trailerY+Math.round(trailerH*.35),9,10);ctx.fillRect(ox+TW-12,trailerY+Math.round(trailerH*.35),9,10);
+    ctx.strokeStyle='#5a3c08';ctx.lineWidth=1;
+    ctx.strokeRect(ox+3,trailerY+5,9,10);ctx.strokeRect(ox+TW-12,trailerY+5,9,10);
+    ctx.strokeRect(ox+3,trailerY+Math.round(trailerH*.35),9,10);ctx.strokeRect(ox+TW-12,trailerY+Math.round(trailerH*.35),9,10);
+    /* Ruecklichter Anhänger unten */
+    ctx.fillStyle='#880000';ctx.fillRect(ox+2,trailerY+trailerH-4,8,4);ctx.fillRect(ox+TW-10,trailerY+trailerH-4,8,4);
+    ctx.fillStyle='#ff4444';ctx.fillRect(ox+3,trailerY+trailerH-3,5,2);ctx.fillRect(ox+TW-8,trailerY+trailerH-3,5,2);
+    ctx.fillStyle='#ffaa00';ctx.fillRect(ox+TW/2-4,trailerY+trailerH-4,8,3);/* Rückstrahler */
+  }},
+
+  /* 6 - Sattelschlepper (Level 7+) */
   {w:PW+8,h:PH+82,minLvl:7,draw(x,y,c){
     const TW=PW+8,ox=x-4;
     const cabH=40,trailerH=PH+38,gap=4,trailerY=y+cabH+gap;
@@ -490,6 +755,47 @@ const ENEMY_MODELS=[
     ctx.fillStyle='#fffde0';ctx.fillRect(ox+2,y+cabH-5,9,4);ctx.fillRect(ox+TW-11,y+cabH-5,9,4);
     ctx.fillStyle='rgba(255,255,220,0.8)';ctx.fillRect(ox+3,y+cabH-4,6,2);ctx.fillRect(ox+TW-9,y+cabH-4,6,2);
   }},
+
+  /* 8 - PKW mit Wohnwagen (ab Lvl 9) */
+  {w:PW+2,h:PH+62,minLvl:9,draw(x,y,c){
+    const CW=PW+2,ox=x-1;
+    const carH=PH,vanH=52,gap=10,vanY=y+carH+gap;
+    axle(ox,CW,y+9);axle(ox,CW,y+carH-21);
+    ctx.fillStyle='#111';rr(ox+2,y+3,CW-4,carH-3,5);ctx.fill();
+    ctx.fillStyle=c.body;rr(ox,y,CW,carH,5);ctx.fill();
+    ctx.fillStyle=c.dark;ctx.fillRect(ox+2,y+2,CW-4,10);
+    ctx.fillStyle=c.glass;rr(ox+3,y+12,CW-6,8,3);ctx.fill();
+    ctx.fillStyle=c.dark;ctx.fillRect(ox,y+20,CW,8);           /* DACH breit */
+    ctx.fillStyle=c.dark;ctx.fillRect(ox+CW/2-2,y+12,4,8);
+    ctx.fillStyle=c.glass;rr(ox+3,y+28,CW-6,8,3);ctx.fill();
+    ctx.fillStyle='rgba(255,255,255,0.2)';ctx.fillRect(ox+4,y+28,CW-8,2);
+    ctx.fillStyle=c.dark;ctx.fillRect(ox+2,y+36,CW-4,carH-36);
+    ctx.fillStyle='#990000';ctx.fillRect(ox+2,y+2,7,4);ctx.fillRect(ox+CW-9,y+2,7,4);
+    ctx.fillStyle='#ff4444';ctx.fillRect(ox+3,y+3,4,2);ctx.fillRect(ox+CW-7,y+3,4,2);
+    ctx.fillStyle='#ffe066';rr(ox+2,y+carH-7,7,5,2);ctx.fill();rr(ox+CW-9,y+carH-7,7,5,2);ctx.fill();
+    ctx.fillStyle='#555';ctx.fillRect(ox+CW/2-2,y+carH,4,gap+1);
+    ctx.fillStyle='#777';ctx.fillRect(ox+CW/2-5,y+carH+gap-2,10,4);
+    ctx.fillStyle='#0d0d0d';
+    ctx.fillRect(ox-6,vanY+Math.round(vanH*.55),6,13);ctx.fillRect(ox+CW,vanY+Math.round(vanH*.55),6,13);
+    ctx.fillStyle='#252525';ctx.fillRect(ox-5,vanY+Math.round(vanH*.55)+1,4,11);ctx.fillRect(ox+CW+1,vanY+Math.round(vanH*.55)+1,4,11);
+    ctx.fillStyle='#777';rr(ox,vanY,CW,vanH,5);ctx.fill();
+    ctx.fillStyle='#ebebdf';rr(ox+1,vanY+1,CW-2,vanH-2,4);ctx.fill();
+    ctx.fillStyle='#d5d5c9';rr(ox+1,vanY+1,CW-2,13,4);ctx.fill();
+    ctx.fillStyle='rgba(170,215,255,0.85)';
+    rr(ox+3,vanY+15,CW/2-5,12,2);ctx.fill();rr(ox+CW/2+2,vanY+15,CW/2-5,12,2);ctx.fill();
+    ctx.fillStyle='rgba(255,255,255,0.35)';
+    ctx.fillRect(ox+4,vanY+15,CW/2-7,3);ctx.fillRect(ox+CW/2+3,vanY+15,CW/2-7,3);
+    ctx.strokeStyle='#aaa';ctx.lineWidth=1;
+    ctx.strokeRect(ox+3,vanY+15,CW/2-5,12);ctx.strokeRect(ox+CW/2+2,vanY+15,CW/2-5,12);
+    ctx.fillStyle=c.body;ctx.fillRect(ox+1,vanY+28,CW-2,3);
+    ctx.strokeStyle='#999';ctx.lineWidth=1.5;
+    ctx.strokeRect(ox+Math.round(CW*.28),vanY+32,Math.round(CW*.44),vanH-36);
+    ctx.beginPath();ctx.moveTo(ox+Math.round(CW*.5),vanY+32);ctx.lineTo(ox+Math.round(CW*.5),vanY+vanH-4);ctx.stroke();
+    ctx.fillStyle='#880000';ctx.fillRect(ox+2,vanY+2,6,4);ctx.fillRect(ox+CW-8,vanY+2,6,4);
+    ctx.fillStyle='#ff4444';ctx.fillRect(ox+3,vanY+3,3,2);ctx.fillRect(ox+CW-6,vanY+3,3,2);
+    ctx.fillStyle='#ffe066';ctx.fillRect(ox+2,vanY+vanH-5,6,4);ctx.fillRect(ox+CW-8,vanY+vanH-5,6,4);
+    ctx.fillStyle='#888';ctx.fillRect(ox+2,vanY+vanH-2,CW-4,2);
+  }},
 ];
 
 const PALETTES=[
@@ -498,10 +804,12 @@ const PALETTES=[
   {body:'#117a65',dark:'#0b5345',glass:'rgba(130,230,190,.75)',accent:'#1abc9c'},
   {body:'#2c3e50',dark:'#1a252f',glass:'rgba(140,200,240,.75)',accent:'#5d6d7e'},
   {body:'#6c3483',dark:'#4a235a',glass:'rgba(210,180,255,.75)',accent:'#a569bd'},
-  {body:'#e8b800',dark:'#a07d00',glass:'rgba(255,240,160,.85)',accent:'#ffd700'},
-  {body:'#2471a3',dark:'#1a5276',glass:'rgba(160,210,255,.8)',accent:'#5dade2'},
-  {body:'#7b241c',dark:'#4a0f0a',glass:'rgba(255,160,140,.8)',accent:'#e74c3c'},
-  {body:'#555',dark:'#333',glass:'rgba(200,220,240,.8)',accent:'#888'},
+  {body:'#e8b800',dark:'#a07d00',glass:'rgba(255,240,160,.85)',accent:'#ffd700'}, /* Bus */
+  {body:'#444',dark:'#222',glass:'rgba(200,220,240,.8)',accent:'#888'},            /* LKW Kasten */
+  {body:'#2471a3',dark:'#1a5276',glass:'rgba(160,210,255,.8)',accent:'#5dade2'},  /* Wohnwagen */
+  {body:'#1a5c34',dark:'#0d3320',glass:'rgba(150,220,170,.8)',accent:'#27ae60'},  /* Flachbett */
+  {body:'#7b241c',dark:'#4a0f0a',glass:'rgba(255,160,140,.8)',accent:'#e74c3c'},  /* Sattel */
+  {body:'#3d6b8f',dark:'#234060',glass:'rgba(180,210,255,.8)',accent:'#5590bb'},  /* Wohnwagen Lvl9 PKW */
 ];
 
 function spawnEnemy(){
@@ -509,15 +817,17 @@ function spawnEnemy(){
   ENEMY_MODELS.forEach((m,i)=>{
     if(level<m.minLvl)return;
     let w=1;
-    if(i===3)w=Math.min(3,level-3);
-    if(i===4)w=Math.min(2,level-3);
-    if(i===5)w=Math.min(3,level-4);
-    if(i===6)w=Math.min(4,level-6);
+    if(i===3)w=Math.min(3,level-3);   /* Bus ab Lvl 4 */
+    if(i===4)w=Math.min(2,level-3);   /* LKW Kasten ab Lvl 4 */
+    if(i===5)w=Math.min(2,level-4);   /* Wohnwagen alt ab Lvl 5 */
+    if(i===6)w=Math.min(3,level-5);   /* Flachbett ab Lvl 6 */
+    if(i===7)w=Math.min(4,level-6);   /* Sattel ab Lvl 7 */
+    if(i===8)w=Math.min(3,level-8);   /* PKW+Wohnwagen ab Lvl 9 */
     for(let k=0;k<Math.max(1,w);k++)pool.push(i);
   });
   const idx=pool[Math.floor(Math.random()*pool.length)];
   const model=ENEMY_MODELS[idx];
-  const palIdx=idx===3?5:idx===4?8:idx===5?6:idx===6?7:Math.floor(Math.random()*5);
+  const palIdx=idx===3?5:idx===4?6:idx===5?7:idx===6?8:idx===7?9:idx===8?10:Math.floor(Math.random()*5);
   enemies.push({x:LANES[Math.floor(Math.random()*3)]-model.w/2,y:-(model.h+10),model,pal:PALETTES[palIdx]});
 }
 function spawnCoin(){coins.push({x:LANES[Math.floor(Math.random()*3)],y:-14});}
@@ -617,26 +927,189 @@ function showLobby(){
 function makePreview(def){
   const c=document.createElement('canvas');c.width=70;c.height=90;
   const cx=c.getContext('2d');
+  /* Temporarily swap ctx so the car's own draw() renders into cx */
+  const realCtx=ctx;
+  /* Override the global ctx reference used by draw functions */
+  /* We do this by re-binding: patch the global ctx temporarily */
+  /* Simpler approach: draw onto a temp full canvas, then copy the car region */
+  const tmp=document.createElement('canvas');tmp.width=W;tmp.height=H;
+  const tCtx=tmp.getContext('2d');
+  /* Save real ctx, swap in tmp */
+  const savedCtxProto=Object.getOwnPropertyDescriptor(window,'ctx');
+  /* We can't reassign const, so instead draw the car scaled on cx directly */
+  /* Use save/restore + scale to fit car into preview canvas */
+  /* Determine car bounding box by skin */
+  let carW=PW,carH=PH;
+  if(def.id==='sports'){carW=PW+6;carH=PH;}
+  else if(def.id==='minivan'){carW=PW+4;carH=PH+12;}
+  else if(def.id==='suv'){carW=PW+8;carH=PH+10;}
+  else if(def.id==='monster'){carW=PW+10+20;carH=PH+6;}/* incl thick tires */
+  else if(def.id==='gold'){carW=PW;carH=PH+14;}
+  else if(def.id==='pickup'){carW=PW+6;carH=PH;}
+  const pad=6;
+  const scaleX=(70-pad*2)/carW;
+  const scaleY=(90-pad*2)/carH;
+  const scale=Math.min(scaleX,scaleY,1.2);
+  const drawW=carW*scale,drawH=carH*scale;
+  const startX=Math.round((70-drawW)/2);
+  const startY=Math.round((90-drawH)/2);
+  /* Draw onto tmp canvas at real coords, then copy scaled */
+  const tmpFull=document.createElement('canvas');
+  tmpFull.width=W;tmpFull.height=H;
+  const tc=tmpFull.getContext('2d');
+  /* Patch global ctx temporarily — not possible with const. 
+     Instead: manually draw a simplified but skin-accurate preview */
   const col=def.col;
-  const ox=35-PW/2,oy=45-PH/2;
   function pr(px,py,pw,ph,r2){
     cx.beginPath();cx.moveTo(px+r2,py);cx.lineTo(px+pw-r2,py);cx.arcTo(px+pw,py,px+pw,py+r2,r2);
     cx.lineTo(px+pw,py+ph-r2);cx.arcTo(px+pw,py+ph,px+pw-r2,py+ph,r2);cx.lineTo(px+r2,py+ph);
     cx.arcTo(px,py+ph,px,py+ph-r2,r2);cx.lineTo(px,py+r2);cx.arcTo(px,py,px+r2,py,r2);cx.closePath();
   }
-  cx.fillStyle='rgba(0,0,0,0.4)';pr(ox+3,oy+4,PW,PH,6);cx.fill();
-  cx.fillStyle=col.body;pr(ox,oy,PW,PH,6);cx.fill();
-  cx.fillStyle=col.dark;cx.fillRect(ox+2,oy+1,PW-4,14);
-  cx.fillStyle=col.glass;pr(ox+3,oy+15,PW-6,11,3);cx.fill();
-  cx.fillStyle='rgba(255,255,255,0.3)';cx.fillRect(ox+5,oy+15,PW-10,2);
-  cx.fillStyle=col.dark;cx.fillRect(ox,oy+26,PW,5);
-  cx.fillStyle=col.glass;pr(ox+3,oy+31,PW-6,10,3);cx.fill();
-  cx.fillStyle=col.dark;cx.fillRect(ox+2,oy+41,PW-4,PH-43);
-  cx.fillStyle='#ffd700';pr(ox+2,oy+2,9,6,2);cx.fill();pr(ox+PW-11,oy+2,9,6,2);cx.fill();
-  cx.fillStyle='#fffacc';cx.fillRect(ox+3,oy+3,6,3);cx.fillRect(ox+PW-9,oy+3,6,3);
-  cx.fillStyle='#aa0000';cx.fillRect(ox+2,oy+PH-6,9,5);cx.fillRect(ox+PW-11,oy+PH-6,9,5);
-  cx.fillStyle='#ff4444';cx.fillRect(ox+3,oy+PH-5,6,3);cx.fillRect(ox+PW-9,oy+PH-5,6,3);
-  if(col.accent){cx.strokeStyle=col.accent;cx.lineWidth=1.5;cx.beginPath();cx.moveTo(ox,oy+25);cx.lineTo(ox+PW,oy+25);cx.stroke();}
+  /* Each skin gets its own accurate preview matching its real silhouette */
+  if(def.id==='sedan'){
+    const ox=35-PW/2,oy=45-PH/2;
+    cx.fillStyle='#0a1825';pr(ox+2,oy+3,PW-4,PH-3,5);cx.fill();
+    cx.fillStyle=col.body;pr(ox,oy,PW,PH,5);cx.fill();
+    cx.fillStyle=col.dark;cx.fillRect(ox+2,oy+2,PW-4,13);
+    cx.fillStyle=col.glass;pr(ox+3,oy+15,PW-6,11,3);cx.fill();
+    cx.fillStyle='rgba(255,255,255,0.3)';cx.fillRect(ox+5,oy+15,PW-10,2);
+    cx.fillStyle=col.dark;cx.fillRect(ox,oy+26,PW,4);
+    cx.fillStyle=col.dark;cx.fillRect(ox+PW/2-2,oy+15,4,11);
+    cx.fillStyle=col.glass;pr(ox+3,oy+30,PW-6,10,3);cx.fill();
+    cx.fillStyle=col.dark;cx.fillRect(ox+2,oy+40,PW-4,14);
+    cx.fillStyle='#ffd700';pr(ox+2,oy+2,9,6,2);cx.fill();pr(ox+PW-11,oy+2,9,6,2);cx.fill();
+    cx.fillStyle='#880000';cx.fillRect(ox+2,oy+PH-6,9,5);cx.fillRect(ox+PW-11,oy+PH-6,9,5);
+    cx.fillStyle='#ff4444';cx.fillRect(ox+3,oy+PH-5,6,3);cx.fillRect(ox+PW-9,oy+PH-5,6,3);
+  } else if(def.id==='sports'){
+    const SW=PW+6,ox=35-SW/2,oy=45-PH/2;
+    cx.fillStyle=col.body;pr(ox,oy+2,SW,PH-2,4);cx.fill();
+    cx.fillStyle=col.dark;cx.fillRect(ox+2,oy+3,SW-4,20);
+    cx.fillStyle='#111';cx.fillRect(ox+4,oy+7,4,6);cx.fillRect(ox+SW/2-2,oy+7,4,6);cx.fillRect(ox+SW-8,oy+7,4,6);
+    cx.fillStyle=col.glass;pr(ox+3,oy+23,SW-6,8,2);cx.fill();
+    cx.fillStyle=col.dark;cx.fillRect(ox+2,oy+31,SW-4,4);
+    cx.fillStyle=col.glass;pr(ox+3,oy+35,SW-6,7,2);cx.fill();
+    cx.fillStyle=col.dark;cx.fillRect(ox+2,oy+42,SW-4,PH-44);
+    cx.fillStyle=col.accent;cx.fillRect(ox-2,oy+PH-11,SW+4,3);
+    cx.fillStyle='#fffacc';cx.fillRect(ox+2,oy+3,14,3);cx.fillRect(ox+SW-16,oy+3,14,3);
+    cx.fillStyle=col.accent;cx.fillRect(ox+2,oy+PH-6,SW-4,5);
+  } else if(def.id==='minivan'){
+    const SW=PW+4,SH=PH+12,ox=35-SW/2,oy=45-SH/2;
+    cx.fillStyle='#181f26';pr(ox+2,oy+2,SW-4,SH-2,4);cx.fill();
+    cx.fillStyle=col.body;pr(ox,oy,SW,SH,4);cx.fill();
+    cx.fillStyle=col.dark;cx.fillRect(ox+2,oy+2,SW-4,11);
+    cx.fillStyle=col.glass;pr(ox+2,oy+13,SW-4,17,3);cx.fill();
+    cx.fillStyle='rgba(255,255,255,0.22)';cx.fillRect(ox+4,oy+13,SW-8,3);
+    cx.fillStyle=col.dark;cx.fillRect(ox+SW/2-2,oy+13,4,17);
+    cx.fillStyle=col.dark;cx.fillRect(ox,oy+30,SW,5);
+    cx.fillStyle=col.accent;cx.fillRect(ox+2,oy+35,SW-4,2);
+    cx.fillStyle=col.body;cx.fillRect(ox+2,oy+37,SW-4,14);
+    cx.fillStyle=col.glass;pr(ox+3,oy+51,SW-6,9,2);cx.fill();
+    cx.fillStyle=col.dark;cx.fillRect(ox+2,oy+60,SW-4,SH-64);
+    cx.fillStyle='#ffd700';pr(ox+2,oy+2,11,8,2);cx.fill();pr(ox+SW-13,oy+2,11,8,2);cx.fill();
+    cx.fillStyle='#880000';pr(ox+2,oy+SH-8,SW-4,7,2);cx.fill();
+  } else if(def.id==='suv'){
+    const SW=PW+8,SH=PH+10,ox=35-SW/2,oy=45-SH/2;
+    cx.fillStyle='#071210';pr(ox+2,oy+2,SW-4,SH-5,4);cx.fill();
+    cx.fillStyle=col.body;pr(ox,oy,SW,SH-3,4);cx.fill();
+    cx.fillStyle=col.dark;cx.fillRect(ox+2,oy+2,SW-4,18);
+    cx.fillStyle=col.body;cx.fillRect(ox+SW/2-7,oy+4,14,13);
+    cx.fillStyle=col.dark;cx.fillRect(ox+SW/2-5,oy+5,10,10);
+    cx.fillStyle=col.glass;pr(ox+3,oy+20,SW-6,16,3);cx.fill();
+    cx.fillStyle='rgba(255,255,255,0.2)';cx.fillRect(ox+5,oy+20,SW-10,3);
+    cx.fillStyle=col.dark;cx.fillRect(ox,oy+36,SW,5);
+    cx.fillStyle=col.glass;pr(ox+3,oy+41,SW-6,13,3);cx.fill();
+    cx.fillStyle=col.dark;cx.fillRect(ox+2,oy+54,SW-4,SH-59);
+    cx.fillStyle='#ffd700';pr(ox+2,oy+2,13,9,2);cx.fill();pr(ox+SW-15,oy+2,13,9,2);cx.fill();
+    cx.fillStyle='#660000';pr(ox+2,oy+SH-10,13,8,2);cx.fill();pr(ox+SW-15,oy+SH-10,13,8,2);cx.fill();
+  } else if(def.id==='monster'){
+    const SW=PW+8,SH=PH+4,ox=35-SW/2,oy=45-SH/2;
+    const tW=12,tH=18;
+    cx.fillStyle='#080808';
+    pr(ox-tW,oy+tH,tW,tH,4);cx.fill();pr(ox+SW,oy+tH,tW,tH,4);cx.fill();
+    pr(ox-tW,oy+SH-tH*2,tW,tH,4);cx.fill();pr(ox+SW,oy+SH-tH*2,tW,tH,4);cx.fill();
+    cx.fillStyle='#1a1a1a';
+    cx.fillRect(ox-tW+2,oy+tH+2,tW-4,tH-4);cx.fillRect(ox+SW+2,oy+tH+2,tW-4,tH-4);
+    cx.fillRect(ox-tW+2,oy+SH-tH*2+2,tW-4,tH-4);cx.fillRect(ox+SW+2,oy+SH-tH*2+2,tW-4,tH-4);
+    cx.fillStyle='#555';cx.fillRect(ox-tW+3,oy+tH+tH/2,SW+tW*2-6,4);
+    cx.fillStyle='#555';cx.fillRect(ox-tW+3,oy+SH-tH-4,SW+tW*2-6,4);
+    cx.fillStyle='#220000';pr(ox+2,oy+3,SW-4,SH-4,4);cx.fill();
+    cx.fillStyle=col.body;pr(ox,oy+2,SW,SH-2,4);cx.fill();
+    cx.fillStyle=col.dark;cx.fillRect(ox+2,oy+3,SW-4,18);
+    cx.fillStyle=col.glass;pr(ox+3,oy+21,SW-6,11,3);cx.fill();
+    cx.fillStyle=col.dark;cx.fillRect(ox,oy+32,SW,10);
+    cx.fillStyle=col.glass;pr(ox+3,oy+42,SW-6,8,2);cx.fill();
+    cx.fillStyle='#ff4400';cx.fillRect(ox,oy+24,3,18);cx.fillRect(ox+SW-3,oy+24,3,18);
+    cx.fillStyle='#ffe066';pr(ox+2,oy+3,8,7,3);cx.fill();pr(ox+SW-10,oy+3,8,7,3);cx.fill();
+    cx.fillStyle='#550000';cx.fillRect(ox+2,oy+SH-7,SW-4,6);
+  } else if(def.id==='moto'){
+    const mx=35,bx=mx-7,oy=5;
+    /* Vorderrad */
+    cx.fillStyle='#0a0a0a';pr(bx+1,oy+2,12,14,4);cx.fill();
+    cx.fillStyle='#1a1a1a';pr(bx+2,oy+3,10,12,3);cx.fill();
+    cx.fillStyle='#fffde0';pr(bx+3,oy,8,4,2);cx.fill(); /* Scheinwerfer */
+    /* Gabel */
+    cx.fillStyle='#999';cx.fillRect(mx-4,oy+15,3,6);cx.fillRect(mx+1,oy+15,3,6);
+    /* Rahmen/Tank */
+    cx.fillStyle=col.body;pr(bx+1,oy+20,12,10,3);cx.fill();
+    cx.fillStyle=col.accent;cx.fillRect(bx+2,oy+21,10,3);
+    /* Lenker */
+    cx.fillStyle='#555';cx.fillRect(bx-5,oy+22,24,3);
+    cx.fillStyle='#333';cx.fillRect(bx-6,oy+22,3,5);cx.fillRect(bx+17,oy+22,3,5);
+    /* Sitz */
+    cx.fillStyle='#1a1a1a';pr(bx+1,oy+30,12,6,3);cx.fill();
+    /* Fahrer Helm */
+    cx.fillStyle='#cc2200';pr(bx+2,oy+32,10,11,5);cx.fill();
+    cx.fillStyle=col.glass;pr(bx+3,oy+33,8,5,2);cx.fill();
+    cx.fillStyle='rgba(255,255,255,0.5)';cx.fillRect(bx+4,oy+33,6,1);
+    /* Jacke */
+    cx.fillStyle='#cc2200';pr(bx+1,oy+39,12,12,3);cx.fill();
+    cx.fillStyle='#991a00';cx.fillRect(bx+2,oy+43,10,3);
+    /* Arme */
+    cx.fillStyle='#cc2200';cx.fillRect(bx-4,oy+36,5,4);cx.fillRect(bx+13,oy+36,5,4);
+    /* Hände */
+    cx.fillStyle='#1a1a1a';pr(bx-6,oy+22,3,4,1);cx.fill();pr(bx+17,oy+22,3,4,1);cx.fill();
+    /* Knie */
+    cx.fillStyle='#111';cx.fillRect(bx-2,oy+42,3,9);cx.fillRect(bx+13,oy+42,3,9);
+    /* Hinterrad */
+    cx.fillStyle='#0a0a0a';pr(bx+1,oy+54,12,14,4);cx.fill();
+    cx.fillStyle='#1a1a1a';pr(bx+2,oy+55,10,12,3);cx.fill();
+    cx.fillStyle='#880000';pr(bx+3,oy+67,8,4,2);cx.fill(); /* Rücklicht */
+  } else if(def.id==='pickup'){
+    const SW=PW+6,ox=35-SW/2,oy=5;
+    /* Ladefläche unten */
+    cx.fillStyle='#282828';cx.fillRect(ox+2,oy+32,SW-4,PH-34);
+    cx.fillStyle='#333';cx.fillRect(ox+4,oy+34,SW-8,PH-38);
+    cx.fillStyle='#5a3c10';
+    for(let i=0;i<4;i++){cx.fillRect(ox+4,oy+35+i*6,SW-8,4);}
+    /* Kabine oben */
+    cx.fillStyle=col.body;pr(ox,oy+2,SW,30,4);cx.fill();
+    cx.fillStyle=col.dark;cx.fillRect(ox+2,oy+3,SW-4,15);
+    cx.fillStyle=col.glass;pr(ox+3,oy+18,SW-6,11,3);cx.fill();
+    cx.fillStyle=col.dark;cx.fillRect(ox+1,oy+29,SW-2,4);
+    cx.fillStyle='#ffe066';pr(ox+2,oy+3,11,7,2);cx.fill();pr(ox+SW-13,oy+3,11,7,2);cx.fill();
+    cx.fillStyle='#770000';pr(ox+2,oy+PH-12,10,7,2);cx.fill();pr(ox+SW-12,oy+PH-12,10,7,2);cx.fill();
+  } else if(def.id==='gold'){
+    const LH=PH+14,ox=35-PW/2,oy=45-LH/2;
+    cx.fillStyle='#1a1000';pr(ox+2,oy+3,PW-4,LH-3,7);cx.fill();
+    cx.fillStyle=col.body;pr(ox,oy,PW,LH,7);cx.fill();
+    cx.fillStyle=col.dark;pr(ox+2,oy+2,PW-4,16,4);cx.fill();
+    cx.fillStyle=col.accent;cx.fillRect(ox+2,oy+17,PW-4,1);
+    cx.fillStyle=col.accent;pr(ox+6,oy+3,PW-12,8,2);cx.fill();
+    cx.fillStyle='rgba(0,0,0,0.65)';cx.fillRect(ox+7,oy+4,PW-14,6);
+    cx.fillStyle=col.glass;pr(ox+3,oy+18,PW-6,13,3);cx.fill();
+    cx.fillStyle=col.dark;cx.fillRect(ox,oy+31,PW,4);
+    cx.fillStyle=col.glass;pr(ox+3,oy+35,PW-6,13,3);cx.fill();
+    cx.fillStyle=col.dark;cx.fillRect(ox+2,oy+48,PW-4,LH-52);
+    cx.fillStyle='#fffde0';pr(ox+2,oy+2,11,8,3);cx.fill();pr(ox+PW-13,oy+2,11,8,3);cx.fill();
+    cx.fillStyle='#770000';pr(ox+2,oy+LH-8,11,7,2);cx.fill();pr(ox+PW-13,oy+LH-8,11,7,2);cx.fill();
+  } else {
+    /* fallback */
+    cx.fillStyle=col.body;pr(5,5,60,80,6);cx.fill();
+    cx.fillStyle=col.dark;cx.fillRect(7,7,56,15);
+    cx.fillStyle=col.glass;pr(8,22,54,20,3);cx.fill();
+    cx.fillStyle='#ffd700';pr(7,7,12,8,2);cx.fill();pr(51,7,12,8,2);cx.fill();
+    cx.fillStyle='#880000';cx.fillRect(7,73,12,7);cx.fillRect(51,73,12,7);
+  }
   return c;
 }
 function renderGarage(){
