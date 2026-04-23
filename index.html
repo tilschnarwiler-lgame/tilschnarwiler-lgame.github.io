@@ -318,17 +318,19 @@ body.game-open .game.active .game-header {
 body.game-open .game.active .iframe-wrap {
     flex: 1;
     border-radius: 0;
-    border-left: none;
-    border-right: none;
-    border-bottom: none;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    position: relative;
+    height: 0; /* overridden by JS */
 }
 
 body.game-open .game.active .iframe-wrap iframe {
-    width: 100% !important;
-    height: 100% !important;
     position: absolute;
-    top: 0; left: 0;
-    transform: none !important;
+    transform-origin: top left;
+    /* width/height/scale set by JS to preserve aspect ratio */
 }
 
 .game-header {
@@ -647,8 +649,50 @@ function showGame(id) {
         window.scrollTo({ top: 0, behavior: 'smooth' });
     } else {
         document.body.classList.add('game-open');
+        requestAnimationFrame(() => fitIframe(id));
     }
 }
+
+function fitIframe(gameId) {
+    const gameEl = document.getElementById(gameId);
+    const wrap   = gameEl.querySelector('.iframe-wrap');
+    const iframe = gameEl.querySelector('iframe');
+    if (!wrap || !iframe) return;
+
+    const origW = parseInt(iframe.getAttribute('width'))  || 600;
+    const origH = parseInt(iframe.getAttribute('height')) || 500;
+
+    // Available space: viewport minus header bar
+    const header = gameEl.querySelector('.game-header');
+    const headerH = header ? header.offsetHeight : 50;
+    const availW = window.innerWidth;
+    const availH = window.innerHeight - headerH;
+
+    // Scale to fit while keeping aspect ratio
+    const scale = Math.min(availW / origW, availH / origH);
+
+    const scaledW = origW * scale;
+    const scaledH = origH * scale;
+
+    // Center in available space
+    const offsetX = (availW - scaledW) / 2;
+    const offsetY = (availH - scaledH) / 2;
+
+    wrap.style.height = availH + 'px';
+
+    iframe.style.width  = origW + 'px';
+    iframe.style.height = origH + 'px';
+    iframe.style.position = 'absolute';
+    iframe.style.left = offsetX + 'px';
+    iframe.style.top  = offsetY + 'px';
+    iframe.style.transform = `scale(${scale})`;
+    iframe.style.transformOrigin = 'top left';
+}
+
+window.addEventListener('resize', () => {
+    const active = document.querySelector('.game.active');
+    if (active && active.id !== 'menu') fitIframe(active.id);
+});
 
 function scaleMobileIframe(gameId) {
     if (window.innerWidth >= 700) return;
