@@ -37,6 +37,11 @@ body {
     overflow-y: auto;
 }
 
+body.game-open {
+    overflow: hidden;
+    height: 100vh;
+}
+
 /* ── BACKGROUND ── */
 .bg-grid {
     position: fixed;
@@ -119,21 +124,7 @@ body {
     pointer-events: none;
 }
 
-/* ── SCANLINES overlay ── */
-body::after {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background: repeating-linear-gradient(
-        0deg,
-        transparent,
-        transparent 2px,
-        rgba(0,0,0,0.07) 2px,
-        rgba(0,0,0,0.07) 4px
-    );
-    pointer-events: none;
-    z-index: 999;
-}
+/* scanlines removed */
 
 /* ── WRAPPER ── */
 .wrapper {
@@ -143,6 +134,12 @@ body::after {
     flex-direction: column;
     align-items: center;
     padding: 0 16px 40px;
+}
+
+body.game-open .wrapper {
+    height: 100vh;
+    overflow: hidden;
+    padding-bottom: 0;
 }
 
 /* ── HEADER ── */
@@ -298,6 +295,40 @@ h1 {
 
 .game.active {
     display: block;
+}
+
+/* When a real game is open, fill the whole viewport */
+body.game-open .game.active {
+    position: fixed;
+    inset: 0;
+    max-width: 100%;
+    padding: 0;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    background: var(--dark-bg);
+    overflow: hidden;
+}
+
+body.game-open .game.active .game-header {
+    padding: 10px 14px;
+    flex-shrink: 0;
+}
+
+body.game-open .game.active .iframe-wrap {
+    flex: 1;
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+    border-bottom: none;
+}
+
+body.game-open .game.active .iframe-wrap iframe {
+    width: 100% !important;
+    height: 100% !important;
+    position: absolute;
+    top: 0; left: 0;
+    transform: none !important;
 }
 
 .game-header {
@@ -588,7 +619,7 @@ iframe {
         <span class="game-title">🏰 Tower Defense</span>
     </div>
     <div class="iframe-wrap" style="--iframe-h:600px; --mobile-ratio:1/1;">
-        <iframe src="tower_defense.html" width="850" height="600" scrolling="no"></iframe>
+        <iframe src="tower_defense.html" width="600" height="600" scrolling="no"></iframe>
     </div>
 </div>
 
@@ -611,12 +642,12 @@ function showGame(id) {
     document.querySelectorAll(".game").forEach(g => g.classList.remove("active"));
     document.getElementById(id).classList.add("active");
 
-    // On mobile: scale iframe to fill container
-    if (id !== 'menu') {
-        scaleMobileIframe(id);
+    if (id === 'menu') {
+        document.body.classList.remove('game-open');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+        document.body.classList.add('game-open');
     }
-
-    window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 function scaleMobileIframe(gameId) {
