@@ -1,180 +1,196 @@
-import React, { useEffect, useRef, useState } from "react";
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <title>Space Jump & Run</title>
+  <style>
+    body {
+      margin: 0;
+      background: black;
+      color: white;
+      text-align: center;
+      font-family: sans-serif;
+      overflow: hidden;
+    }
 
-export default function JumpAndRun() {
-  const canvasRef = useRef(null);
-  const keys = useRef({});
-  const rafId = useRef(null);
+    canvas {
+      border: 2px solid white;
+      margin-top: 10px;
+      background: radial-gradient(circle at center, #050510, #000);
+    }
+  </style>
+</head>
+<body>
 
-  const [won, setWon] = useState(false);
-  const wonRef = useRef(false);
+<h2>🚀 Space Jump & Run</h2>
+<canvas id="game" width="800" height="400"></canvas>
+<p>Pfeiltasten = Bewegung | ↑ = Springen</p>
 
-  const player = useRef({
-    x: 50,
-    y: 300,
-    w: 30,
-    h: 30,
-    vx: 0,
-    vy: 0,
-    onGround: false,
-    hidden: false
+<script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+const keys = {};
+
+// ✅ FIX: verhindert Scrollen + sorgt für stabile Eingabe
+window.addEventListener("keydown", (e) => {
+  if (["ArrowUp","ArrowDown","ArrowLeft","ArrowRight","Space"].includes(e.code)) {
+    e.preventDefault();
+  }
+  keys[e.code] = true;
+}, { passive: false });
+
+window.addEventListener("keyup", (e) => {
+  keys[e.code] = false;
+});
+
+// PLAYER
+const player = {
+  x: 50,
+  y: 300,
+  w: 30,
+  h: 30,
+  vx: 0,
+  vy: 0,
+  onGround: false
+};
+
+const gravity = 0.5;
+const speed = 3;
+const jumpPower = -10;
+
+let level = 0;
+
+// LEVELS
+const levels = [
+  {
+    width: 900,
+    platforms: [
+      {x:0,y:350,w:900,h:20},
+      {x:150,y:300,w:120,h:10},
+      {x:350,y:260,w:120,h:10},
+      {x:550,y:300,w:120,h:10},
+      {x:750,y:240,w:120,h:10}
+    ],
+    portal: {x:820,y:180,w:30,h:50},
+    lasers: [{x:300,y:330,w:120,h:5}]
+  },
+  {
+    width: 1000,
+    platforms: [
+      {x:0,y:350,w:1000,h:20},
+      {x:120,y:310,w:80,h:10},
+      {x:260,y:280,w:80,h:10},
+      {x:420,y:250,w:80,h:10},
+      {x:600,y:220,w:80,h:10},
+      {x:760,y:180,w:80,h:10}
+    ],
+    portal: {x:900,y:140,w:30,h:50},
+    lasers: [
+      {x:400,y:340,w:150,h:5},
+      {x:700,y:200,w:100,h:5}
+    ]
+  }
+];
+
+// COLLISION
+function coll(a,b){
+  return a.x < b.x + b.w &&
+         a.x + a.w > b.x &&
+         a.y < b.y + b.h &&
+         a.y + a.h > b.y;
+}
+
+// RESET PLAYER
+function reset(){
+  player.x = 50;
+  player.y = 300;
+  player.vx = 0;
+  player.vy = 0;
+  player.onGround = false;
+}
+
+// GAME LOOP
+function loop(){
+  const lvl = levels[level];
+
+  const camX = Math.max(0, Math.min(player.x - 200, lvl.width - 800));
+
+  // MOVE
+  if(keys["ArrowLeft"]) player.vx = -speed;
+  else if(keys["ArrowRight"]) player.vx = speed;
+  else player.vx *= 0.8;
+
+  if(keys["ArrowUp"] && player.onGround){
+    player.vy = jumpPower;
+    player.onGround = false;
+  }
+
+  player.vy += gravity;
+  player.x += player.vx;
+  player.y += player.vy;
+
+  player.onGround = false;
+
+  // PLATFORM COLLISION
+  lvl.platforms.forEach(p=>{
+    if(coll(player,p) && player.vy > 0){
+      player.y = p.y - player.h;
+      player.vy = 0;
+      player.onGround = true;
+    }
   });
 
-  const gravity = 0.5;
-  const moveSpeed = 3;
-  const jumpPower = -10;
+  // LASERS
+  lvl.lasers.forEach(l=>{
+    if(coll(player,l)) reset();
+  });
 
-  const platforms = [
-    { x: 0, y: 350, w: 500, h: 20 },
-    { x: 120, y: 280, w: 100, h: 10 },
-    { x: 260, y: 220, w: 100, h: 10 },
-    { x: 380, y: 160, w: 100, h: 10 }
-  ];
+  // PORTAL
+  if(coll(player,lvl.portal)){
+    level = (level + 1) % levels.length;
+    reset();
+  }
 
-  const portal = useRef({ x: 440, y: 110, w: 30, h: 50, active: true });
+  if(player.y > canvas.height) reset();
 
-  useEffect(() => {
-    const down = (e) => (keys.current[e.code] = true);
-    const up = (e) => (keys.current[e.code] = false);
+  // DRAW
+  ctx.fillStyle = "#000010";
+  ctx.fillRect(0,0,canvas.width,canvas.height);
 
-    window.addEventListener("keydown", down);
-    window.addEventListener("keyup", up);
+  ctx.save();
+  ctx.translate(-camX,0);
 
-    return () => {
-      window.removeEventListener("keydown", down);
-      window.removeEventListener("keyup", up);
-    };
-  }, []);
+  // platforms
+  ctx.fillStyle = "#8a2be2";
+  lvl.platforms.forEach(p=>{
+    ctx.fillRect(p.x,p.y,p.w,p.h);
+  });
 
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
+  // lasers
+  ctx.fillStyle = "red";
+  lvl.lasers.forEach(l=>{
+    ctx.fillRect(l.x,l.y,l.w,l.h);
+  });
 
-    const reset = () => {
-      const state = player.current;
-      state.x = 50;
-      state.y = 300;
-      state.vx = 0;
-      state.vy = 0;
-      state.onGround = false;
-      state.hidden = false;
-    };
+  // portal
+  ctx.fillStyle = "#00ffcc";
+  ctx.fillRect(lvl.portal.x,lvl.portal.y,lvl.portal.w,lvl.portal.h);
 
-    const collision = (a, b) =>
-      a.x < b.x + b.w &&
-      a.x + a.w > b.x &&
-      a.y < b.y + b.h &&
-      a.y + a.h > b.y;
+  // player
+  ctx.fillStyle = "#00aaff";
+  ctx.fillRect(player.x,player.y,player.w,player.h);
 
-    const loop = () => {
-      const playerState = player.current;
-      const k = keys.current;
-      const port = portal.current;
+  ctx.restore();
 
-      if (!wonRef.current) {
-        if (k["ArrowLeft"]) playerState.vx = -moveSpeed;
-        else if (k["ArrowRight"]) playerState.vx = moveSpeed;
-        else playerState.vx *= 0.8;
+  ctx.fillStyle = "white";
+  ctx.fillText("Level: " + (level + 1), 10, 20);
 
-        if (k["ArrowUp"] && playerState.onGround) {
-          playerState.vy = jumpPower;
-          playerState.onGround = false;
-        }
-
-        playerState.vy += gravity;
-        playerState.x += playerState.vx;
-        playerState.y += playerState.vy;
-
-        playerState.onGround = false;
-
-        for (let pl of platforms) {
-          if (collision(playerState, pl) && playerState.vy > 0) {
-            playerState.y = pl.y - playerState.h;
-            playerState.vy = 0;
-            playerState.onGround = true;
-          }
-        }
-
-        if (port.active && collision(playerState, port)) {
-          wonRef.current = true;
-          setWon(true);
-          port.active = false;
-
-          playerState.hidden = true;
-          playerState.vx = 0;
-          playerState.vy = 0;
-        }
-
-        if (playerState.x < 0) playerState.x = 0;
-        if (playerState.x + playerState.w > canvas.width) {
-          playerState.x = canvas.width - playerState.w;
-        }
-
-        if (playerState.y > canvas.height) reset();
-      }
-
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      ctx.fillStyle = "#444";
-      platforms.forEach((pl) => ctx.fillRect(pl.x, pl.y, pl.w, pl.h));
-
-      if (portal.current.active) {
-        ctx.fillStyle = "purple";
-        ctx.fillRect(portal.current.x, portal.current.y, portal.current.w, portal.current.h);
-      }
-
-      const playerState = player.current;
-      if (!playerState.hidden) {
-        ctx.fillStyle = "blue";
-        ctx.fillRect(playerState.x, playerState.y, playerState.w, playerState.h);
-      }
-
-      rafId.current = requestAnimationFrame(loop);
-    };
-
-    rafId.current = requestAnimationFrame(loop);
-
-    return () => cancelAnimationFrame(rafId.current);
-  }, []);
-
-  return (
-    <div style={{ textAlign: "center" }}>
-      <canvas
-        ref={canvasRef}
-        width={500}
-        height={400}
-        style={{ border: "2px solid black" }}
-      />
-      <p>Steuerung: Pfeiltasten</p>
-      {won && <h2 style={{ color: "green" }}>Level geschafft!</h2>}
-    </div>
-  );
+  requestAnimationFrame(loop);
 }
 
-// ---------------- TESTS ----------------
+loop();
+</script>
 
-export function collision(a, b) {
-  return (
-    a.x < b.x + b.w &&
-    a.x + a.w > b.x &&
-    a.y < b.y + b.h &&
-    a.y + a.h > b.y
-  );
-}
-
-function runTests() {
-  const a = { x: 0, y: 0, w: 10, h: 10 };
-  const b = { x: 5, y: 5, w: 10, h: 10 };
-  const c = { x: 100, y: 100, w: 10, h: 10 };
-  const edge = { x: 10, y: 10, w: 10, h: 10 };
-
-  console.assert(collision(a, b) === true, "Collision overlap failed");
-  console.assert(collision(a, c) === false, "Collision miss failed");
-
-  // edge touching case
-  console.assert(collision(a, edge) === false, "Edge collision failed");
-
-  console.log("All tests passed");
-}
-
-runTests();
+</body>
+</html>
