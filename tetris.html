@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>Neon Tetris</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
 body {
  margin:0;
@@ -13,6 +14,7 @@ body {
  height:100vh;
  font-family: Arial, sans-serif;
  color:white;
+ touch-action: none;
 }
 .wrapper {
  display:flex;
@@ -48,7 +50,13 @@ canvas {
   <p>Lines: <span id="lines">0</span></p>
   <p>Level: <span id="level">1</span></p>
   <p class="hs">Best: <span id="highscore">0</span></p>
-  <p class="hint">← → move<br>↓ faster<br>↑ rotate</p>
+  <p class="hint">
+   ← → bewegen<br>
+   ↓ schneller<br>
+   ↑ rotieren<br><br>
+   Swipe: bewegen<br>
+   Tippen: rotieren
+  </p>
  </div>
 </div>
 
@@ -74,7 +82,49 @@ const SHAPES=[
 let piece = createPiece();
 let dropCounter=0, lastTime=0;
 let score=0, lines=0, level=1, dropInterval=600;
-let highscore = 0;
+let highscore=0;
+
+// Touch
+let touchStartX=0, touchStartY=0, touchStartTime=0;
+const SWIPE_THRESHOLD = 30;  // Mindest-Pixel für Swipe
+const TAP_MAX_MOVE = 10;     // Max Bewegung damit es als Tap gilt
+const TAP_MAX_TIME = 200;    // Max ms für Tap
+
+canvas.addEventListener("touchstart", e=>{
+ e.preventDefault();
+ touchStartX = e.touches[0].clientX;
+ touchStartY = e.touches[0].clientY;
+ touchStartTime = Date.now();
+}, {passive:false});
+
+canvas.addEventListener("touchend", e=>{
+ e.preventDefault();
+ let dx = e.changedTouches[0].clientX - touchStartX;
+ let dy = e.changedTouches[0].clientY - touchStartY;
+ let dt = Date.now() - touchStartTime;
+ let dist = Math.sqrt(dx*dx + dy*dy);
+
+ // Tap → rotieren
+ if(dist < TAP_MAX_MOVE && dt < TAP_MAX_TIME){
+  rotate(piece);
+  return;
+ }
+
+ // Swipe
+ if(Math.abs(dx) > Math.abs(dy)){
+  // Horizontal
+  if(dx > SWIPE_THRESHOLD){
+   piece.x++; if(collide(board,piece)) piece.x--;
+  } else if(dx < -SWIPE_THRESHOLD){
+   piece.x--; if(collide(board,piece)) piece.x++;
+  }
+ } else {
+  // Vertikal
+  if(dy > SWIPE_THRESHOLD){
+   piece.y++; if(collide(board,piece)) piece.y--;
+  }
+ }
+}, {passive:false});
 
 function createPiece(){
  let id=Math.floor(Math.random()*7)+1;
