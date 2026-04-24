@@ -1,107 +1,131 @@
 <!DOCTYPE html>
+
 <html lang="de">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>Flappy Final</title>
+<title>Flappy Bird</title>
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    background: #1a1a2e;
-    overflow: hidden;
-    touch-action: none;
-  }
-  #wrapper {
-    position: relative;
-    display: inline-block;
-  }
-  canvas {
-    display: block;
-    border: 3px solid rgba(255,255,255,0.2);
-    border-radius: 8px;
-    box-shadow: 0 0 40px rgba(0,0,0,0.6);
-    max-width: 100vw;
-    max-height: 100vh;
-  }
-  #overlay {
-    display: none;
-    position: absolute;
-    inset: 0;
-    background: rgba(0,0,0,0.65);
-    border-radius: 6px;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    gap: 14px;
-  }
-  #overlay.visible { display: flex; }
-  #overlay h1 {
-    font-size: 42px;
-    color: #fff;
-    text-shadow: 0 2px 12px rgba(0,0,0,0.8);
-    letter-spacing: 2px;
-    font-family: sans-serif;
-  }
-  #overlay .score-line { font-size: 22px; color: #ffe082; font-family: sans-serif; }
-  #overlay .hs-line    { font-size: 18px; color: #80cbc4; font-family: sans-serif; }
-  #restart-btn {
-    margin-top: 10px;
-    padding: 14px 44px;
-    font-size: 20px;
-    font-weight: 700;
-    background: linear-gradient(135deg, #43e97b, #38f9d7);
-    color: #1a1a2e;
-    border: none;
-    border-radius: 50px;
-    cursor: pointer;
-    box-shadow: 0 4px 20px rgba(67,233,123,0.4);
-    transition: transform 0.1s;
-    touch-action: manipulation;
-    font-family: sans-serif;
-  }
-  #restart-btn:hover  { transform: scale(1.05); }
-  #restart-btn:active { transform: scale(0.96); }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  display: flex; justify-content: center; align-items: center;
+  height: 100vh; background: #0f0f1a; overflow: hidden; touch-action: none;
+}
+#wrapper { position: relative; display: inline-block; }
+canvas {
+  display: block; border: 3px solid rgba(255,255,255,0.15);
+  border-radius: 10px; box-shadow: 0 0 60px rgba(0,0,0,0.8);
+  max-width: 100vw; max-height: 100vh;
+}
 
-  #countdown-overlay {
-    display: none;
-    position: absolute;
-    inset: 0;
-    background: rgba(0,0,0,0.5);
-    border-radius: 6px;
-    justify-content: center;
-    align-items: center;
-  }
-  #countdown-overlay.visible { display: flex; }
-  #countdown-num {
-    font-size: 130px;
-    font-weight: 900;
-    color: #fff;
-    font-family: sans-serif;
-    text-shadow: 0 0 50px rgba(255,255,255,0.8);
-    animation: cdpop 0.85s ease-out forwards;
-  }
-  @keyframes cdpop {
-    0%   { transform: scale(2.0); opacity: 0; }
-    25%  { transform: scale(1.0); opacity: 1; }
-    75%  { transform: scale(1.0); opacity: 1; }
-    100% { transform: scale(0.4); opacity: 0; }
-  }
+/* ── shared overlay base ── */
+.screen {
+display: none; position: absolute; inset: 0;
+border-radius: 8px; flex-direction: column;
+justify-content: center; align-items: center;
+font-family: ‘Segoe UI’, sans-serif;
+}
+.screen.visible { display: flex; }
+
+/* ── HOME SCREEN ── */
+#home-screen { background: linear-gradient(180deg,#0d2137 0%,#1a3a5c 60%,#0d2137 100%); gap: 0; }
+#home-screen h1 {
+font-size: 52px; font-weight: 900; color: #fff;
+text-shadow: 0 0 30px #43e97b, 0 3px 0 #1b5e20;
+letter-spacing: 3px; margin-bottom: 4px;
+}
+#home-screen .subtitle { font-size: 14px; color: #80cbc4; margin-bottom: 24px; }
+
+.skin-grid {
+display: grid; grid-template-columns: repeat(4, 64px); gap: 12px;
+margin-bottom: 24px;
+}
+.skin-cell {
+width: 64px; height: 64px; border-radius: 50%;
+border: 3px solid rgba(255,255,255,0.2);
+cursor: pointer; position: relative;
+transition: transform 0.15s, border-color 0.15s;
+display: flex; align-items: center; justify-content: center;
+}
+.skin-cell:hover  { transform: scale(1.12); }
+.skin-cell.active { border-color: #43e97b; box-shadow: 0 0 14px #43e97b; }
+.skin-cell canvas { border-radius: 50%; border: none; box-shadow: none; }
+
+#play-btn {
+padding: 16px 60px; font-size: 22px; font-weight: 800;
+background: linear-gradient(135deg,#43e97b,#38f9d7);
+color: #0d2137; border: none; border-radius: 50px; cursor: pointer;
+box-shadow: 0 4px 24px rgba(67,233,123,0.5);
+transition: transform 0.1s; touch-action: manipulation;
+}
+#play-btn:hover  { transform: scale(1.06); }
+#play-btn:active { transform: scale(0.96); }
+#hs-home { font-size: 16px; color: #ffd600; margin-top: 14px; }
+
+/* ── GAME OVER ── */
+#gameover-screen { background: rgba(0,0,0,0.72); gap: 12px; }
+#gameover-screen h1 { font-size: 44px; color: #fff; text-shadow: 0 2px 14px #000; letter-spacing: 2px; }
+.go-score { font-size: 24px; color: #ffe082; }
+.go-hs    { font-size: 18px; color: #80cbc4; }
+.go-btns  { display: flex; gap: 14px; margin-top: 6px; }
+.go-btn {
+padding: 13px 32px; font-size: 18px; font-weight: 700;
+border: none; border-radius: 50px; cursor: pointer;
+transition: transform 0.1s; touch-action: manipulation; font-family: inherit;
+}
+.go-btn:hover  { transform: scale(1.06); }
+.go-btn:active { transform: scale(0.96); }
+#go-restart { background: linear-gradient(135deg,#43e97b,#38f9d7); color: #0d2137; box-shadow: 0 4px 18px rgba(67,233,123,0.4); }
+#go-home    { background: rgba(255,255,255,0.15); color: #fff; border: 2px solid rgba(255,255,255,0.35); }
+
+/* ── COUNTDOWN ── */
+#countdown-overlay {
+display: none; position: absolute; inset: 0;
+background: rgba(0,0,0,0.45); border-radius: 8px;
+justify-content: center; align-items: center;
+}
+#countdown-overlay.visible { display: flex; }
+#countdown-num {
+font-size: 130px; font-weight: 900; color: #fff;
+font-family: sans-serif; text-shadow: 0 0 50px rgba(255,255,255,0.9);
+animation: cdpop 0.85s ease-out forwards;
+}
+@keyframes cdpop {
+0%   { transform: scale(2.0); opacity: 0; }
+25%  { transform: scale(1.0); opacity: 1; }
+75%  { transform: scale(1.0); opacity: 1; }
+100% { transform: scale(0.4); opacity: 0; }
+}
 </style>
+
 </head>
 <body>
 <div id="wrapper">
   <canvas id="game" width="420" height="640"></canvas>
 
-  <div id="overlay">
-    <h1>💀 Game Over</h1>
-    <div class="score-line" id="final-score">Score: 0</div>
-    <div class="hs-line"    id="final-hs">🏆 Highscore: 0</div>
-    <button id="restart-btn">▶ Neustart</button>
+  <!-- HOME -->
+
+  <div id="home-screen" class="screen visible">
+    <h1>🐦 FLAPPY</h1>
+    <div class="subtitle">Wähle deinen Vogel</div>
+    <div class="skin-grid" id="skin-grid"></div>
+    <button id="play-btn">▶ Spielen</button>
+    <div id="hs-home">🏆 Highscore: <span id="hs-home-val">0</span></div>
   </div>
+
+  <!-- GAME OVER -->
+
+  <div id="gameover-screen" class="screen">
+    <h1>💀 Game Over</h1>
+    <div class="go-score" id="go-score">Score: 0</div>
+    <div class="go-hs"    id="go-hs">🏆 Highscore: 0</div>
+    <div class="go-btns">
+      <button class="go-btn" id="go-restart">▶ Neustart</button>
+      <button class="go-btn" id="go-home">🏠 Home</button>
+    </div>
+  </div>
+
+  <!-- COUNTDOWN -->
 
   <div id="countdown-overlay">
     <span id="countdown-num">3</span>
@@ -109,137 +133,228 @@
 </div>
 
 <script>
-const canvas     = document.getElementById("game");
-const ctx        = canvas.getContext("2d");
-const overlay    = document.getElementById("overlay");
-const cdOverlay  = document.getElementById("countdown-overlay");
-const cdNum      = document.getElementById("countdown-num");
-const finalScore = document.getElementById("final-score");
-const finalHs    = document.getElementById("final-hs");
-const restartBtn = document.getElementById("restart-btn");
+// ═══════════════════════════════════════════════════════════
+//  SKINS
+// ═══════════════════════════════════════════════════════════
+const SKINS = [
+  { name:"Gelb",   body:"#fdd835", wing:"#f9a825" },
+  { name:"Blau",   body:"#29b6f6", wing:"#0277bd" },
+  { name:"Rot",    body:"#ef5350", wing:"#b71c1c" },
+  { name:"Grün",   body:"#66bb6a", wing:"#2e7d32" },
+  { name:"Pink",   body:"#f06292", wing:"#ad1457" },
+  { name:"Lila",   body:"#ab47bc", wing:"#6a1b9a" },
+  { name:"Orange", body:"#ffa726", wing:"#e65100" },
+  { name:"Weiß",   body:"#eceff1", wing:"#90a4ae" },
+];
+let selectedSkin = parseInt(localStorage.getItem("flappy_skin") || "0");
 
-// ── Highscore (localStorage) ──────────────────────────────
+// Build skin picker
+const skinGrid = document.getElementById("skin-grid");
+SKINS.forEach((s, i) => {
+  const cell = document.createElement("div");
+  cell.className = "skin-cell" + (i === selectedSkin ? " active" : "");
+  // mini canvas preview
+  const mc = document.createElement("canvas");
+  mc.width = 58; mc.height = 58; mc.style.cssText = "border-radius:50%;border:none;box-shadow:none;";
+  const mx = mc.getContext("2d");
+  mx.fillStyle = s.body;
+  mx.beginPath(); mx.arc(29,29,20,0,Math.PI*2); mx.fill();
+  mx.fillStyle = s.wing;
+  mx.beginPath(); mx.ellipse(16,34,13,7,0,0,Math.PI*2); mx.fill();
+  mx.beginPath(); mx.ellipse(42,24,13,7,0,0,Math.PI*2); mx.fill();
+  // eye: same for all skins - black with white dot
+  mx.fillStyle = "#111";
+  mx.beginPath(); mx.arc(35,24,5,0,Math.PI*2); mx.fill();
+  mx.fillStyle = "white";
+  mx.beginPath(); mx.arc(36.8,22.4,2,0,Math.PI*2); mx.fill();
+  cell.appendChild(mc);
+  cell.addEventListener("click", () => {
+    document.querySelectorAll(".skin-cell").forEach(c => c.classList.remove("active"));
+    cell.classList.add("active");
+    selectedSkin = i;
+    localStorage.setItem("flappy_skin", i);
+  });
+  skinGrid.appendChild(cell);
+});
+
+// ═══════════════════════════════════════════════════════════
+//  CANVAS & REFS
+// ═══════════════════════════════════════════════════════════
+const canvas   = document.getElementById("game");
+const ctx      = canvas.getContext("2d");
+const homeScr  = document.getElementById("home-screen");
+const goScr    = document.getElementById("gameover-screen");
+const cdOvl    = document.getElementById("countdown-overlay");
+const cdNum    = document.getElementById("countdown-num");
+const goScore  = document.getElementById("go-score");
+const goHs     = document.getElementById("go-hs");
+const hsHomeVal= document.getElementById("hs-home-val");
+
 let highscore = parseInt(localStorage.getItem("flappy_hs") || "0");
+hsHomeVal.textContent = highscore;
+let onHome = true; // true = home screen active, suppress endGame overlay
 
-// ── Game state ────────────────────────────────────────────
-let bird, pipes, powerups, score, frame, gameOver, slowMo, shield, invincible, counting;
-// shield   = 1 means the powerup is active (not yet consumed by a hit)
-// invincible = frames remaining of post-hit invincibility (120 = 2 sec at 60fps)
+// ═══════════════════════════════════════════════════════════
+//  WORLDS  (7 total, each 10 points)
+// ═══════════════════════════════════════════════════════════
+const WORLDS = [
+  { name:"☀️ TAG",     bg:"#4fc3f7", pipe1:"#388e3c", pipe2:"#1b5e20" },
+  { name:"🌙 NACHT",   bg:"#0d1b2a", pipe1:"#1a237e", pipe2:"#0d1433" },
+  { name:"🌅 SUNSET",  bg:"#c2440e", pipe1:"#6d4c41", pipe2:"#3e2723" },
+  { name:"🚀 SPACE",   bg:"#000814", pipe1:"#37474f", pipe2:"#1c313a" },
+  { name:"🌊 OZEAN",   bg:"#006064", pipe1:"#00838f", pipe2:"#004d5b" },
+  { name:"🌋 LAVA",    bg:"#bf360c", pipe1:"#4a148c", pipe2:"#6a1b9a" },
+  { name:"❄️ EIS",     bg:"#b3e5fc", pipe1:"#80deea", pipe2:"#00838f" },
+];
+
+function getWorld() { return Math.floor(score / 10) % WORLDS.length; }
+
+// ═══════════════════════════════════════════════════════════
+//  POWERUP TYPES  (6 total)
+// ═══════════════════════════════════════════════════════════
+// slow    – zeitlupe
+// shield  – zeitlich begrenzt unverwundbar, blinkt am Ende
+// mini    – vogel schrumpft (kleinere hitbox) 15 sek
+// ghost   – fliegt durch rohre 5 sek
+const PU_TYPES = ["slow","shield","mini","ghost"];
+const PU_COLOR = {
+  slow:"#00e5ff", shield:"#ffd600", mini:"#ce93d8", ghost:"#80deea"
+};
+const PU_ICON = {
+  slow:"⏱", shield:"🛡", mini:"🔬", ghost:"👻"
+};
+
+function randomPU() { return PU_TYPES[Math.floor(Math.random()*PU_TYPES.length)]; }
+
+// ═══════════════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════════════
+let bird, pipes, powerups, score, frame, gameOver, counting;
+let slowMo, shield, invincible, mini, ghost;
 
 function initState() {
-  bird = { x: 80, y: 200, r: 14, v: 0, g: 0.45, jump: -8, wing: 0 };
-  pipes = []; powerups = [];
-  score = 0; frame = 0;
-  gameOver = false; counting = false;
-  slowMo = 0; shield = 0; invincible = 0;
+  bird = { x:80, y:200, r:14, v:0, g:0.45, jump:-8, wing:0 };
+  pipes=[]; powerups=[];
+  score=0; frame=0; gameOver=false; counting=false;
+  slowMo=0; shield=0; invincible=0; mini=0; ghost=0;
 }
 initState();
 
-// ── Controls ──────────────────────────────────────────────
-function flap() {
-  if (!gameOver && !counting) bird.v = bird.jump;
-}
+// ═══════════════════════════════════════════════════════════
+//  CONTROLS
+// ═══════════════════════════════════════════════════════════
+function flap() { if (!gameOver && !counting) bird.v = bird.jump; }
 document.addEventListener("keydown", flap);
-canvas.addEventListener("touchstart", e => { e.preventDefault(); flap(); }, { passive: false });
+canvas.addEventListener("touchstart", e => { e.preventDefault(); flap(); }, {passive:false});
 
-// ── Restart & countdown ───────────────────────────────────
-function startCountdown() {
-  overlay.classList.remove("visible");
+// ═══════════════════════════════════════════════════════════
+//  SCREEN TRANSITIONS
+// ═══════════════════════════════════════════════════════════
+document.getElementById("play-btn").addEventListener("click", () => {
+  homeScr.classList.remove("visible");
+  onHome = false;
   initState();
-  counting = true;
+  startCountdown();
+});
 
-  function showCount(n) {
+document.getElementById("go-restart").addEventListener("click", () => {
+  goScr.classList.remove("visible");
+  onHome = false;
+  initState();
+  startCountdown();
+});
+document.getElementById("go-home").addEventListener("click", () => {
+  goScr.classList.remove("visible");
+  onHome = true;
+  initState();
+  homeScr.classList.add("visible");
+  hsHomeVal.textContent = highscore;
+});
+
+function startCountdown() {
+  counting = true;
+  let count = 3;
+  function show(n) {
     cdNum.textContent = n;
-    // retrigger CSS animation
     cdNum.style.animation = "none";
     void cdNum.offsetWidth;
     cdNum.style.animation = "cdpop 0.85s ease-out forwards";
-    cdOverlay.classList.add("visible");
+    cdOvl.classList.add("visible");
   }
-
-  showCount(3);
-  setTimeout(() => showCount(2), 900);
-  setTimeout(() => showCount(1), 1800);
-  setTimeout(() => {
-    cdOverlay.classList.remove("visible");
-    counting = false;
-  }, 2700);
+  show(3);
+  setTimeout(()=>show(2), 900);
+  setTimeout(()=>show(1), 1800);
+  setTimeout(()=>{ cdOvl.classList.remove("visible"); counting=false; }, 2700);
 }
 
-restartBtn.addEventListener("click",    startCountdown);
-restartBtn.addEventListener("touchend", e => { e.preventDefault(); startCountdown(); }, { passive: false });
-
-// ── World ─────────────────────────────────────────────────
-function getWorld() { return Math.floor(score / 10) % 4; }
-const BG = ["#4fc3f7","#0d1b2a","#c2440e","#000814"];
-
-// ── Difficulty ────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════
+//  DIFFICULTY
+// ═══════════════════════════════════════════════════════════
 function diff() {
-  let lvl = Math.floor(score / 10);
+  let lvl = Math.floor(score/10);
   return {
-    speed:       2 + lvl * 0.4,
-    gap:         Math.max(90, 160 - lvl * 10),
-    spawn:       Math.max(90, 120 - lvl * 6),
-    powerChance: Math.max(0.08, 0.25 - lvl * 0.03)
+    speed:       2 + lvl*0.4,
+    gap:         Math.max(88, 160 - lvl*10),
+    spawn:       Math.max(85, 120 - lvl*6),
+    powerChance: Math.max(0.10, 0.28 - lvl*0.02)
   };
 }
 
-// ── Pipe spawn ────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════
+//  PIPE SPAWN
+// ═══════════════════════════════════════════════════════════
 function addPipe() {
   let d = diff();
-  let top = Math.random() * 240 + 60;
-  pipes.push({ x: canvas.width, w: 50, top, bottom: canvas.height - top - d.gap, passed: false });
+  let top = Math.random()*240+60;
+  pipes.push({ x:canvas.width, w:50, top, bottom:canvas.height-top-d.gap, passed:false });
   if (Math.random() < d.powerChance) {
-    powerups.push({
-      x: canvas.width + 40,
-      y: top + d.gap / 2,
-      type: Math.random() < 0.5 ? "slow" : "shield",
-      taken: false
-    });
+    let midY = top + d.gap/2;
+    powerups.push({ x:canvas.width+40, y:midY, type:randomPU(), taken:false });
   }
 }
 
-// ── Collision: circle vs rect ─────────────────────────────
-function circRect(cx, cy, r, rx, ry, rw, rh) {
-  let nx = Math.max(rx, Math.min(cx, rx + rw));
-  let ny = Math.max(ry, Math.min(cy, ry + rh));
-  let dx = cx - nx, dy = cy - ny;
-  return dx*dx + dy*dy < r*r;
+// ═══════════════════════════════════════════════════════════
+//  COLLISION
+// ═══════════════════════════════════════════════════════════
+function circRect(cx,cy,r,rx,ry,rw,rh) {
+  let nx=Math.max(rx,Math.min(cx,rx+rw));
+  let ny=Math.max(ry,Math.min(cy,ry+rh));
+  let dx=cx-nx, dy=cy-ny;
+  return dx*dx+dy*dy < r*r;
 }
 
-// ── Update ────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════
+//  UPDATE
+// ═══════════════════════════════════════════════════════════
 function update() {
   if (gameOver || counting) return;
 
   let d = diff();
-  let speed = slowMo > 0 ? d.speed * 0.5 : d.speed;
+  let speed = slowMo>0 ? d.speed*0.45 : d.speed;
+  let r = mini>0 ? 8 : bird.r;   // smaller hitbox with mini
 
   bird.v += bird.g;
   bird.y += bird.v;
 
-  // floor / ceiling
-  if (bird.y - bird.r < 0 || bird.y + bird.r > canvas.height) {
-    return endGame();
-  }
+  if (bird.y - r < 0 || bird.y + r > canvas.height) return endGame();
 
   if (frame % d.spawn === 0) addPipe();
 
-  // pipe collisions
+  // pipes
   for (let p of pipes) {
     p.x -= speed;
-    if (!p.passed && p.x + p.w < bird.x) { score++; p.passed = true; }
+    if (!p.passed && p.x+p.w < bird.x) { score++; p.passed=true; }
 
-    let hitTop    = circRect(bird.x, bird.y, bird.r, p.x, 0,                        p.w, p.top);
-    let hitBottom = circRect(bird.x, bird.y, bird.r, p.x, canvas.height - p.bottom, p.w, p.bottom);
+    if (ghost > 0) continue;  // ghost: skip collision
 
-    if (hitTop || hitBottom) {
+    let hitT = circRect(bird.x,bird.y,r, p.x,0,p.w,p.top);
+    let hitB = circRect(bird.x,bird.y,r, p.x,canvas.height-p.bottom,p.w,p.bottom);
+
+    if (hitT || hitB) {
       if (invincible > 0) {
-        // still in grace period — ignore hit completely
+        // grace period — no effect
       } else if (shield > 0) {
-        // consume shield, start 2-sec invincibility + bounce up
-        shield = 0;
-        invincible = 120;          // 120 frames ≈ 2 seconds
-        bird.v = bird.jump * 0.6;  // bounce upward out of pipe
+        shield=0; invincible=120; bird.v=bird.jump*0.6;
       } else {
         return endGame();
       }
@@ -247,168 +362,238 @@ function update() {
   }
   pipes = pipes.filter(p => p.x > -80);
 
-  // powerup collisions
+  // powerups
   for (let p of powerups) {
     p.x -= speed;
-    if (!p.taken && circRect(bird.x, bird.y, bird.r, p.x - 10, p.y - 10, 20, 20)) {
-      p.taken = true;
-      if (p.type === "slow")   slowMo = 180;
-      if (p.type === "shield") { shield = 1; invincible = 0; } // reset grace on fresh pickup
+    if (!p.taken && circRect(bird.x,bird.y,r+2, p.x-12,p.y-12,24,24)) {
+      p.taken=true;
+      applyPowerup(p.type);
     }
   }
   powerups = powerups.filter(p => !p.taken && p.x > -60);
 
-  if (slowMo > 0) slowMo--;
-  if (invincible > 0) invincible--;
+  // tick timers
+  if (slowMo>0)     slowMo--;
+  if (invincible>0) invincible--;
+  if (shield>0)     shield--;
+  if (mini>0)       mini--;
+  if (ghost>0)      ghost--;
+
   bird.wing += 0.25;
   frame++;
 }
 
-function endGame() {
-  gameOver = true;
-  if (score > highscore) {
-    highscore = score;
-    localStorage.setItem("flappy_hs", highscore);
-  }
-  finalScore.textContent = "Score: " + score;
-  finalHs.textContent    = "🏆 Highscore: " + highscore;
-  overlay.classList.add("visible");
+function applyPowerup(type) {
+  if (type==="slow")   slowMo  = 200;
+  if (type==="shield") { shield=360; invincible=0; }
+  if (type==="mini")   mini    = 900;
+  if (type==="ghost")  ghost   = 300;
 }
 
-// ── Draw ──────────────────────────────────────────────────
-function drawPipe(p) {
-  // body
-  ctx.fillStyle = "#388e3c";
-  ctx.fillRect(p.x, 0, p.w, p.top);
-  ctx.fillRect(p.x, canvas.height - p.bottom, p.w, p.bottom);
-  // cap
-  ctx.fillStyle = "#1b5e20";
-  ctx.fillRect(p.x - 4, p.top - 20,                   p.w + 8, 20);
-  ctx.fillRect(p.x - 4, canvas.height - p.bottom,      p.w + 8, 20);
-  // shine
-  ctx.fillStyle = "rgba(255,255,255,0.1)";
-  ctx.fillRect(p.x + 5, 0, 7, p.top);
-  ctx.fillRect(p.x + 5, canvas.height - p.bottom, 7, p.bottom);
+function endGame() {
+  if (onHome) return;  // already on home screen, don't show game over
+  gameOver=true;
+  if (score>highscore) { highscore=score; localStorage.setItem("flappy_hs",highscore); }
+  goScore.textContent = "Score: "+score;
+  goHs.textContent    = "🏆 Highscore: "+highscore;
+  goScr.classList.add("visible");
+}
+
+// ═══════════════════════════════════════════════════════════
+//  DRAW HELPERS
+// ═══════════════════════════════════════════════════════════
+function drawPipe(p, world) {
+  let w = WORLDS[world];
+  ctx.fillStyle = w.pipe1;
+  ctx.fillRect(p.x,0,p.w,p.top);
+  ctx.fillRect(p.x,canvas.height-p.bottom,p.w,p.bottom);
+  ctx.fillStyle = w.pipe2;
+  ctx.fillRect(p.x-4,p.top-20,p.w+8,20);
+  ctx.fillRect(p.x-4,canvas.height-p.bottom,p.w+8,20);
+  ctx.fillStyle="rgba(255,255,255,0.08)";
+  ctx.fillRect(p.x+5,0,7,p.top);
+  ctx.fillRect(p.x+5,canvas.height-p.bottom,7,p.bottom);
 }
 
 function drawBird() {
-  // flicker during invincibility: hide every other 4-frame block
-  if (invincible > 0 && Math.floor(invincible / 4) % 2 === 0) return;
+  if (invincible>0 && Math.floor(invincible/4)%2===0) return;
+  if (ghost>0 && Math.floor(frame/5)%2===0) return; // ghost flicker too
 
-  let w = Math.sin(bird.wing) * 6;
-  // body
-  ctx.fillStyle = "#fdd835";
-  ctx.beginPath(); ctx.arc(bird.x, bird.y, bird.r, 0, Math.PI*2); ctx.fill();
-  // wings
-  ctx.fillStyle = "#f9a825";
-  ctx.beginPath(); ctx.ellipse(bird.x-12, bird.y+w, 10, 6, 0, 0, Math.PI*2); ctx.fill();
-  ctx.beginPath(); ctx.ellipse(bird.x+12, bird.y-w, 10, 6, 0, 0, Math.PI*2); ctx.fill();
-  // eye
+  let skin = SKINS[selectedSkin];
+  let bx=bird.x, by=bird.y;
+  let r = mini>0 ? 8 : bird.r;
+  let wingScale = mini>0 ? 0.55 : 1;
+  let w = Math.sin(bird.wing)*6;
+
+  // ghost tint overlay
+  if (ghost>0) {
+    ctx.save(); ctx.globalAlpha=0.55;
+  }
+
+  ctx.fillStyle = skin.body;
+  ctx.beginPath(); ctx.arc(bx,by,r,0,Math.PI*2); ctx.fill();
+
+  ctx.fillStyle = skin.wing;
+  ctx.beginPath(); ctx.ellipse(bx-12*wingScale,by+w,10*wingScale,6*wingScale,0,0,Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(bx+12*wingScale,by-w,10*wingScale,6*wingScale,0,0,Math.PI*2); ctx.fill();
+
+  // eye: same for all skins - black circle + white highlight
   ctx.fillStyle = "#111";
-  ctx.beginPath(); ctx.arc(bird.x+5, bird.y-4, 3, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(bx+r*0.35, by-r*0.28, r*0.26, 0, Math.PI*2); ctx.fill();
   ctx.fillStyle = "white";
-  ctx.beginPath(); ctx.arc(bird.x+6, bird.y-5, 1.3, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(bx+r*0.43, by-r*0.37, r*0.11, 0, Math.PI*2); ctx.fill();
+
+  if (ghost>0) ctx.restore();
 }
 
-function draw() {
-  let w = getWorld();
-  ctx.fillStyle = BG[w];
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-  // space stars
-  if (w === 3) {
-    ctx.fillStyle = "white";
-    for (let i = 0; i < 55; i++) {
-      ctx.fillRect((i*37 + frame*0.4|0) % 420, (i*91)%640, i%4===0?2:1, i%4===0?2:1);
+function drawWorldExtras(world) {
+  // night moon
+  if (world===1) {
+    ctx.fillStyle="#fff9c4";
+    ctx.beginPath(); ctx.arc(360,60,28,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle=WORLDS[1].bg;
+    ctx.beginPath(); ctx.arc(373,51,24,0,Math.PI*2); ctx.fill();
+  }
+  // space stars (parallax)
+  if (world===3) {
+    ctx.fillStyle="white";
+    for (let i=0;i<60;i++) {
+      ctx.fillRect((i*37+frame*0.35|0)%420,(i*91)%640,i%5===0?2:1,i%5===0?2:1);
     }
   }
-  // night moon
-  if (w === 1) {
-    ctx.fillStyle = "#fff9c4";
-    ctx.beginPath(); ctx.arc(360, 60, 28, 0, Math.PI*2); ctx.fill();
-    ctx.fillStyle = BG[1];
-    ctx.beginPath(); ctx.arc(372, 51, 24, 0, Math.PI*2); ctx.fill();
+  // ocean bubbles
+  if (world===4) {
+    ctx.fillStyle="rgba(255,255,255,0.18)";
+    for (let i=0;i<10;i++) {
+      let bx2=(i*83+frame*0.4|0)%420;
+      let by2=(i*61+frame*(0.3+i*0.04)|0)%640;
+      ctx.beginPath(); ctx.arc(bx2,by2,4+i%4,0,Math.PI*2); ctx.fill();
+    }
   }
-
-  pipes.forEach(drawPipe);
-
-  // powerups
-  for (let p of powerups) {
-    if (p.taken) continue;
-    ctx.save();
-    ctx.shadowBlur = 14;
-    ctx.shadowColor = p.type === "slow" ? "#00e5ff" : "#ffd600";
-    ctx.fillStyle   = p.type === "slow" ? "#00e5ff" : "#ffd600";
-    ctx.beginPath(); ctx.arc(p.x, p.y, 12, 0, Math.PI*2); ctx.fill();
-    ctx.restore();
-    ctx.font = "13px sans-serif";
-    ctx.textAlign = "center"; ctx.textBaseline = "middle";
-    ctx.fillText(p.type === "slow" ? "⏱" : "🛡", p.x, p.y);
-    ctx.textAlign = "left"; ctx.textBaseline = "alphabetic";
+  // lava glow bottom
+  if (world===5) {
+    let grad=ctx.createLinearGradient(0,500,0,640);
+    grad.addColorStop(0,"rgba(255,87,34,0)");
+    grad.addColorStop(1,"rgba(255,87,34,0.45)");
+    ctx.fillStyle=grad; ctx.fillRect(0,500,420,140);
   }
+  // ice snowflakes
+  if (world===6) {
+    ctx.fillStyle="rgba(255,255,255,0.6)";
+    for (let i=0;i<18;i++) {
+      let sx=(i*53+frame*0.5|0)%420;
+      let sy=(i*77+frame*(0.6+i*0.03)|0)%640;
+      ctx.fillRect(sx,sy,3,3);
+    }
+  }
+}
 
+function drawPowerup(p) {
+  if (p.taken) return;
+  let col = PU_COLOR[p.type];
+  ctx.save();
+  ctx.shadowBlur=16; ctx.shadowColor=col;
+  ctx.fillStyle=col;
+  ctx.beginPath(); ctx.arc(p.x,p.y,13,0,Math.PI*2); ctx.fill();
+  ctx.restore();
+  ctx.font="14px sans-serif";
+  ctx.textAlign="center"; ctx.textBaseline="middle";
+  ctx.fillText(PU_ICON[p.type], p.x, p.y);
+  ctx.textAlign="left"; ctx.textBaseline="alphabetic";
+}
+
+// ═══════════════════════════════════════════════════════════
+//  MAIN DRAW
+// ═══════════════════════════════════════════════════════════
+function draw() {
+  let w = getWorld();
+  ctx.fillStyle = WORLDS[w].bg;
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+
+  drawWorldExtras(w);
+  pipes.forEach(p => drawPipe(p, w));
+  powerups.forEach(drawPowerup);
   drawBird();
 
-  // shield ring — show when shield active OR during invincibility frames
-  if ((shield > 0 || invincible > 0) && !(invincible > 0 && Math.floor(invincible / 4) % 2 === 0)) {
+  // shield/invincible ring
+  let shieldExpiring = shield > 0 && shield < 120;
+  let shieldBlink    = shieldExpiring && Math.floor(frame/5)%2===0; // alternates color
+  let invBlink       = invincible > 0 && Math.floor(invincible/4)%2===0; // hides on invincible
+
+  if ((shield>0 || invincible>0) && !invBlink) {
     ctx.save();
-    ctx.strokeStyle = "#00e5ff";
-    ctx.lineWidth = 3;
-    ctx.shadowBlur = 18; ctx.shadowColor = "#00e5ff";
-    ctx.beginPath(); ctx.arc(bird.x, bird.y, bird.r + 9, 0, Math.PI*2); ctx.stroke();
+    let ringCol = shieldExpiring
+      ? (shieldBlink ? "#ff1744" : "#ffd600")
+      : (invincible>0 ? "#00e5ff" : "#ffd600");
+    ctx.strokeStyle = ringCol;
+    ctx.lineWidth   = shieldExpiring ? 4 : 3;
+    ctx.shadowBlur  = 18; ctx.shadowColor = ringCol;
+    ctx.beginPath(); ctx.arc(bird.x, bird.y, bird.r+10, 0, Math.PI*2); ctx.stroke();
+    ctx.restore();
+  }
+  // ghost ring
+  if (ghost>0 && Math.floor(frame/5)%2!==0) {
+    ctx.save();
+    ctx.strokeStyle="rgba(128,222,234,0.7)"; ctx.lineWidth=2;
+    ctx.setLineDash([5,5]);
+    ctx.beginPath(); ctx.arc(bird.x,bird.y,bird.r+8,0,Math.PI*2); ctx.stroke();
+    ctx.restore();
+  }
+  // mini ring
+  if (mini>0) {
+    ctx.save();
+    ctx.strokeStyle="#ce93d8"; ctx.lineWidth=1.5;
+    ctx.beginPath(); ctx.arc(bird.x,bird.y,bird.r+6,0,Math.PI*2); ctx.stroke();
     ctx.restore();
   }
 
   // slow tint
-  if (slowMo > 0) {
-    ctx.fillStyle = "rgba(0,229,255,0.05)";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-  }
+  if (slowMo>0) { ctx.fillStyle="rgba(0,229,255,0.04)"; ctx.fillRect(0,0,420,640); }
 
   // ── HUD ──
-  // score box
-  ctx.fillStyle = "rgba(0,0,0,0.38)";
+  ctx.fillStyle="rgba(0,0,0,0.4)";
   ctx.beginPath();
-  ctx.roundRect ? ctx.roundRect(6, 6, 150, 54, 8) : ctx.rect(6, 6, 150, 54);
+  if(ctx.roundRect) ctx.roundRect(6,6,152,54,8); else ctx.rect(6,6,152,54);
   ctx.fill();
-  ctx.fillStyle = "white";
-  ctx.font = "bold 22px sans-serif";
-  ctx.fillText("Score: " + score, 14, 30);
-  let names = ["☀️ TAG","🌙 NACHT","🌅 SUNSET","🚀 SPACE"];
-  ctx.font = "13px sans-serif";
-  ctx.fillText(names[w], 14, 50);
+  ctx.fillStyle="white"; ctx.font="bold 22px sans-serif";
+  ctx.fillText("Score: "+score,14,30);
+  ctx.font="13px sans-serif";
+  ctx.fillText(WORLDS[w].name,14,50);
 
-  // highscore box (top right)
-  ctx.fillStyle = "rgba(0,0,0,0.38)";
-  ctx.fillRect(canvas.width - 138, 6, 132, 30);
-  ctx.fillStyle = "#ffd600";
-  ctx.font = "bold 15px sans-serif";
-  ctx.fillText("🏆 " + highscore, canvas.width - 130, 26);
+  ctx.fillStyle="rgba(0,0,0,0.4)"; ctx.fillRect(canvas.width-140,6,134,30);
+  ctx.fillStyle="#ffd600"; ctx.font="bold 15px sans-serif";
+  ctx.fillText("🏆 "+highscore, canvas.width-132,26);
 
-  // badges
-  let by = 70;
-  if (slowMo > 0) {
-    ctx.fillStyle = "#00e5ff";
-    ctx.fillRect(6, by, 90, 22);
-    ctx.fillStyle = "#1a1a2e"; ctx.font = "bold 13px sans-serif";
-    ctx.fillText("⏱ SLOW-MO", 10, by+15);
-    by += 28;
+  // active powerup badges
+  let badges = [];
+  if (slowMo>0)     badges.push({label:"⏱ SLOW-MO",  col:"#00e5ff"});
+  if (shield>0) {
+    let expiring = shield < 120;
+    let blinkOn  = expiring && Math.floor(frame/6)%2===0;
+    let secs     = Math.ceil(shield/60);
+    badges.push({ label:"🛡 SHIELD "+secs+"s", col: blinkOn ? "#ff1744" : "#ffd600" });
   }
-  if (shield > 0 || invincible > 0) {
-    ctx.fillStyle = invincible > 0 ? (frame % 8 < 4 ? "#ff6b6b" : "#ffd600") : "#ffd600";
-    ctx.fillRect(6, by, 110, 22);
-    ctx.fillStyle = "#1a1a2e"; ctx.font = "bold 13px sans-serif";
-    let label = invincible > 0 ? "🛡 UNBESIEGBAR" : "🛡 SHIELD";
-    ctx.fillText(label, 10, by+15);
+  if (invincible>0) badges.push({label:"🛡 UNANGREIFBAR", col: frame%8<4?"#ff6b6b":"#ffd600"});
+  if (mini>0)       badges.push({label:"🔬 MINI",     col:"#ce93d8"});
+  if (ghost>0)      badges.push({label:"👻 GHOST",    col:"#80deea"});
+
+  let by2=70;
+  for (let b of badges) {
+    ctx.fillStyle=b.col; ctx.fillRect(6,by2,130,22);
+    ctx.fillStyle="#0d1b2a"; ctx.font="bold 12px sans-serif";
+    ctx.fillText(b.label,10,by2+15);
+    by2+=26;
   }
 }
 
-// ── Loop ──────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════
+//  LOOP
+// ═══════════════════════════════════════════════════════════
 (function loop() {
-  update();
-  draw();
+  update(); draw();
   requestAnimationFrame(loop);
 })();
 </script>
+
 </body>
 </html>
