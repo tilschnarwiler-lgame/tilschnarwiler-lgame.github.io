@@ -233,14 +233,7 @@ h1 {
     transform: translateY(-4px) scale(1.02);
 }
 
-/* individual accent colors per card */
-.game-card:nth-child(1) { --accent: #00ff88; }
-.game-card:nth-child(2) { --accent: #ffcc00; }
-.game-card:nth-child(3) { --accent: #00d4ff; }
-.game-card:nth-child(4) { --accent: #ff2d78; }
-.game-card:nth-child(5) { --accent: #ff7700; }
-.game-card:nth-child(6) { --accent: #b44eff; }
-.game-card:nth-child(7) { --accent: #00ffcc; }
+/* accent colors set automatically via JS */
 
 .game-card:hover {
     border-color: var(--accent);
@@ -455,13 +448,7 @@ iframe {
 .game-card {
     animation: cardIn 0.4s ease both;
 }
-.game-card:nth-child(1) { animation-delay: 0.05s; }
-.game-card:nth-child(2) { animation-delay: 0.10s; }
-.game-card:nth-child(3) { animation-delay: 0.15s; }
-.game-card:nth-child(4) { animation-delay: 0.20s; }
-.game-card:nth-child(5) { animation-delay: 0.25s; }
-.game-card:nth-child(6) { animation-delay: 0.30s; }
-.game-card:nth-child(7) { animation-delay: 0.35s; }
+/* animation-delay and accent set automatically via JS */
 
 /* ── RESPONSIVE ── */
 
@@ -556,6 +543,10 @@ iframe {
             <span class="card-icon">🦘</span>
             <span class="card-title">Jump & Run</span>
         </div>
+        <div class="game-card" onclick="showGame('stickman')">
+            <span class="card-icon">🥷</span>
+            <span class="card-title">Stickman Fight</span>
+        </div>
     </div>
 </div>
 
@@ -621,7 +612,18 @@ iframe {
         <span class="game-title">🏰 Tower Defense</span>
     </div>
     <div class="iframe-wrap" style="--iframe-h:600px; --mobile-ratio:1/1;">
-        <iframe src="tower_defense.html" width="850" height="600" scrolling="no"></iframe>
+        <iframe src="tower_defense.html" width="600" height="600" scrolling="no"></iframe>
+    </div>
+</div>
+
+<!-- STICKMAN FIGHT -->
+<div id="stickman" class="game">
+    <div class="game-header">
+        <button class="backBtn" onclick="showGame('menu')">⬅ Zurück</button>
+        <span class="game-title">🥷 Stickman Fight</span>
+    </div>
+    <div class="iframe-wrap" style="--iframe-h:600px;">
+        <iframe src="stickman_fight.html" width="600" height="600" scrolling="no"></iframe>
     </div>
 </div>
 
@@ -632,7 +634,7 @@ iframe {
         <span class="game-title">🦘 Jump & Run</span>
     </div>
     <div class="iframe-wrap" style="--iframe-h:600px; --mobile-ratio:1/1;">
-        <iframe src="jump_run.html" width="800" height="600" scrolling="no"></iframe>
+        <iframe src="jump_run.html" width="600" height="600" scrolling="no"></iframe>
     </div>
 </div>
 ```
@@ -730,6 +732,16 @@ document.addEventListener("keydown", function(e) {
         e.preventDefault();
     }
 }, true);
+
+
+// Auto-assign accent colors and animation delays to game cards
+(function(){
+    const colors = ['#00ff88','#ffcc00','#00d4ff','#ff2d78','#ff7700','#b44eff','#00ffcc','#ff9900','#00ffee','#ff4488'];
+    document.querySelectorAll('.game-card').forEach((card, i) => {
+        card.style.setProperty('--accent', colors[i % colors.length]);
+        card.style.animationDelay = (0.05 + i * 0.05) + 's';
+    });
+})();
 
 // ── PARTICLES ──
 (function(){
