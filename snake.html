@@ -27,31 +27,28 @@ body {
     margin-bottom: 15px;
 }
 
-#startBtn {
+/* BUTTON STYLE (Start + Restart gleich!) */
+.btn {
     padding: 12px 20px;
     font-size: 18px;
     background: limegreen;
     border: none;
     border-radius: 8px;
     cursor: pointer;
+    margin: 10px;
+}
+
+/* Restart auch zentriert */
+#restartContainer {
+    position: absolute;
+    display: none;
+    text-align: center;
 }
 
 /* GAME */
 canvas {
     background: black;
     border: 2px solid white;
-}
-
-button#restartBtn {
-    position: absolute;
-    top: 20px;
-    display: none;
-    padding: 10px 15px;
-    border: none;
-    border-radius: 8px;
-    background: #007bff;
-    color: white;
-    cursor: pointer;
 }
 </style>
 </head>
@@ -61,10 +58,13 @@ button#restartBtn {
 <!-- 🎮 MENU -->
 <div id="menu">
     <h1>🐍 Snake Arcade</h1>
-    <button id="startBtn" onclick="bootGame()">▶ Start Game</button>
+    <button class="btn" onclick="bootGame()">▶ Start Game</button>
 </div>
 
-<button id="restartBtn" onclick="restartGame()">🔁 Restart</button>
+<!-- 🔄 RESTART SCREEN -->
+<div id="restartContainer">
+    <button class="btn" onclick="restartGame()">🔁 Restart</button>
+</div>
 
 <canvas id="game" width="600" height="400"></canvas>
 
@@ -79,13 +79,38 @@ const BLOCK = 20;
 let snake, direction, food, score, highscore, gameOver;
 let gameStarted = false;
 
+// ---------------- TOUCH (SWIPE) ----------------
+let touchStartX = 0;
+let touchStartY = 0;
+
+document.addEventListener("touchstart", (e) => {
+    const t = e.touches[0];
+    touchStartX = t.clientX;
+    touchStartY = t.clientY;
+});
+
+document.addEventListener("touchend", (e) => {
+    const t = e.changedTouches[0];
+
+    let dx = t.clientX - touchStartX;
+    let dy = t.clientY - touchStartY;
+
+    if (Math.abs(dx) > Math.abs(dy)) {
+        if (dx > 0 && direction !== "LEFT") direction = "RIGHT";
+        else if (dx < 0 && direction !== "RIGHT") direction = "LEFT";
+    } else {
+        if (dy > 0 && direction !== "UP") direction = "DOWN";
+        else if (dy < 0 && direction !== "DOWN") direction = "UP";
+    }
+});
+
 // ---------------- AUDIO ----------------
 const AudioCtx = window.AudioContext || window.webkitAudioContext;
 const audioCtx = new AudioCtx();
 
 let musicInterval;
 
-function playTone(freq, duration, type = "square", volume = 0.08) {
+function playTone(freq, duration, type = "square", volume = 0.06) {
     const osc = audioCtx.createOscillator();
     const gain = audioCtx.createGain();
 
@@ -101,15 +126,14 @@ function playTone(freq, duration, type = "square", volume = 0.08) {
     osc.stop(audioCtx.currentTime + duration);
 }
 
-// 🎵 ruhigere Musik
+// 🎵 MUSIC
 function startMusic() {
     if (musicInterval) return;
 
     const melody = [
-        110, 110, 146, 110,
-        98, 110, 131, 110,
-        92, 98, 110, 98,
-        110, 131, 110, 98
+        110,110,146,110,
+        98,110,131,110,
+        92,98,110,98
     ];
 
     let i = 0;
@@ -125,13 +149,13 @@ function stopMusic() {
     musicInterval = null;
 }
 
-// 🍎 eat sound
+// 🍎 EAT
 function playEatSound() {
-    playTone(700, 0.05, "square", 0.08);
-    setTimeout(() => playTone(1000, 0.05, "square", 0.06), 60);
+    playTone(700, 0.05);
+    setTimeout(() => playTone(1000, 0.05), 60);
 }
 
-// 💀 death sound
+// 💀 DEATH
 function playDeathSound() {
     playTone(120, 0.3, "sawtooth", 0.1);
     setTimeout(() => playTone(80, 0.4, "sawtooth", 0.1), 150);
@@ -145,13 +169,13 @@ document.addEventListener("click", () => {
 }, { once: true });
 
 // 🚫 anti scroll
-window.addEventListener("keydown", function(e) {
+window.addEventListener("keydown", (e) => {
     if (["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"].includes(e.key)) {
         e.preventDefault();
     }
 });
 
-// ---------------- START GAME ----------------
+// ---------------- START ----------------
 highscore = localStorage.getItem("snake_highscore");
 highscore = highscore ? parseInt(highscore) : 0;
 
@@ -171,7 +195,7 @@ function startGame() {
     score = 0;
     gameOver = false;
 
-    document.getElementById("restartBtn").style.display = "none";
+    document.getElementById("restartContainer").style.display = "none";
 
     food = spawnFood();
 
@@ -227,14 +251,12 @@ function update() {
     if (direction === "UP") head.y -= BLOCK;
     if (direction === "DOWN") head.y += BLOCK;
 
-    // WRAP
     if (head.x < 0) head.x = WIDTH - BLOCK;
     else if (head.x >= WIDTH) head.x = 0;
 
     if (head.y < 0) head.y = HEIGHT - BLOCK;
     else if (head.y >= HEIGHT) head.y = 0;
 
-    // SELF COLLISION
     for (let part of snake) {
         if (part.x === head.x && part.y === head.y) {
             gameOver = true;
@@ -244,7 +266,7 @@ function update() {
 
             localStorage.setItem("snake_highscore", Math.max(score, highscore));
 
-            document.getElementById("restartBtn").style.display = "block";
+            document.getElementById("restartContainer").style.display = "block";
             return;
         }
     }
@@ -265,12 +287,6 @@ function drawSnake() {
     snake.forEach((s, i) => {
         ctx.fillStyle = i === 0 ? "#0b6b2a" : "#2ecc71";
         ctx.fillRect(s.x, s.y, BLOCK, BLOCK);
-
-        if (i === 0) {
-            ctx.fillStyle = "white";
-            ctx.fillRect(s.x + 5, s.y + 5, 4, 4);
-            ctx.fillRect(s.x + 12, s.y + 5, 4, 4);
-        }
     });
 }
 
@@ -282,14 +298,9 @@ function drawApple() {
     ctx.beginPath();
     ctx.arc(x, y, BLOCK / 2 - 2, 0, Math.PI * 2);
     ctx.fill();
-
-    ctx.fillStyle = "green";
-    ctx.beginPath();
-    ctx.ellipse(x + 5, y - 10, 6, 3, Math.PI / 4, 0, Math.PI * 2);
-    ctx.fill();
 }
 
-// ---------------- RENDER ----------------
+// ---------------- DRAW ----------------
 function draw() {
     ctx.fillStyle = "black";
     ctx.fillRect(0, 0, WIDTH, HEIGHT);
@@ -298,18 +309,7 @@ function draw() {
     drawSnake();
 
     ctx.fillStyle = "white";
-    ctx.font = "18px Arial";
     ctx.fillText("Score: " + score, 10, 20);
-    ctx.fillText("Highscore: " + highscore, 10, 45);
-
-    if (gameOver) {
-        ctx.fillStyle = "rgba(0,0,0,0.7)";
-        ctx.fillRect(0, 0, WIDTH, HEIGHT);
-
-        ctx.fillStyle = "white";
-        ctx.font = "30px Arial";
-        ctx.fillText("GAME OVER", 200, 180);
-    }
 }
 
 // ---------------- LOOP ----------------
