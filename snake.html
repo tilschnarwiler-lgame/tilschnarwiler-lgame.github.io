@@ -9,34 +9,63 @@ body {
     margin: 0;
     background: black;
     display: flex;
-    flex-direction: column;
+    justify-content: center;
     align-items: center;
+    height: 100vh;
     font-family: Arial;
     color: white;
 }
 
-button {
-    padding: 10px 15px;
-    margin: 10px;
+/* MENU */
+#menu {
+    position: absolute;
+    text-align: center;
+}
+
+#menu h1 {
+    font-size: 32px;
+    margin-bottom: 15px;
+}
+
+#startBtn {
+    padding: 12px 20px;
+    font-size: 18px;
+    background: limegreen;
     border: none;
     border-radius: 8px;
     cursor: pointer;
-    background: #007bff;
-    color: white;
-    font-size: 16px;
-    display: none;
 }
 
+/* GAME */
 canvas {
     background: black;
     border: 2px solid white;
+}
+
+button#restartBtn {
+    position: absolute;
+    top: 20px;
+    display: none;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 8px;
+    background: #007bff;
+    color: white;
+    cursor: pointer;
 }
 </style>
 </head>
 
 <body>
 
+<!-- 🎮 MENU -->
+<div id="menu">
+    <h1>🐍 Snake Arcade</h1>
+    <button id="startBtn" onclick="bootGame()">▶ Start Game</button>
+</div>
+
 <button id="restartBtn" onclick="restartGame()">🔁 Restart</button>
+
 <canvas id="game" width="600" height="400"></canvas>
 
 <script>
@@ -48,6 +77,7 @@ const HEIGHT = 400;
 const BLOCK = 20;
 
 let snake, direction, food, score, highscore, gameOver;
+let gameStarted = false;
 
 // ---------------- AUDIO ----------------
 const AudioCtx = window.AudioContext || window.webkitAudioContext;
@@ -55,7 +85,6 @@ const audioCtx = new AudioCtx();
 
 let musicInterval;
 
-// 🔊 Grundton-Generator
 function playTone(freq, duration, type = "square", volume = 0.08) {
     const osc = audioCtx.createOscillator();
     const gain = audioCtx.createGain();
@@ -72,22 +101,23 @@ function playTone(freq, duration, type = "square", volume = 0.08) {
     osc.stop(audioCtx.currentTime + duration);
 }
 
-// 🎵 SPANNENDERE ARCADE MUSIK (leicht „drückend“)
+// 🎵 ruhigere Musik
 function startMusic() {
     if (musicInterval) return;
 
     const melody = [
-        220, 247, 262, 247,
-        220, 196, 220, 247,
-        196, 185, 196, 220
+        110, 110, 146, 110,
+        98, 110, 131, 110,
+        92, 98, 110, 98,
+        110, 131, 110, 98
     ];
 
     let i = 0;
 
     musicInterval = setInterval(() => {
-        playTone(melody[i % melody.length], 0.12, "square", 0.05);
+        playTone(melody[i % melody.length], 0.25, "sine", 0.04);
         i++;
-    }, 140);
+    }, 260);
 }
 
 function stopMusic() {
@@ -95,35 +125,45 @@ function stopMusic() {
     musicInterval = null;
 }
 
-// 🍎 ESSEN SOUND (knackiger + „arcade pop“)
+// 🍎 eat sound
 function playEatSound() {
     playTone(700, 0.05, "square", 0.08);
     setTimeout(() => playTone(1000, 0.05, "square", 0.06), 60);
 }
 
-// 💀 DEATH SOUND (dein bestehender bleibt gut)
+// 💀 death sound
 function playDeathSound() {
     playTone(120, 0.3, "sawtooth", 0.1);
     setTimeout(() => playTone(80, 0.4, "sawtooth", 0.1), 150);
 }
 
-// 🎧 Audio Unlock
+// unlock audio
 document.addEventListener("click", () => {
     if (audioCtx.state === "suspended") {
         audioCtx.resume();
     }
 }, { once: true });
 
-// 🚫 ANTI SCROLL FIX
+// 🚫 anti scroll
 window.addEventListener("keydown", function(e) {
-    if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)) {
+    if (["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"].includes(e.key)) {
         e.preventDefault();
     }
 });
 
-// ---------------- START ----------------
+// ---------------- START GAME ----------------
 highscore = localStorage.getItem("snake_highscore");
 highscore = highscore ? parseInt(highscore) : 0;
+
+function bootGame() {
+    if (gameStarted) return;
+
+    gameStarted = true;
+    document.getElementById("menu").style.display = "none";
+
+    startGame();
+    loop();
+}
 
 function startGame() {
     snake = [{x: 200, y: 200}];
@@ -211,7 +251,6 @@ function update() {
 
     snake.unshift(head);
 
-    // FOOD
     if (head.x === food.x && head.y === food.y) {
         score++;
         playEatSound();
@@ -250,7 +289,7 @@ function drawApple() {
     ctx.fill();
 }
 
-// ---------------- DRAW ----------------
+// ---------------- RENDER ----------------
 function draw() {
     ctx.fillStyle = "black";
     ctx.fillRect(0, 0, WIDTH, HEIGHT);
@@ -279,9 +318,6 @@ function loop() {
     draw();
     setTimeout(loop, 100);
 }
-
-startGame();
-loop();
 </script>
 
 </body>
