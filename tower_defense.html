@@ -59,7 +59,7 @@ canvas { display: block; width: 600px; height: 620px; min-width: 600px; max-widt
     <button class="tbtn archer" id="btnArcher">
       <span class="btn-name">Bogenschütze</span>
       <span class="btn-cost">60 Gold</span>
-      <span class="btn-desc">2 Schaden · mittl. Reichw.</span>
+      <span class="btn-desc">3 Schaden · mittl. Reichw.</span>
     </button>
     <button class="tbtn cannon" id="btnCannon">
       <span class="btn-name">Kanonenturm</span>
@@ -69,7 +69,7 @@ canvas { display: block; width: 600px; height: 620px; min-width: 600px; max-widt
     <button class="tbtn mage" id="btnMage">
       <span class="btn-name">Magierturm</span>
       <span class="btn-cost">100 Gold</span>
-      <span class="btn-desc">3 Flächenschaden</span>
+      <span class="btn-desc">4 Flächenschaden</span>
     </button>
     <div class="divider"></div>
     <div id="upgPanel">
@@ -95,13 +95,13 @@ let buildMode=null,msg='',msgTimer=0,popup=null,selectedTower=null;
 let wave=0,enemiesToSpawn=0,spawnTimer=0,phase='prep';
 
 const TOWER_DEFS={
-  archer:{cost:60,range:145,cooldown:48,dmg:2,color:'#4a9a4a',label:'Bogenschütze'},
+  archer:{cost:60,range:145,cooldown:48,dmg:3,color:'#4a9a4a',label:'Bogenschütze'},
   cannon:{cost:100,range:160,cooldown:96,dmg:5,color:'#a05a28',label:'Kanonenturm'},
-  mage:{cost:120,range:130,cooldown:96,dmg:3,color:'#8a28c0',label:'Magierturm',splash:55}
+  mage:{cost:120,range:130,cooldown:96,dmg:4,color:'#8a28c0',label:'Magierturm',splash:55}
 };
 const UPGRADE_DEFS={
-  archer:{cost:40,rangeBonus:0.20,dmgBonus:2,label:'+20% Reichw., +1 Schaden'},
-  cannon:{cost:60,rangeBonus:0.10,dmgBonus:2,label:'+10% Reichw., +2 Schaden'},
+  archer:{cost:50,rangeBonus:0.20,dmgBonus:2,label:'+20% Reichw., +1 Schaden'},
+  cannon:{cost:70,rangeBonus:0.10,dmgBonus:2,label:'+10% Reichw., +2 Schaden'},
   mage:{cost:80,rangeBonus:0.20,dmgBonus:2,label:'+20% Reichw., +2 Schaden'}
 };
 
