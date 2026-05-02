@@ -141,10 +141,11 @@ function spawnEnemy(){
   else if(side===2){x=Math.floor(Math.random()*COLS);y=0;}
   else{x=Math.floor(Math.random()*COLS);y=ROWS-1;}
   if(type==='heavy'){
-    enemies.push({x,y,hp:20,maxHp:20,speed:0.018+wave*0.001,color:'#8a0000',angle:0,type:'heavy',dmg:5});
+    enemies.push({x,y,hp:20,maxHp:20,speed:0.009+wave*0.0005
+,color:'#8a0000',angle:0,type:'heavy',dmg:5});
   } else {
     const cols=['#8B3a3a','#4a5a00','#1a3a3a','#2c2c5e','#5a3a1a'];
-    enemies.push({x,y,hp:5,maxHp:5,speed:0.030+wave*0.002,color:cols[Math.floor(Math.random()*cols.length)],angle:0,type:'light',dmg:1});
+    enemies.push({x,y,hp:5,maxHp:5,speed:0.015+wave*0.001,color:cols[Math.floor(Math.random()*cols.length)],angle:0,type:'light',dmg:1});
   }
 }
 
