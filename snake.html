@@ -49,20 +49,21 @@ const BLOCK = 20;
 
 let snake, direction, food, score, highscore, gameOver;
 
-// ---------------- AUDIO ENGINE ----------------
+// ---------------- AUDIO ----------------
 const AudioCtx = window.AudioContext || window.webkitAudioContext;
 const audioCtx = new AudioCtx();
 
 let musicInterval;
 
-function playTone(freq, duration, type = "square") {
+// 🔊 Grundton-Generator
+function playTone(freq, duration, type = "square", volume = 0.08) {
     const osc = audioCtx.createOscillator();
     const gain = audioCtx.createGain();
 
     osc.type = type;
     osc.frequency.value = freq;
 
-    gain.gain.value = 0.1;
+    gain.gain.value = volume;
 
     osc.connect(gain);
     gain.connect(audioCtx.destination);
@@ -71,17 +72,22 @@ function playTone(freq, duration, type = "square") {
     osc.stop(audioCtx.currentTime + duration);
 }
 
-// 🎵 MUSIC
+// 🎵 SPANNENDERE ARCADE MUSIK (leicht „drückend“)
 function startMusic() {
     if (musicInterval) return;
 
-    const notes = [220, 262, 330, 262, 220, 196, 220, 262];
+    const melody = [
+        220, 247, 262, 247,
+        220, 196, 220, 247,
+        196, 185, 196, 220
+    ];
+
     let i = 0;
 
     musicInterval = setInterval(() => {
-        playTone(notes[i % notes.length], 0.1, "square");
+        playTone(melody[i % melody.length], 0.12, "square", 0.05);
         i++;
-    }, 200);
+    }, 140);
 }
 
 function stopMusic() {
@@ -89,24 +95,31 @@ function stopMusic() {
     musicInterval = null;
 }
 
-// 🍎 EAT SOUND
+// 🍎 ESSEN SOUND (knackiger + „arcade pop“)
 function playEatSound() {
-    playTone(600, 0.08, "square");
-    setTimeout(() => playTone(900, 0.08, "square"), 80);
+    playTone(700, 0.05, "square", 0.08);
+    setTimeout(() => playTone(1000, 0.05, "square", 0.06), 60);
 }
 
-// 💀 DEATH SOUND
+// 💀 DEATH SOUND (dein bestehender bleibt gut)
 function playDeathSound() {
-    playTone(120, 0.3, "sawtooth");
-    setTimeout(() => playTone(80, 0.4, "sawtooth"), 150);
+    playTone(120, 0.3, "sawtooth", 0.1);
+    setTimeout(() => playTone(80, 0.4, "sawtooth", 0.1), 150);
 }
 
-// unlock audio
+// 🎧 Audio Unlock
 document.addEventListener("click", () => {
     if (audioCtx.state === "suspended") {
         audioCtx.resume();
     }
 }, { once: true });
+
+// 🚫 ANTI SCROLL FIX
+window.addEventListener("keydown", function(e) {
+    if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)) {
+        e.preventDefault();
+    }
+});
 
 // ---------------- START ----------------
 highscore = localStorage.getItem("snake_highscore");
