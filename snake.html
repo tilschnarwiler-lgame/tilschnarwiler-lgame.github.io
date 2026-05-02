@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<title>Snake</title>
+<title>Snake Arcade</title>
 
 <style>
 body {
@@ -13,10 +13,6 @@ body {
     align-items: center;
     font-family: Arial;
     color: white;
-}
-
-h2 {
-    margin: 10px;
 }
 
 button {
@@ -41,7 +37,6 @@ canvas {
 <body>
 
 <button id="restartBtn" onclick="restartGame()">🔁 Restart</button>
-
 <canvas id="game" width="600" height="400"></canvas>
 
 <script>
@@ -54,10 +49,69 @@ const BLOCK = 20;
 
 let snake, direction, food, score, highscore, gameOver;
 
+// ---------------- AUDIO ENGINE ----------------
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+const audioCtx = new AudioCtx();
+
+let musicInterval;
+
+function playTone(freq, duration, type = "square") {
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+
+    osc.type = type;
+    osc.frequency.value = freq;
+
+    gain.gain.value = 0.1;
+
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+
+    osc.start();
+    osc.stop(audioCtx.currentTime + duration);
+}
+
+// 🎵 MUSIC
+function startMusic() {
+    if (musicInterval) return;
+
+    const notes = [220, 262, 330, 262, 220, 196, 220, 262];
+    let i = 0;
+
+    musicInterval = setInterval(() => {
+        playTone(notes[i % notes.length], 0.1, "square");
+        i++;
+    }, 200);
+}
+
+function stopMusic() {
+    clearInterval(musicInterval);
+    musicInterval = null;
+}
+
+// 🍎 EAT SOUND
+function playEatSound() {
+    playTone(600, 0.08, "square");
+    setTimeout(() => playTone(900, 0.08, "square"), 80);
+}
+
+// 💀 DEATH SOUND
+function playDeathSound() {
+    playTone(120, 0.3, "sawtooth");
+    setTimeout(() => playTone(80, 0.4, "sawtooth"), 150);
+}
+
+// unlock audio
+document.addEventListener("click", () => {
+    if (audioCtx.state === "suspended") {
+        audioCtx.resume();
+    }
+}, { once: true });
+
+// ---------------- START ----------------
 highscore = localStorage.getItem("snake_highscore");
 highscore = highscore ? parseInt(highscore) : 0;
 
-// ---------------- START ----------------
 function startGame() {
     snake = [{x: 200, y: 200}];
     direction = "RIGHT";
@@ -67,9 +121,11 @@ function startGame() {
     document.getElementById("restartBtn").style.display = "none";
 
     food = spawnFood();
+
+    startMusic();
 }
 
-// ---------------- FOOD (SAFE + VISIBEL) ----------------
+// ---------------- FOOD ----------------
 function spawnFood() {
     let newFood;
 
@@ -118,18 +174,23 @@ function update() {
     if (direction === "UP") head.y -= BLOCK;
     if (direction === "DOWN") head.y += BLOCK;
 
-    // 🌍 WRAP AROUND
+    // WRAP
     if (head.x < 0) head.x = WIDTH - BLOCK;
     else if (head.x >= WIDTH) head.x = 0;
 
     if (head.y < 0) head.y = HEIGHT - BLOCK;
     else if (head.y >= HEIGHT) head.y = 0;
 
-    // 💀 SELF COLLISION
+    // SELF COLLISION
     for (let part of snake) {
         if (part.x === head.x && part.y === head.y) {
             gameOver = true;
-            saveHighscore();
+
+            stopMusic();
+            playDeathSound();
+
+            localStorage.setItem("snake_highscore", Math.max(score, highscore));
+
             document.getElementById("restartBtn").style.display = "block";
             return;
         }
@@ -137,25 +198,17 @@ function update() {
 
     snake.unshift(head);
 
-    // 🍎 FOOD
+    // FOOD
     if (head.x === food.x && head.y === food.y) {
         score++;
-        if (score > highscore) highscore = score;
+        playEatSound();
         food = spawnFood();
     } else {
         snake.pop();
     }
 }
 
-// ---------------- HIGH SCORE ----------------
-function saveHighscore() {
-    if (score > highscore) {
-        highscore = score;
-        localStorage.setItem("snake_highscore", highscore);
-    }
-}
-
-// ---------------- DRAW SNAKE ----------------
+// ---------------- DRAW ----------------
 function drawSnake() {
     snake.forEach((s, i) => {
         ctx.fillStyle = i === 0 ? "#0b6b2a" : "#2ecc71";
@@ -169,24 +222,15 @@ function drawSnake() {
     });
 }
 
-// ---------------- DRAW APPLE (REALISTIC) ----------------
 function drawApple() {
     const x = food.x + BLOCK / 2;
     const y = food.y + BLOCK / 2;
 
-    // Body
     ctx.fillStyle = "red";
     ctx.beginPath();
     ctx.arc(x, y, BLOCK / 2 - 2, 0, Math.PI * 2);
     ctx.fill();
 
-    // Highlight
-    ctx.fillStyle = "rgba(255,255,255,0.4)";
-    ctx.beginPath();
-    ctx.arc(x - 4, y - 4, 4, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Leaf
     ctx.fillStyle = "green";
     ctx.beginPath();
     ctx.ellipse(x + 5, y - 10, 6, 3, Math.PI / 4, 0, Math.PI * 2);
@@ -201,7 +245,6 @@ function draw() {
     drawApple();
     drawSnake();
 
-    // UI oben links
     ctx.fillStyle = "white";
     ctx.font = "18px Arial";
     ctx.fillText("Score: " + score, 10, 20);
@@ -224,7 +267,6 @@ function loop() {
     setTimeout(loop, 100);
 }
 
-// START
 startGame();
 loop();
 </script>
