@@ -89,20 +89,20 @@ canvas { display: block; width: 600px; height: 620px; min-width: 600px; max-widt
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
 const GS=40,COLS=15,ROWS=15,CX=7,CY=7;
-let baseHP=100,money=160,gameOver=false;
+let baseHP=100,money=180,gameOver=false;
 let enemies=[],towers=[],arrows=[],particles=[],explosions=[];
 let buildMode=null,msg='',msgTimer=0,popup=null,selectedTower=null;
 let wave=0,enemiesToSpawn=0,spawnTimer=0,phase='prep';
 
 const TOWER_DEFS={
-  archer:{cost:80,range:145,cooldown:48,dmg:2,color:'#4a9a4a',label:'Bogenschütze'},
-  cannon:{cost:120,range:160,cooldown:96,dmg:5,color:'#a05a28',label:'Kanonenturm'},
-  mage:{cost:160,range:130,cooldown:96,dmg:3,color:'#8a28c0',label:'Magierturm',splash:55}
+  archer:{cost:60,range:145,cooldown:48,dmg:2,color:'#4a9a4a',label:'Bogenschütze'},
+  cannon:{cost:100,range:160,cooldown:96,dmg:5,color:'#a05a28',label:'Kanonenturm'},
+  mage:{cost:120,range:130,cooldown:96,dmg:3,color:'#8a28c0',label:'Magierturm',splash:55}
 };
 const UPGRADE_DEFS={
-  archer:{cost:40,rangeBonus:0.20,dmgBonus:1,label:'+20% Reichw., +1 Schaden'},
-  cannon:{cost:80,rangeBonus:0.10,dmgBonus:2,label:'+10% Reichw., +2 Schaden'},
-  mage:{cost:100,rangeBonus:0.20,dmgBonus:2,label:'+20% Reichw., +2 Schaden'}
+  archer:{cost:40,rangeBonus:0.20,dmgBonus:2,label:'+20% Reichw., +1 Schaden'},
+  cannon:{cost:60,rangeBonus:0.10,dmgBonus:2,label:'+10% Reichw., +2 Schaden'},
+  mage:{cost:80,rangeBonus:0.20,dmgBonus:2,label:'+20% Reichw., +2 Schaden'}
 };
 
 const terrain=[];
