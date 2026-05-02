@@ -39,6 +39,8 @@ canvas { display: block; width: 600px; height: 620px; min-width: 600px; max-widt
 #upgPanel .upg-btn { margin-top: 5px; width: 100%; padding: 5px; background: #3a3a00; color: #f1c40f; border: 1px solid #888800; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: bold; font-family: 'Segoe UI', sans-serif; }
 #upgPanel .upg-btn:hover:not(:disabled) { background: #555500; }
 #upgPanel .upg-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+#upgPanel .sell-btn { margin-top: 4px; width: 100%; padding: 5px; background: #5a1a1a; color: #ffaaaa; border: 1px solid #aa3333; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: bold; font-family: 'Segoe UI', sans-serif; }
+#upgPanel .sell-btn:hover { background: #882222; }
 #upgPanel .upg-done { color: #888; font-size: 10px; margin-top: 4px; border-top: 1px solid #333; padding-top: 4px; font-family: 'Segoe UI', sans-serif; }
 #upgPanel .close-btn { float: right; background: none; border: none; color: #888; cursor: pointer; font-size: 14px; line-height: 1; }
 </style>
@@ -81,7 +83,7 @@ canvas { display: block; width: 600px; height: 620px; min-width: 600px; max-widt
     <div class="divider"></div>
     <button class="wave-btn" id="waveBtn">Welle 1 starten</button>
     <div class="divider"></div>
-    <div class="s-title" style="font-size:9px;line-height:1.5;">Klick auf Turm → Upgrade<br>Klick auf Baum/Busch → Entfernen</div>
+    <div class="s-title" style="font-size:9px;line-height:1.5;">Klick auf Turm → Upgrade/Verkauf<br>Klick auf Baum/Busch → Entfernen</div>
   </div>
   <canvas id="game" width="600" height="620"></canvas>
 </div>
@@ -100,7 +102,7 @@ const TOWER_DEFS={
   mage:{cost:120,range:130,cooldown:96,dmg:4,color:'#8a28c0',label:'Magierturm',splash:55}
 };
 const UPGRADE_DEFS={
-  archer:{cost:50,rangeBonus:0.20,dmgBonus:2,label:'+20% Reichw., +1 Schaden'},
+  archer:{cost:50,rangeBonus:0.20,dmgBonus:2,label:'+20% Reichw., +2 Schaden'},
   cannon:{cost:70,rangeBonus:0.10,dmgBonus:2,label:'+10% Reichw., +2 Schaden'},
   mage:{cost:80,rangeBonus:0.20,dmgBonus:2,label:'+20% Reichw., +2 Schaden'}
 };
@@ -141,8 +143,7 @@ function spawnEnemy(){
   else if(side===2){x=Math.floor(Math.random()*COLS);y=0;}
   else{x=Math.floor(Math.random()*COLS);y=ROWS-1;}
   if(type==='heavy'){
-    enemies.push({x,y,hp:20,maxHp:20,speed:0.009+wave*0.0005
-,color:'#8a0000',angle:0,type:'heavy',dmg:5});
+    enemies.push({x,y,hp:20,maxHp:20,speed:0.009+wave*0.0005,color:'#8a0000',angle:0,type:'heavy',dmg:5});
   } else {
     const cols=['#8B3a3a','#4a5a00','#1a3a3a','#2c2c5e','#5a3a1a'];
     enemies.push({x,y,hp:5,maxHp:5,speed:0.015+wave*0.001,color:cols[Math.floor(Math.random()*cols.length)],angle:0,type:'light',dmg:1});
@@ -165,19 +166,40 @@ function getMouse(e){
   return{x:(e.clientX-r.left)*(600/r.width),y:(e.clientY-r.top)*(620/r.height)};
 }
 
+function getSellPrice(tw){
+  const def=TOWER_DEFS[tw.type];
+  const upd=UPGRADE_DEFS[tw.type];
+  return Math.floor(def.cost/2)+(tw.upgraded?Math.floor(upd.cost/2):0);
+}
+
+function sellTower(tw){
+  const refund=getSellPrice(tw);
+  money+=refund;
+  grid[tw.y][tw.x]=null;
+  towers=towers.filter(t=>t!==tw);
+  hideUpgPanel();
+  showMsg('Turm verkauft! +'+refund+' 💰');
+  updateUI();
+}
+
 function showUpgPanel(tw){
   selectedTower=tw;
   const def=TOWER_DEFS[tw.type],upd=UPGRADE_DEFS[tw.type];
   document.getElementById('upgTitle').textContent=(tw.upgraded?'★ ':'')+def.label;
   document.getElementById('upgStats').innerHTML='Schaden: '+tw.dmg+'<br>Reichweite: '+Math.round(tw.range);
   const bot=document.getElementById('upgBottom');
+  const sellPrice=getSellPrice(tw);
+  const sellBtn='<button class="sell-btn" id="doSellBtn">Verkaufen (+'+sellPrice+' 💰)</button>';
   if(!tw.upgraded){
-    bot.innerHTML='<div class="upg-info">Upgrade ('+upd.cost+'G):<br>'+upd.label+'</div>'+
-      '<button class="upg-btn" id="doUpgBtn"'+(money<upd.cost?' disabled':'')+'>Upgrade kaufen</button>';
+    bot.innerHTML=
+      '<div class="upg-info">Upgrade ('+upd.cost+'💰):<br>'+upd.label+'</div>'+
+      '<button class="upg-btn" id="doUpgBtn"'+(money<upd.cost?' disabled':'')+'>Upgrade kaufen</button>'+
+      sellBtn;
     document.getElementById('doUpgBtn').onclick=doUpgrade;
   } else {
-    bot.innerHTML='<div class="upg-done">Bereits aufgewertet ✓</div>';
+    bot.innerHTML='<div class="upg-done">Bereits aufgewertet ✓</div>'+sellBtn;
   }
+  document.getElementById('doSellBtn').onclick=()=>sellTower(tw);
   document.getElementById('upgPanel').style.display='block';
 }
 
@@ -450,7 +472,7 @@ function draw(){
   particles.forEach(p=>{ctx.globalAlpha=Math.max(0,p.life/30);ctx.fillStyle=p.col;ctx.beginPath();ctx.arc(p.x,p.y,2,0,Math.PI*2);ctx.fill();});
   ctx.globalAlpha=1;
   if(popup){
-    const label=popup.type===2?'Baum entfernen (40 Gold)':'Busch entfernen (20 Gold)';
+    const label=popup.type===2?'Baum entfernen (40 💰)':'Busch entfernen (20 💰)';
     const{bx,by}=popup;ctx.fillStyle='rgba(0,0,0,0.88)';rrect(bx-1,by-1,194,42,7);ctx.fill();
     ctx.fillStyle='#c0392b';rrect(bx,by,192,40,6);ctx.fill();ctx.fillStyle='#fff';ctx.font='bold 12px sans-serif';ctx.textAlign='left';ctx.fillText(label,bx+12,by+25);
   }
