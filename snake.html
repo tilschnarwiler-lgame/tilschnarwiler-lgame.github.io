@@ -9,6 +9,7 @@ body {
     margin: 0;
     background: black;
     display: flex;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
     height: 100vh;
@@ -28,7 +29,7 @@ body {
     margin-bottom: 15px;
 }
 
-/* BUTTON STYLE */
+/* BUTTON */
 .btn {
     padding: 12px 20px;
     font-size: 18px;
@@ -39,31 +40,62 @@ body {
     margin: 10px;
 }
 
-/* Restart Button */
+/* GAME WRAPPER */
+#gameWrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* TOP BAR */
+#topBar {
+    width: 600px;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    align-items: center;
+    margin-bottom: 5px;
+    font-size: 18px;
+}
+
+#scoreBoardLeft {
+    text-align: left;
+}
+
+#highscoreBoard {
+    text-align: center;
+}
+
+#pauseBtn {
+    justify-self: end;
+    width: 45px;
+    height: 45px;
+    padding: 0;
+    font-size: 18px;
+}
+
+/* OVERLAY TEXT */
+.overlayText {
+    font-size: 30px;
+    font-family: Arial;
+    color: white;
+    text-align: center;
+    margin-bottom: 15px;
+}
+
+/* RESTART */
 #restartBtn {
     position: absolute;
     display: none;
 }
 
-/* Pause Button */
-#pauseBtn {
-    position: absolute;
-    top: 15px;
-    right: 15px;
-    width: 50px;
-    height: 50px;
-    padding: 0;
-    font-size: 20px;
-}
-
-/* Pause Overlay */
+/* PAUSE OVERLAY */
 #pauseOverlay {
     position: absolute;
     text-align: center;
     display: none;
 }
 
-/* GAME */
+/* CANVAS */
 canvas {
     background: black;
     border: 2px solid white;
@@ -74,21 +106,31 @@ canvas {
 
 <body>
 
+<!-- MENU -->
 <div id="menu">
     <h1>🐍 Snake Arcade</h1>
     <button class="btn" onclick="bootGame()">▶ Start Game</button>
 </div>
 
-<button id="restartBtn" class="btn" onclick="restartGame()">🔁 Restart</button>
+<!-- GAME -->
+<div id="gameWrapper">
 
-<button id="pauseBtn" class="btn">⏸️</button>
+    <div id="topBar" style="display:none;">
+        <div id="scoreBoardLeft">Score: 0</div>
+        <div id="highscoreBoard">Highscore: 0</div>
+        <button id="pauseBtn" class="btn">⏸️</button>
+    </div>
 
-<div id="pauseOverlay">
-    <h2>Spiel pausiert</h2>
-    <button class="btn" onclick="resumeGame()">▶ Fortsetzen</button>
+    <canvas id="game" width="600" height="400"></canvas>
+
 </div>
 
-<canvas id="game" width="600" height="400"></canvas>
+<button id="restartBtn" class="btn" onclick="restartGame()">🔁 Restart</button>
+
+<div id="pauseOverlay">
+    <div class="overlayText">Spiel pausiert</div>
+    <button class="btn" onclick="resumeGame()">▶ Fortsetzen</button>
+</div>
 
 <script>
 const canvas = document.getElementById("game");
@@ -102,7 +144,7 @@ let snake, direction, food, score, highscore, gameOver;
 let gameStarted = false;
 let isPaused = false;
 
-// ---------------- TOUCH ----------------
+/* ---------------- TOUCH ---------------- */
 let touchStartX = 0;
 let touchStartY = 0;
 
@@ -127,7 +169,7 @@ document.addEventListener("touchend", (e) => {
     }
 }, { passive: true });
 
-// ---------------- AUDIO ----------------
+/* ---------------- AUDIO ---------------- */
 const AudioCtx = window.AudioContext || window.webkitAudioContext;
 const audioCtx = new AudioCtx();
 
@@ -179,7 +221,7 @@ document.addEventListener("click", () => {
     if (audioCtx.state === "suspended") audioCtx.resume();
 }, { once: true });
 
-// ---------------- KEYBOARD ----------------
+/* ---------------- KEYBOARD ---------------- */
 document.addEventListener("keydown", (e) => {
     if (!gameStarted) return;
 
@@ -194,7 +236,7 @@ document.addEventListener("keydown", (e) => {
     }
 });
 
-// ---------------- START ----------------
+/* ---------------- START ---------------- */
 highscore = localStorage.getItem("snake_highscore");
 highscore = highscore ? parseInt(highscore) : 0;
 
@@ -203,6 +245,7 @@ function bootGame() {
 
     gameStarted = true;
     document.getElementById("menu").style.display = "none";
+    document.getElementById("topBar").style.display = "grid";
 
     startGame();
     loop();
@@ -226,7 +269,7 @@ function restartGame() {
     startGame();
 }
 
-// ---------------- PAUSE ----------------
+/* ---------------- PAUSE ---------------- */
 document.getElementById("pauseBtn").addEventListener("click", () => {
     if (gameOver) return;
 
@@ -241,7 +284,7 @@ function resumeGame() {
     document.getElementById("pauseOverlay").style.display = "none";
 }
 
-// ---------------- FOOD ----------------
+/* ---------------- FOOD ---------------- */
 function spawnFood() {
     let newFood;
 
@@ -257,7 +300,7 @@ function spawnFood() {
     return newFood;
 }
 
-// ---------------- UPDATE ----------------
+/* ---------------- UPDATE ---------------- */
 function update() {
     if (gameOver || isPaused) return;
 
@@ -275,15 +318,8 @@ function update() {
 
     if (snake.some(s => s.x === head.x && s.y === head.y)) {
         gameOver = true;
-
         stopMusic();
         playDeathSound();
-
-        if (score > highscore) {
-            highscore = score;
-            localStorage.setItem("snake_highscore", highscore);
-        }
-
         return;
     }
 
@@ -296,9 +332,18 @@ function update() {
     } else {
         snake.pop();
     }
+
+    /* LIVE SCORE UPDATE */
+    if (score > highscore) {
+        highscore = score;
+        localStorage.setItem("snake_highscore", highscore);
+    }
+
+    document.getElementById("scoreBoardLeft").innerText = "Score: " + score;
+    document.getElementById("highscoreBoard").innerText = "Highscore: " + highscore;
 }
 
-// ---------------- DRAW ----------------
+/* ---------------- DRAW ---------------- */
 function drawSnake() {
     snake.forEach((s, i) => {
         ctx.fillStyle = i === 0 ? "#0b6b2a" : "#2ecc71";
@@ -321,6 +366,11 @@ function drawApple() {
     ctx.arc(x, y, BLOCK / 2 - 2, 0, Math.PI * 2);
     ctx.fill();
 
+    ctx.fillStyle = "rgba(255,255,255,0.4)";
+    ctx.beginPath();
+    ctx.arc(x - 4, y - 4, 4, 0, Math.PI * 2);
+    ctx.fill();
+
     ctx.fillStyle = "green";
     ctx.beginPath();
     ctx.ellipse(x + 5, y - 10, 6, 3, Math.PI / 4, 0, Math.PI * 2);
@@ -334,18 +384,15 @@ function draw() {
     drawApple();
     drawSnake();
 
-    ctx.fillStyle = "white";
-    ctx.font = "18px Arial";
-    ctx.fillText("Score: " + score, 10, 20);
-    ctx.fillText("Highscore: " + highscore, 10, 45);
-
     if (gameOver) {
         ctx.fillStyle = "rgba(0,0,0,0.7)";
         ctx.fillRect(0, 0, WIDTH, HEIGHT);
 
         ctx.fillStyle = "white";
         ctx.font = "30px Arial";
-        ctx.fillText("GAME OVER", 200, 180);
+        ctx.textAlign = "center";
+        ctx.fillText("GAME OVER", WIDTH / 2, 180);
+        ctx.textAlign = "start";
 
         const btn = document.getElementById("restartBtn");
         btn.style.display = "block";
@@ -359,7 +406,7 @@ function draw() {
     }
 }
 
-// ---------------- LOOP ----------------
+/* ---------------- LOOP ---------------- */
 function loop() {
     update();
     draw();
