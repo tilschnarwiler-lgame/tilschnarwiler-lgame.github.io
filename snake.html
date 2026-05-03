@@ -39,9 +39,27 @@ body {
     margin: 10px;
 }
 
-/* RESTART BUTTON */
+/* Restart Button */
 #restartBtn {
     position: absolute;
+    display: none;
+}
+
+/* Pause Button */
+#pauseBtn {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    width: 50px;
+    height: 50px;
+    padding: 0;
+    font-size: 20px;
+}
+
+/* Pause Overlay */
+#pauseOverlay {
+    position: absolute;
+    text-align: center;
     display: none;
 }
 
@@ -63,6 +81,13 @@ canvas {
 
 <button id="restartBtn" class="btn" onclick="restartGame()">🔁 Restart</button>
 
+<button id="pauseBtn" class="btn">⏸️</button>
+
+<div id="pauseOverlay">
+    <h2>Spiel pausiert</h2>
+    <button class="btn" onclick="resumeGame()">▶ Fortsetzen</button>
+</div>
+
 <canvas id="game" width="600" height="400"></canvas>
 
 <script>
@@ -75,6 +100,7 @@ const BLOCK = 20;
 
 let snake, direction, food, score, highscore, gameOver;
 let gameStarted = false;
+let isPaused = false;
 
 // ---------------- TOUCH ----------------
 let touchStartX = 0;
@@ -153,17 +179,19 @@ document.addEventListener("click", () => {
     if (audioCtx.state === "suspended") audioCtx.resume();
 }, { once: true });
 
-// ---------------- KEYBOARD (FIXED) ----------------
+// ---------------- KEYBOARD ----------------
 document.addEventListener("keydown", (e) => {
     if (!gameStarted) return;
 
     const keys = ["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"];
     if (keys.includes(e.key)) e.preventDefault();
 
-    if (e.key === "ArrowLeft" && direction !== "RIGHT") direction = "LEFT";
-    if (e.key === "ArrowRight" && direction !== "LEFT") direction = "RIGHT";
-    if (e.key === "ArrowUp" && direction !== "DOWN") direction = "UP";
-    if (e.key === "ArrowDown" && direction !== "UP") direction = "DOWN";
+    if (!isPaused) {
+        if (e.key === "ArrowLeft" && direction !== "RIGHT") direction = "LEFT";
+        if (e.key === "ArrowRight" && direction !== "LEFT") direction = "RIGHT";
+        if (e.key === "ArrowUp" && direction !== "DOWN") direction = "UP";
+        if (e.key === "ArrowDown" && direction !== "UP") direction = "DOWN";
+    }
 });
 
 // ---------------- START ----------------
@@ -185,16 +213,32 @@ function startGame() {
     direction = "RIGHT";
     score = 0;
     gameOver = false;
+    isPaused = false;
 
     document.getElementById("restartBtn").style.display = "none";
+    document.getElementById("pauseOverlay").style.display = "none";
 
     food = spawnFood();
     startMusic();
 }
 
-
 function restartGame() {
     startGame();
+}
+
+// ---------------- PAUSE ----------------
+document.getElementById("pauseBtn").addEventListener("click", () => {
+    if (gameOver) return;
+
+    isPaused = true;
+    stopMusic();
+    document.getElementById("pauseOverlay").style.display = "block";
+});
+
+function resumeGame() {
+    isPaused = false;
+    startMusic();
+    document.getElementById("pauseOverlay").style.display = "none";
 }
 
 // ---------------- FOOD ----------------
@@ -215,7 +259,7 @@ function spawnFood() {
 
 // ---------------- UPDATE ----------------
 function update() {
-    if (gameOver) return;
+    if (gameOver || isPaused) return;
 
     let head = {...snake[0]};
 
@@ -303,11 +347,15 @@ function draw() {
         ctx.font = "30px Arial";
         ctx.fillText("GAME OVER", 200, 180);
 
-        // 🔁 Restart Button unter Text
         const btn = document.getElementById("restartBtn");
         btn.style.display = "block";
         btn.style.left = (canvas.offsetLeft + WIDTH/2 - 70) + "px";
         btn.style.top = (canvas.offsetTop + 210) + "px";
+    }
+
+    if (isPaused) {
+        ctx.fillStyle = "rgba(0,0,0,0.6)";
+        ctx.fillRect(0, 0, WIDTH, HEIGHT);
     }
 }
 
