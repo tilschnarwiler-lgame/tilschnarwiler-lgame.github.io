@@ -237,26 +237,18 @@ function sellTower(tw){
   updateUI();
 }
 
-function showUpgPanel(tw){
-  selectedTower=tw;
-  const def=TOWER_DEFS[tw.type],upd=UPGRADE_DEFS[tw.type];
-  document.getElementById('upgTitle').textContent=(tw.upgraded?'★ ':'')+def.label;
-  document.getElementById('upgStats').innerHTML='Schaden: '+tw.dmg+'<br>Reichweite: '+Math.round(tw.range);
-  const bot=document.getElementById('upgBottom');
-  const sellPrice=getSellPrice(tw);
-  const sellBtn='<button class="sell-btn" id="doSellBtn">Verkaufen (+'+sellPrice+' 💰)</button>';
-  if(!tw.upgraded){
-    bot.innerHTML=
-      '<div class="upg-info">Upgrade ('+upd.cost+' 💰):<br>'+upd.label+'</div>'+
-      '<button class="upg-btn" id="doUpgBtn"'+(money<upd.cost?' disabled':'')+'>Upgrade kaufen</button>'+
-      sellBtn;
-    document.getElementById('doUpgBtn').onclick=doUpgrade;
-  } else {
-    bot.innerHTML='<div class="upg-done">Bereits aufgewertet ✓</div>'+sellBtn;
+function drawTower(tw){
+  const px=tw.x*GS,py=tw.y*GS;
+  if(tw.type==='archer')drawTowerArcher(px,py,tw.upgraded);
+  else if(tw.type==='cannon')drawTowerCannon(px,py,tw.upgraded);
+  else drawTowerMage(px,py,tw.upgraded);
+  if(selectedTower&&selectedTower.x===tw.x&&selectedTower.y===tw.y){
+    ctx.strokeStyle=TOWER_DEFS[tw.type].color;ctx.lineWidth=1.5;ctx.setLineDash([4,4]);
+    ctx.beginPath();ctx.arc(px+GS/2,py+GS/2,tw.range,0,Math.PI*2);ctx.stroke();
+    ctx.setLineDash([]);ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.strokeRect(px+1,py+1,GS-2,GS-2);
   }
-  document.getElementById('doSellBtn').onclick=()=>sellTower(tw);
-  document.getElementById('upgPanel').style.display='block';
 }
+
 
 function hideUpgPanel(){selectedTower=null;document.getElementById('upgPanel').style.display='none';}
 
