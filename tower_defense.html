@@ -65,12 +65,12 @@ canvas { display: block; width: 600px; height: 620px; min-width: 600px; max-widt
     </button>
     <button class="tbtn cannon" id="btnCannon">
       <span class="btn-name">Kanonenturm</span>
-      <span class="btn-cost">80 💰</span>
+      <span class="btn-cost">100 💰</span>
       <span class="btn-desc">5 Schaden · langsam</span>
     </button>
     <button class="tbtn mage" id="btnMage">
       <span class="btn-name">Magierturm</span>
-      <span class="btn-cost">100 💰</span>
+      <span class="btn-cost">120 💰</span>
       <span class="btn-desc">4 Flächenschaden</span>
     </button>
     <div class="divider"></div>
@@ -88,8 +88,8 @@ canvas { display: block; width: 600px; height: 620px; min-width: 600px; max-widt
   <canvas id="game" width="600" height="620"></canvas>
 </div>
 <script>
-const canvas = document.getElementById('game');
-const ctx = canvas.getContext('2d');
+const canvas=document.getElementById('game');
+const ctx=canvas.getContext('2d');
 const GS=40,COLS=15,ROWS=15,CX=7,CY=7;
 let baseHP=100,money=180,gameOver=false;
 let enemies=[],towers=[],arrows=[],particles=[],explosions=[];
@@ -167,9 +167,7 @@ function getMouse(e){
 }
 
 function getSellPrice(tw){
-  const def=TOWER_DEFS[tw.type];
-  const upd=UPGRADE_DEFS[tw.type];
-  return Math.floor(def.cost/2)+(tw.upgraded?Math.floor(upd.cost/2):0);
+  return Math.floor(TOWER_DEFS[tw.type].cost/2)+(tw.upgraded?Math.floor(UPGRADE_DEFS[tw.type].cost/2):0);
 }
 
 function sellTower(tw){
@@ -192,7 +190,7 @@ function showUpgPanel(tw){
   const sellBtn='<button class="sell-btn" id="doSellBtn">Verkaufen (+'+sellPrice+' 💰)</button>';
   if(!tw.upgraded){
     bot.innerHTML=
-      '<div class="upg-info">Upgrade ('+upd.cost+'💰):<br>'+upd.label+'</div>'+
+      '<div class="upg-info">Upgrade ('+upd.cost+' 💰):<br>'+upd.label+'</div>'+
       '<button class="upg-btn" id="doUpgBtn"'+(money<upd.cost?' disabled':'')+'>Upgrade kaufen</button>'+
       sellBtn;
     document.getElementById('doUpgBtn').onclick=doUpgrade;
@@ -397,7 +395,7 @@ function drawTower(tw){
   if(tw.type==='archer')drawTowerArcher(px,py,tw.upgraded);
   else if(tw.type==='cannon')drawTowerCannon(px,py,tw.upgraded);
   else drawTowerMage(px,py,tw.upgraded);
-  if(selectedTower===tw){
+  if(selectedTower&&selectedTower.x===tw.x&&selectedTower.y===tw.y){
     ctx.strokeStyle=TOWER_DEFS[tw.type].color;ctx.lineWidth=1.5;ctx.setLineDash([4,4]);
     ctx.beginPath();ctx.arc(px+GS/2,py+GS/2,tw.range,0,Math.PI*2);ctx.stroke();
     ctx.setLineDash([]);ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.strokeRect(px+1,py+1,GS-2,GS-2);
