@@ -14,6 +14,7 @@ body {
     height: 100vh;
     font-family: Arial;
     color: white;
+    overflow: hidden;
 }
 
 /* MENU */
@@ -27,7 +28,7 @@ body {
     margin-bottom: 15px;
 }
 
-/* BUTTON STYLE (Start + Restart gleich!) */
+/* BUTTON STYLE */
 .btn {
     padding: 12px 20px;
     font-size: 18px;
@@ -38,33 +39,29 @@ body {
     margin: 10px;
 }
 
-/* Restart auch zentriert */
-#restartContainer {
+/* RESTART BUTTON */
+#restartBtn {
     position: absolute;
     display: none;
-    text-align: center;
 }
 
 /* GAME */
 canvas {
     background: black;
     border: 2px solid white;
+    touch-action: none;
 }
 </style>
 </head>
 
 <body>
 
-<!-- 🎮 MENU -->
 <div id="menu">
     <h1>🐍 Snake Arcade</h1>
     <button class="btn" onclick="bootGame()">▶ Start Game</button>
 </div>
 
-<!-- 🔄 RESTART SCREEN -->
-<div id="restartContainer">
-    <button class="btn" onclick="restartGame()">🔁 Restart</button>
-</div>
+<button id="restartBtn" class="btn" onclick="restartGame()">🔁 Restart</button>
 
 <canvas id="game" width="600" height="400"></canvas>
 
@@ -79,7 +76,7 @@ const BLOCK = 20;
 let snake, direction, food, score, highscore, gameOver;
 let gameStarted = false;
 
-// ---------------- TOUCH (SWIPE) ----------------
+// ---------------- TOUCH ----------------
 let touchStartX = 0;
 let touchStartY = 0;
 
@@ -87,7 +84,7 @@ document.addEventListener("touchstart", (e) => {
     const t = e.touches[0];
     touchStartX = t.clientX;
     touchStartY = t.clientY;
-});
+}, { passive: true });
 
 document.addEventListener("touchend", (e) => {
     const t = e.changedTouches[0];
@@ -102,7 +99,7 @@ document.addEventListener("touchend", (e) => {
         if (dy > 0 && direction !== "UP") direction = "DOWN";
         else if (dy < 0 && direction !== "DOWN") direction = "UP";
     }
-});
+}, { passive: true });
 
 // ---------------- AUDIO ----------------
 const AudioCtx = window.AudioContext || window.webkitAudioContext;
@@ -116,7 +113,6 @@ function playTone(freq, duration, type = "square", volume = 0.06) {
 
     osc.type = type;
     osc.frequency.value = freq;
-
     gain.gain.value = volume;
 
     osc.connect(gain);
@@ -126,16 +122,10 @@ function playTone(freq, duration, type = "square", volume = 0.06) {
     osc.stop(audioCtx.currentTime + duration);
 }
 
-// 🎵 MUSIC
 function startMusic() {
     if (musicInterval) return;
 
-    const melody = [
-        110,110,146,110,
-        98,110,131,110,
-        92,98,110,98
-    ];
-
+    const melody = [110,110,146,110,98,110,131,110,92,98,110,98];
     let i = 0;
 
     musicInterval = setInterval(() => {
@@ -149,30 +139,31 @@ function stopMusic() {
     musicInterval = null;
 }
 
-// 🍎 EAT
 function playEatSound() {
     playTone(700, 0.05);
     setTimeout(() => playTone(1000, 0.05), 60);
 }
 
-// 💀 DEATH
 function playDeathSound() {
     playTone(120, 0.3, "sawtooth", 0.1);
     setTimeout(() => playTone(80, 0.4, "sawtooth", 0.1), 150);
 }
 
-// unlock audio
 document.addEventListener("click", () => {
-    if (audioCtx.state === "suspended") {
-        audioCtx.resume();
-    }
+    if (audioCtx.state === "suspended") audioCtx.resume();
 }, { once: true });
 
-// 🚫 anti scroll
-window.addEventListener("keydown", (e) => {
-    if (["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"].includes(e.key)) {
-        e.preventDefault();
-    }
+// ---------------- KEYBOARD (FIXED) ----------------
+document.addEventListener("keydown", (e) => {
+    if (!gameStarted) return;
+
+    const keys = ["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"];
+    if (keys.includes(e.key)) e.preventDefault();
+
+    if (e.key === "ArrowLeft" && direction !== "RIGHT") direction = "LEFT";
+    if (e.key === "ArrowRight" && direction !== "LEFT") direction = "RIGHT";
+    if (e.key === "ArrowUp" && direction !== "DOWN") direction = "UP";
+    if (e.key === "ArrowDown" && direction !== "UP") direction = "DOWN";
 });
 
 // ---------------- START ----------------
@@ -195,10 +186,9 @@ function startGame() {
     score = 0;
     gameOver = false;
 
-    document.getElementById("restartContainer").style.display = "none";
+    document.getElementById("restartBtn").style.display = "none";
 
     food = spawnFood();
-
     startMusic();
 }
 
@@ -212,39 +202,17 @@ function spawnFood() {
             y: Math.floor(Math.random() * (HEIGHT / BLOCK)) * BLOCK
         };
 
-        let onSnake = false;
-
-        for (let part of snake) {
-            if (part.x === newFood.x && part.y === newFood.y) {
-                onSnake = true;
-                break;
-            }
-        }
-
-        if (!onSnake) break;
+        if (!snake.some(s => s.x === newFood.x && s.y === newFood.y)) break;
     }
 
     return newFood;
-}
-
-// ---------------- CONTROLS ----------------
-document.addEventListener("keydown", (e) => {
-    if (e.key === "ArrowLeft" && direction !== "RIGHT") direction = "LEFT";
-    if (e.key === "ArrowRight" && direction !== "LEFT") direction = "RIGHT";
-    if (e.key === "ArrowUp" && direction !== "DOWN") direction = "UP";
-    if (e.key === "ArrowDown" && direction !== "UP") direction = "DOWN";
-});
-
-// ---------------- RESTART ----------------
-function restartGame() {
-    startGame();
 }
 
 // ---------------- UPDATE ----------------
 function update() {
     if (gameOver) return;
 
-    let head = {x: snake[0].x, y: snake[0].y};
+    let head = {...snake[0]};
 
     if (direction === "LEFT") head.x -= BLOCK;
     if (direction === "RIGHT") head.x += BLOCK;
@@ -252,23 +220,22 @@ function update() {
     if (direction === "DOWN") head.y += BLOCK;
 
     if (head.x < 0) head.x = WIDTH - BLOCK;
-    else if (head.x >= WIDTH) head.x = 0;
-
+    if (head.x >= WIDTH) head.x = 0;
     if (head.y < 0) head.y = HEIGHT - BLOCK;
-    else if (head.y >= HEIGHT) head.y = 0;
+    if (head.y >= HEIGHT) head.y = 0;
 
-    for (let part of snake) {
-        if (part.x === head.x && part.y === head.y) {
-            gameOver = true;
+    if (snake.some(s => s.x === head.x && s.y === head.y)) {
+        gameOver = true;
 
-            stopMusic();
-            playDeathSound();
+        stopMusic();
+        playDeathSound();
 
-            localStorage.setItem("snake_highscore", Math.max(score, highscore));
-
-            document.getElementById("restartContainer").style.display = "block";
-            return;
+        if (score > highscore) {
+            highscore = score;
+            localStorage.setItem("snake_highscore", highscore);
         }
+
+        return;
     }
 
     snake.unshift(head);
@@ -287,6 +254,12 @@ function drawSnake() {
     snake.forEach((s, i) => {
         ctx.fillStyle = i === 0 ? "#0b6b2a" : "#2ecc71";
         ctx.fillRect(s.x, s.y, BLOCK, BLOCK);
+
+        if (i === 0) {
+            ctx.fillStyle = "white";
+            ctx.fillRect(s.x + 5, s.y + 5, 4, 4);
+            ctx.fillRect(s.x + 12, s.y + 5, 4, 4);
+        }
     });
 }
 
@@ -298,9 +271,13 @@ function drawApple() {
     ctx.beginPath();
     ctx.arc(x, y, BLOCK / 2 - 2, 0, Math.PI * 2);
     ctx.fill();
+
+    ctx.fillStyle = "green";
+    ctx.beginPath();
+    ctx.ellipse(x + 5, y - 10, 6, 3, Math.PI / 4, 0, Math.PI * 2);
+    ctx.fill();
 }
 
-// ---------------- DRAW ----------------
 function draw() {
     ctx.fillStyle = "black";
     ctx.fillRect(0, 0, WIDTH, HEIGHT);
@@ -309,7 +286,24 @@ function draw() {
     drawSnake();
 
     ctx.fillStyle = "white";
+    ctx.font = "18px Arial";
     ctx.fillText("Score: " + score, 10, 20);
+    ctx.fillText("Highscore: " + highscore, 10, 45);
+
+    if (gameOver) {
+        ctx.fillStyle = "rgba(0,0,0,0.7)";
+        ctx.fillRect(0, 0, WIDTH, HEIGHT);
+
+        ctx.fillStyle = "white";
+        ctx.font = "30px Arial";
+        ctx.fillText("GAME OVER", 200, 180);
+
+        // 🔁 Restart Button unter Text
+        const btn = document.getElementById("restartBtn");
+        btn.style.display = "block";
+        btn.style.left = (canvas.offsetLeft + WIDTH/2 - 70) + "px";
+        btn.style.top = (canvas.offsetTop + 210) + "px";
+    }
 }
 
 // ---------------- LOOP ----------------
