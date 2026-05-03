@@ -447,17 +447,27 @@ function drawTowerMage(px,py,upg){
   const ns=upg?5:3;for(let i=0;i<ns;i++){const a=(i/ns)*Math.PI*2,r=upg?9:7;ctx.beginPath();ctx.arc(px+20+Math.cos(a)*r,py+22+Math.sin(a)*r,1.5,0,Math.PI*2);ctx.fill();}
   if(upg){ctx.strokeStyle='rgba(200,100,255,0.4)';ctx.lineWidth=1;ctx.beginPath();ctx.arc(px+20,py+22,11,0,Math.PI*2);ctx.stroke();}
 }
-function drawTower(tw){
-  const px=tw.x*GS,py=tw.y*GS;
-  if(tw.type==='archer')drawTowerArcher(px,py,tw.upgraded);
-  else if(tw.type==='cannon')drawTowerCannon(px,py,tw.upgraded);
-  else drawTowerMage(px,py,tw.upgraded);
-  if(selectedTower&&selectedTower.x===tw.x&&selectedTower.y===tw.y){
-    ctx.strokeStyle=TOWER_DEFS[tw.type].color;ctx.lineWidth=1.5;ctx.setLineDash([4,4]);
-    ctx.beginPath();ctx.arc(px+GS/2,py+GS/2,tw.range,0,Math.PI*2);ctx.stroke();
-    ctx.setLineDash([]);ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.strokeRect(px+1,py+1,GS-2,GS-2);
+function showUpgPanel(tw){
+  selectedTower=towers.find(t=>t.x===tw.x&&t.y===tw.y)||tw;
+  const def=TOWER_DEFS[tw.type],upd=UPGRADE_DEFS[tw.type];
+  document.getElementById('upgTitle').textContent=(tw.upgraded?'★ ':'')+def.label;
+  document.getElementById('upgStats').innerHTML='Schaden: '+tw.dmg+'<br>Reichweite: '+Math.round(tw.range);
+  const bot=document.getElementById('upgBottom');
+  const sellPrice=getSellPrice(tw);
+  const sellBtn='<button class="sell-btn" id="doSellBtn">Verkaufen (+'+sellPrice+' 💰)</button>';
+  if(!tw.upgraded){
+    bot.innerHTML=
+      '<div class="upg-info">Upgrade ('+upd.cost+' 💰):<br>'+upd.label+'</div>'+
+      '<button class="upg-btn" id="doUpgBtn"'+(money<upd.cost?' disabled':'')+'>Upgrade kaufen</button>'+
+      sellBtn;
+    document.getElementById('doUpgBtn').onclick=doUpgrade;
+  } else {
+    bot.innerHTML='<div class="upg-done">Bereits aufgewertet ✓</div>'+sellBtn;
   }
+  document.getElementById('doSellBtn').onclick=()=>sellTower(selectedTower);
+  document.getElementById('upgPanel').style.display='block';
 }
+
 function drawEnemy(en){
   const px=en.x*GS+GS/2,py=en.y*GS+GS/2;
   const isHeavy=en.type==='heavy',S=isHeavy?0.75:0.52;
