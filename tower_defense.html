@@ -108,7 +108,7 @@ let buildMode=null,msg='',msgTimer=0,popup=null,selectedTower=null;
 let wave=0,enemiesToSpawn=0,spawnTimer=0,phase='prep';
 
 const TOWER_DEFS={
-  archer:{cost:60,range:145,cooldown:48,dmg:3,color:'#4a9a4a',label:'Bogenschützenturm'},
+  archer:{cost:60,range:145,cooldown:48,dmg:3,color:'#ffffff',label:'Bogenschützenturm'},
   cannon:{cost:100,range:160,cooldown:96,dmg:5,color:'#a05a28',label:'Kanonenturm'},
   mage:{cost:120,range:130,cooldown:96,dmg:4,color:'#8a28c0',label:'Magierturm',splash:55}
 };
@@ -127,7 +127,6 @@ const terrain=[];
 })();
 const grid=Array.from({length:ROWS},()=>Array(COLS).fill(null));
 
-// ---- Tower preview drawings ----
 function drawPreviewArcher(c){
   const x=c.getContext('2d');
   x.clearRect(0,0,44,44);
@@ -237,18 +236,26 @@ function sellTower(tw){
   updateUI();
 }
 
-function drawTower(tw){
-  const px=tw.x*GS,py=tw.y*GS;
-  if(tw.type==='archer')drawTowerArcher(px,py,tw.upgraded);
-  else if(tw.type==='cannon')drawTowerCannon(px,py,tw.upgraded);
-  else drawTowerMage(px,py,tw.upgraded);
-  if(selectedTower&&selectedTower.x===tw.x&&selectedTower.y===tw.y){
-    ctx.strokeStyle=TOWER_DEFS[tw.type].color;ctx.lineWidth=1.5;ctx.setLineDash([4,4]);
-    ctx.beginPath();ctx.arc(px+GS/2,py+GS/2,tw.range,0,Math.PI*2);ctx.stroke();
-    ctx.setLineDash([]);ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.strokeRect(px+1,py+1,GS-2,GS-2);
+function showUpgPanel(tw){
+  selectedTower=tw;
+  const def=TOWER_DEFS[tw.type],upd=UPGRADE_DEFS[tw.type];
+  document.getElementById('upgTitle').textContent=(tw.upgraded?'★ ':'')+def.label;
+  document.getElementById('upgStats').innerHTML='Schaden: '+tw.dmg+'<br>Reichweite: '+Math.round(tw.range);
+  const bot=document.getElementById('upgBottom');
+  const sellPrice=getSellPrice(tw);
+  const sellBtn='<button class="sell-btn" id="doSellBtn">Verkaufen (+'+sellPrice+' 💰)</button>';
+  if(!tw.upgraded){
+    bot.innerHTML=
+      '<div class="upg-info">Upgrade ('+upd.cost+' 💰):<br>'+upd.label+'</div>'+
+      '<button class="upg-btn" id="doUpgBtn"'+(money<upd.cost?' disabled':'')+'>Upgrade kaufen</button>'+
+      sellBtn;
+    document.getElementById('doUpgBtn').onclick=doUpgrade;
+  } else {
+    bot.innerHTML='<div class="upg-done">Bereits aufgewertet ✓</div>'+sellBtn;
   }
+  document.getElementById('doSellBtn').onclick=()=>sellTower(tw);
+  document.getElementById('upgPanel').style.display='block';
 }
-
 
 function hideUpgPanel(){selectedTower=null;document.getElementById('upgPanel').style.display='none';}
 
@@ -439,27 +446,17 @@ function drawTowerMage(px,py,upg){
   const ns=upg?5:3;for(let i=0;i<ns;i++){const a=(i/ns)*Math.PI*2,r=upg?9:7;ctx.beginPath();ctx.arc(px+20+Math.cos(a)*r,py+22+Math.sin(a)*r,1.5,0,Math.PI*2);ctx.fill();}
   if(upg){ctx.strokeStyle='rgba(200,100,255,0.4)';ctx.lineWidth=1;ctx.beginPath();ctx.arc(px+20,py+22,11,0,Math.PI*2);ctx.stroke();}
 }
-function showUpgPanel(tw){
-  selectedTower=towers.find(t=>t.x===tw.x&&t.y===tw.y)||tw;
-  const def=TOWER_DEFS[tw.type],upd=UPGRADE_DEFS[tw.type];
-  document.getElementById('upgTitle').textContent=(tw.upgraded?'★ ':'')+def.label;
-  document.getElementById('upgStats').innerHTML='Schaden: '+tw.dmg+'<br>Reichweite: '+Math.round(tw.range);
-  const bot=document.getElementById('upgBottom');
-  const sellPrice=getSellPrice(tw);
-  const sellBtn='<button class="sell-btn" id="doSellBtn">Verkaufen (+'+sellPrice+' 💰)</button>';
-  if(!tw.upgraded){
-    bot.innerHTML=
-      '<div class="upg-info">Upgrade ('+upd.cost+' 💰):<br>'+upd.label+'</div>'+
-      '<button class="upg-btn" id="doUpgBtn"'+(money<upd.cost?' disabled':'')+'>Upgrade kaufen</button>'+
-      sellBtn;
-    document.getElementById('doUpgBtn').onclick=doUpgrade;
-  } else {
-    bot.innerHTML='<div class="upg-done">Bereits aufgewertet ✓</div>'+sellBtn;
+function drawTower(tw){
+  const px=tw.x*GS,py=tw.y*GS;
+  if(tw.type==='archer')drawTowerArcher(px,py,tw.upgraded);
+  else if(tw.type==='cannon')drawTowerCannon(px,py,tw.upgraded);
+  else drawTowerMage(px,py,tw.upgraded);
+  if(selectedTower&&selectedTower.x===tw.x&&selectedTower.y===tw.y){
+    ctx.strokeStyle=TOWER_DEFS[tw.type].color;ctx.lineWidth=1.5;ctx.setLineDash([4,4]);
+    ctx.beginPath();ctx.arc(px+GS/2,py+GS/2,tw.range,0,Math.PI*2);ctx.stroke();
+    ctx.setLineDash([]);ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.strokeRect(px+1,py+1,GS-2,GS-2);
   }
-  document.getElementById('doSellBtn').onclick=()=>sellTower(selectedTower);
-  document.getElementById('upgPanel').style.display='block';
 }
-
 function drawEnemy(en){
   const px=en.x*GS+GS/2,py=en.y*GS+GS/2;
   const isHeavy=en.type==='heavy',S=isHeavy?0.75:0.52;
