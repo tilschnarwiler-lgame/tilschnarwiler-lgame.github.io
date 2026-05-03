@@ -17,11 +17,13 @@ canvas { display: block; width: 600px; height: 620px; min-width: 600px; max-widt
 .hp-bar-wrap { padding: 2px 4px; }
 .hp-bar-bg { background: #333; border-radius: 3px; height: 10px; width: 100%; }
 .hp-bar-fill { height: 10px; border-radius: 3px; transition: width 0.2s; }
-.tbtn { width: 100%; padding: 6px; border: none; border-radius: 5px; cursor: pointer; font-size: 11px; font-weight: bold; text-align: left; display: flex; flex-direction: column; gap: 1px; font-family: 'Segoe UI', sans-serif; }
+.tbtn { width: 100%; padding: 6px; border: none; border-radius: 5px; cursor: pointer; font-size: 11px; font-weight: bold; text-align: left; display: flex; flex-direction: row; align-items: center; gap: 6px; font-family: 'Segoe UI', sans-serif; }
 .tbtn:disabled { opacity: 0.4; cursor: not-allowed; filter: grayscale(0.6); }
-.tbtn .btn-name { font-size: 12px; }
+.tbtn-text { display: flex; flex-direction: column; gap: 1px; flex: 1; }
+.tbtn .btn-name { font-size: 11px; }
 .tbtn .btn-cost { font-size: 10px; opacity: 0.8; }
 .tbtn .btn-desc { font-size: 9px; opacity: 0.65; font-weight: normal; }
+.tbtn canvas { width: 44px; height: 44px; min-width: 44px; max-width: 44px; flex-shrink: 0; border-radius: 4px; }
 .tbtn.archer { background: #2d6a2d; color: #a8f0a8; border: 1px solid #4a9a4a; }
 .tbtn.archer.active { background: #4a9a4a; box-shadow: 0 0 8px #4a9a4a88; }
 .tbtn.cannon { background: #6a3a1a; color: #f0c898; border: 1px solid #a05a28; }
@@ -50,28 +52,37 @@ canvas { display: block; width: 600px; height: 620px; min-width: 600px; max-widt
   <div id="sidebar">
     <div class="s-title">Status</div>
     <div class="hp-bar-wrap">
-      <div style="color:#aaa;font-size:10px;margin-bottom:3px;font-family:'Segoe UI',sans-serif;">Rathaus HP</div>
+      <div style="color:#aaa;font-size:10px;margin-bottom:3px;">Rathaus HP</div>
       <div class="hp-bar-bg"><div class="hp-bar-fill" id="hpBar" style="width:100%;background:#27ae60;"></div></div>
-      <div style="color:#fff;font-size:10px;text-align:right;margin-top:1px;font-family:'Segoe UI',sans-serif;" id="hpText">100 / 100</div>
+      <div style="color:#fff;font-size:10px;text-align:right;margin-top:1px;" id="hpText">100 / 100</div>
     </div>
     <div class="stat-row"><span class="stat-label">Gold 💰</span><span class="stat-val gold" id="goldText">180</span></div>
     <div class="stat-row"><span class="stat-label">Welle</span><span class="stat-val" id="waveText">—</span></div>
     <div class="divider"></div>
     <div class="s-title">Türme bauen</div>
     <button class="tbtn archer" id="btnArcher">
-      <span class="btn-name">Bogenschützenturm</span>
-      <span class="btn-cost">60 💰</span>
-      <span class="btn-desc">3 Schaden · mittl. Reichw.</span>
+      <div class="tbtn-text">
+        <span class="btn-name">Bogenschütze</span>
+        <span class="btn-cost">60 💰</span>
+        <span class="btn-desc">3 Schaden · mittl. Reichw.</span>
+      </div>
+      <canvas id="previewArcher" width="44" height="44"></canvas>
     </button>
     <button class="tbtn cannon" id="btnCannon">
-      <span class="btn-name">Kanonenturm</span>
-      <span class="btn-cost">100 💰</span>
-      <span class="btn-desc">5 Schaden · langsam</span>
+      <div class="tbtn-text">
+        <span class="btn-name">Kanonenturm</span>
+        <span class="btn-cost">100 💰</span>
+        <span class="btn-desc">5 Schaden · langsam</span>
+      </div>
+      <canvas id="previewCannon" width="44" height="44"></canvas>
     </button>
     <button class="tbtn mage" id="btnMage">
-      <span class="btn-name">Magierturm</span>
-      <span class="btn-cost">120 💰</span>
-      <span class="btn-desc">4 Flächenschaden</span>
+      <div class="tbtn-text">
+        <span class="btn-name">Magierturm</span>
+        <span class="btn-cost">120 💰</span>
+        <span class="btn-desc">4 Flächenschaden</span>
+      </div>
+      <canvas id="previewMage" width="44" height="44"></canvas>
     </button>
     <div class="divider"></div>
     <div id="upgPanel">
@@ -97,7 +108,7 @@ let buildMode=null,msg='',msgTimer=0,popup=null,selectedTower=null;
 let wave=0,enemiesToSpawn=0,spawnTimer=0,phase='prep';
 
 const TOWER_DEFS={
-  archer:{cost:60,range:145,cooldown:48,dmg:3,color:'#4a9a4a',label:'Bogenschützenturm'},
+  archer:{cost:60,range:145,cooldown:48,dmg:3,color:'#4a9a4a',label:'Bogenschütze'},
   cannon:{cost:100,range:160,cooldown:96,dmg:5,color:'#a05a28',label:'Kanonenturm'},
   mage:{cost:120,range:130,cooldown:96,dmg:4,color:'#8a28c0',label:'Magierturm',splash:55}
 };
@@ -115,6 +126,52 @@ const terrain=[];
   }}
 })();
 const grid=Array.from({length:ROWS},()=>Array(COLS).fill(null));
+
+// ---- Tower preview drawings ----
+function drawPreviewArcher(c){
+  const x=c.getContext('2d');
+  x.clearRect(0,0,44,44);
+  x.fillStyle='#6d4c41';x.fillRect(13,22,18,18);
+  x.fillStyle='#5d4037';x.fillRect(11,14,22,12);
+  x.fillStyle='#4e342e';x.fillRect(11,9,6,9);x.fillRect(19,9,6,9);x.fillRect(27,9,6,9);
+  x.fillStyle='#3e2723';x.fillRect(13,9,4,6);x.fillRect(21,9,4,6);x.fillRect(29,9,4,6);
+  x.fillStyle='#795548';x.fillRect(11,37,22,4);
+  x.fillStyle='#d4a96e';x.beginPath();x.arc(22,12,3.5,0,Math.PI*2);x.fill();
+  x.fillStyle='#4a4a4a';x.beginPath();x.arc(22,9,4,Math.PI,0);x.fill();
+  x.fillStyle='#546e7a';x.fillRect(18.5,14,7,6);
+  x.strokeStyle='#5d4037';x.lineWidth=1.5;x.beginPath();x.moveTo(15,13);x.lineTo(15,20);x.stroke();
+  x.strokeStyle='#e8d5b0';x.lineWidth=0.8;x.beginPath();x.moveTo(15,13);x.quadraticCurveTo(21,17,15,20);x.stroke();
+}
+function drawPreviewCannon(c){
+  const x=c.getContext('2d');
+  x.clearRect(0,0,44,44);
+  x.fillStyle='#5a4a3a';x.fillRect(10,20,24,18);
+  x.fillStyle='#7a6a58';x.fillRect(8,12,28,12);
+  x.fillStyle='#6a5a48';x.fillRect(8,6,8,10);x.fillRect(20,6,8,10);
+  x.fillStyle='#5a4a38';x.fillRect(10,6,4,7);x.fillRect(22,6,4,7);
+  x.fillStyle='#888';x.fillRect(18,16,8,5);
+  x.fillStyle='#aaa';x.fillRect(25,17,6,3);
+  x.fillStyle='#333';
+  x.beginPath();x.arc(15,32,3,0,Math.PI*2);x.fill();
+  x.beginPath();x.arc(21,32,3,0,Math.PI*2);x.fill();
+  x.beginPath();x.arc(18,28,3,0,Math.PI*2);x.fill();
+}
+function drawPreviewMage(c){
+  const x=c.getContext('2d');
+  x.clearRect(0,0,44,44);
+  x.fillStyle='#2a1a4a';x.fillRect(15,16,14,22);
+  x.fillStyle='#3a2a5a';x.fillRect(11,32,22,10);
+  x.fillStyle='#4a3a7a';x.beginPath();x.moveTo(22,4);x.lineTo(30,16);x.lineTo(14,16);x.closePath();x.fill();
+  x.fillStyle='#8888ff';x.beginPath();x.arc(22,22,3,0,Math.PI*2);x.fill();
+  x.fillStyle='#aaaaff';
+  for(let i=0;i<3;i++){const a=(i/3)*Math.PI*2;x.beginPath();x.arc(22+Math.cos(a)*7,24+Math.sin(a)*7,1.5,0,Math.PI*2);x.fill();}
+}
+
+function renderPreviews(){
+  drawPreviewArcher(document.getElementById('previewArcher'));
+  drawPreviewCannon(document.getElementById('previewCannon'));
+  drawPreviewMage(document.getElementById('previewMage'));
+}
 
 function waveEnemyCount(w){return w<=5?3+w:6+w*2;}
 
@@ -483,7 +540,9 @@ function draw(){
   }
 }
 function loop(){update();draw();requestAnimationFrame(loop);}
-updateUI();loop();
+renderPreviews();
+updateUI();
+loop();
 </script>
 </body>
 </html>
