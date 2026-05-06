@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>Block Blast</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Rajdhani:wght@400;600&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+font-family: ‘Rajdhani’, sans-serif;
+background: #0a0a0f;
+color: white;
+min-height: 100vh;
+display: flex;
+flex-direction: column;
+align-items: center;
+justify-content: flex-start;
+padding: 20px 10px;
+overflow-x: hidden;
+touch-action: none;
+}
+
+body::before {
+content: ‘’;
+position: fixed;
+inset: 0;
+background:
+radial-gradient(ellipse 60% 40% at 20% 20%, rgba(0,200,255,0.06) 0%, transparent 70%),
+radial-gradient(ellipse 50% 60% at 80% 80%, rgba(120,0,255,0.06) 0%, transparent 70%);
+pointer-events: none;
+z-index: 0;
+}
+
+h1 {
+font-family: ‘Orbitron’, sans-serif;
+font-size: 2.2rem;
+font-weight: 900;
+letter-spacing: 0.15em;
+background: linear-gradient(90deg, #00c8ff, #7b2fff, #00c8ff);
+background-size: 200%;
+-webkit-background-clip: text;
+-webkit-text-fill-color: transparent;
+background-clip: text;
+animation: shimmer 3s linear infinite;
+margin-bottom: 16px;
+position: relative;
+z-index: 1;
+}
+
+@keyframes shimmer {
+0% { background-position: 0% }
+100% { background-position: 200% }
+}
+
+/* SCORE ROW */
+#scores {
+display: flex;
+gap: 24px;
+margin-bottom: 14px;
+position: relative;
+z-index: 1;
+}
+
+.score-box {
+background: rgba(255,255,255,0.04);
+border: 1px solid rgba(0,200,255,0.2);
+border-radius: 10px;
+padding: 8px 24px;
+text-align: center;
+min-width: 110px;
+}
+
+.score-label {
+font-size: 0.7rem;
+letter-spacing: 0.12em;
+color: rgba(0,200,255,0.7);
+text-transform: uppercase;
+margin-bottom: 2px;
+}
+
+.score-value {
+font-family: ‘Orbitron’, sans-serif;
+font-size: 1.5rem;
+font-weight: 700;
+color: #fff;
+}
+
+#highscore-box .score-value { color: #ffd700; }
+
+/* BOARD */
+canvas#board {
+border: 1px solid rgba(0,200,255,0.25);
+border-radius: 8px;
+box-shadow: 0 0 40px rgba(0,200,255,0.1), inset 0 0 20px rgba(0,0,0,0.5);
+position: relative;
+z-index: 1;
+display: block;
+}
+
+/* PIECES */
+#pieces {
+display: flex;
+justify-content: center;
+align-items: center;
+gap: 20px;
+margin-top: 20px;
+min-height: 130px;
+position: relative;
+z-index: 1;
+}
+
+.piece-wrap {
+background: rgba(255,255,255,0.03);
+border: 1px solid rgba(255,255,255,0.08);
+border-radius: 10px;
+padding: 10px;
+display: flex;
+align-items: center;
+justify-content: center;
+width: 110px;
+height: 110px;
+transition: transform 0.15s, border-color 0.15s;
+cursor: grab;
+touch-action: none;
+user-select: none;
+}
+
+.piece-wrap:active { cursor: grabbing; transform: scale(0.95); }
+.piece-wrap:hover { border-color: rgba(0,200,255,0.4); }
+
+/* GHOST */
+.ghost {
+position: fixed;
+pointer-events: none;
+opacity: 0.8;
+z-index: 9999;
+transform: translate(-50%, -50%);
+filter: drop-shadow(0 0 8px rgba(0,200,255,0.7));
+}
+
+/* BOARD HIGHLIGHT */
+canvas#board.drag-active {
+border-color: rgba(0,200,255,0.6);
+box-shadow: 0 0 60px rgba(0,200,255,0.2);
+}
+
+/* SCORE POP */
+.score-pop {
+position: fixed;
+font-family: ‘Orbitron’, sans-serif;
+font-size: 1.4rem;
+font-weight: 700;
+color: #00ffaa;
+pointer-events: none;
+z-index: 9999;
+animation: popUp 0.9s ease-out forwards;
+}
+
+@keyframes popUp {
+0%   { opacity: 1; transform: translateY(0) scale(1); }
+100% { opacity: 0; transform: translateY(-70px) scale(1.3); }
+}
+
+/* GAME OVER */
+#gameover {
+position: fixed;
+inset: 0;
+display: none;
+flex-direction: column;
+align-items: center;
+justify-content: center;
+background: rgba(0,0,0,0.88);
+z-index: 10000;
+backdrop-filter: blur(6px);
+}
+
+#gameover h2 {
+font-family: ‘Orbitron’, sans-serif;
+font-size: 3rem;
+font-weight: 900;
+letter-spacing: 0.1em;
+color: #ff3a5c;
+text-shadow: 0 0 30px rgba(255,58,92,0.7);
+margin-bottom: 12px;
+}
+
+#gameover .go-score {
+font-family: ‘Orbitron’, sans-serif;
+font-size: 1.2rem;
+color: rgba(255,255,255,0.6);
+margin-bottom: 6px;
+}
+
+#gameover .go-score span { color: #fff; }
+
+#gameover .go-high {
+font-family: ‘Orbitron’, sans-serif;
+font-size: 1rem;
+color: #ffd700;
+margin-bottom: 32px;
+}
+
+#restart-btn {
+font-family: ‘Orbitron’, sans-serif;
+font-size: 1rem;
+letter-spacing: 0.1em;
+padding: 14px 40px;
+background: linear-gradient(135deg, #00c8ff, #7b2fff);
+border: none;
+border-radius: 8px;
+color: white;
+cursor: pointer;
+transition: transform 0.15s, box-shadow 0.15s;
+box-shadow: 0 4px 20px rgba(0,200,255,0.3);
+}
+
+#restart-btn:hover {
+transform: scale(1.05);
+box-shadow: 0 6px 28px rgba(0,200,255,0.5);
+}
+</style>
+
+</head>
+
+<body>
+<h1>BLOCK BLAST</h1>
+
+<div id="scores">
+  <div class="score-box" id="score-box">
+    <div class="score-label">Score</div>
+    <div class="score-value" id="score-display">0</div>
+  </div>
+  <div class="score-box" id="highscore-box">
+    <div class="score-label">Best</div>
+    <div class="score-value" id="highscore-display">0</div>
+  </div>
+</div>
+
+<canvas id="board" width="320" height="320"></canvas>
+
+<div id="pieces"></div>
+
+<div id="gameover">
+  <h2>GAME OVER</h2>
+  <div class="go-score">Score: <span id="go-score-val">0</span></div>
+  <div class="go-high" id="go-high-msg"></div>
+  <button id="restart-btn">PLAY AGAIN</button>
+</div>
+
+<script>
+const boardEl      = document.getElementById("board");
+const ctx          = boardEl.getContext("2d");
+const piecesEl     = document.getElementById("pieces");
+const gameoverEl   = document.getElementById("gameover");
+const scoreDisp    = document.getElementById("score-display");
+const highDisp     = document.getElementById("highscore-display");
+const goScoreVal   = document.getElementById("go-score-val");
+const goHighMsg    = document.getElementById("go-high-msg");
+const restartBtn   = document.getElementById("restart-btn");
+
+const SIZE = 8;
+const CELL = 40;
+
+/* STATE */
+let board, pieces, dragging, ghost, score, highscore;
+
+/* COLORS per piece */
+const COLORS = [
+  "#00c8ff","#7b2fff","#ff3a5c","#00ffaa","#ffb800","#ff6b35","#00e5ff","#c77dff"
+];
+
+/* SHAPES */
+const shapes = [
+  [[1,1,1,1]],
+  [[1,1,1,1,1]],
+  [[1,1],[1,1]],
+  [[1,1,1],[1,1,1],[1,1,1]],
+  [[1,1,1]],
+  [[1],[1],[1]],
+  [[1,0],[1,1]],
+  [[0,1],[1,1]],
+  [[1,1,0],[0,1,1]],
+  [[0,1,1],[1,1,0]],
+  [[1],[1],[1],[1]],
+];
+
+/* ── INIT ─────────────────────────────────────────────── */
+function init(){
+  board    = Array.from({length:SIZE}, ()=>Array(SIZE).fill(0));
+  pieces   = [];
+  dragging = null;
+  ghost    = null;
+  score    = 0;
+  highscore= parseInt(localStorage.getItem("bbHighscore")||"0");
+
+  scoreDisp.textContent = 0;
+  highDisp.textContent  = highscore;
+  gameoverEl.style.display = "none";
+
+  createPieces();
+  drawBoard();
+}
+
+/* ── DRAW BOARD ───────────────────────────────────────── */
+function drawBoard(highlightCells){
+  ctx.clearRect(0,0,320,320);
+
+  // empty cell backgrounds
+  for(let y=0;y<SIZE;y++){
+    for(let x=0;x<SIZE;x++){
+      ctx.fillStyle = "rgba(255,255,255,0.04)";
+      ctx.fillRect(x*CELL+1, y*CELL+1, CELL-2, CELL-2);
+    }
+  }
+
+  // grid lines
+  ctx.strokeStyle = "rgba(255,255,255,0.18)";
+  ctx.lineWidth = 1;
+  for(let i=0;i<=SIZE;i++){
+    ctx.beginPath(); ctx.moveTo(i*CELL,0); ctx.lineTo(i*CELL,320); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0,i*CELL); ctx.lineTo(320,i*CELL); ctx.stroke();
+  }
+
+  // cells
+  for(let y=0;y<SIZE;y++){
+    for(let x=0;x<SIZE;x++){
+      if(board[y][x]){
+        const color = board[y][x];
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        roundRect(ctx, x*CELL+2, y*CELL+2, CELL-4, CELL-4, 5);
+        ctx.fill();
+        // shine
+        ctx.fillStyle = "rgba(255,255,255,0.18)";
+        ctx.beginPath();
+        roundRect(ctx, x*CELL+4, y*CELL+4, CELL-8, 8, 3);
+        ctx.fill();
+      }
+    }
+  }
+
+  // drop preview highlight
+  if(highlightCells){
+    for(const [hx,hy] of highlightCells){
+      ctx.fillStyle="rgba(255,255,255,0.18)";
+      ctx.beginPath();
+      roundRect(ctx, hx*CELL+2, hy*CELL+2, CELL-4, CELL-4, 5);
+      ctx.fill();
+    }
+  }
+}
+
+function roundRect(c,x,y,w,h,r){
+  c.moveTo(x+r,y);
+  c.lineTo(x+w-r,y); c.arcTo(x+w,y,x+w,y+r,r);
+  c.lineTo(x+w,y+h-r); c.arcTo(x+w,y+h,x+w-r,y+h,r);
+  c.lineTo(x+r,y+h); c.arcTo(x,y+h,x,y+h-r,r);
+  c.lineTo(x,y+r); c.arcTo(x,y,x+r,y,r);
+  c.closePath();
+}
+
+/* ── DRAW PIECE CANVAS ────────────────────────────────── */
+function drawShape(c, shape, color, cellSize=20){
+  const cs = cellSize;
+  c.clearRect(0,0,c.canvas.width,c.canvas.height);
+  shape.forEach((row,y)=>row.forEach((v,x)=>{
+    if(v){
+      c.fillStyle = color;
+      c.beginPath();
+      roundRect(c, x*cs+1, y*cs+1, cs-2, cs-2, 3);
+      c.fill();
+      c.fillStyle="rgba(255,255,255,0.2)";
+      c.beginPath();
+      roundRect(c, x*cs+2, y*cs+2, cs-4, 5, 2);
+      c.fill();
+    }
+  }));
+}
+
+/* ── CREATE 3 PIECES ──────────────────────────────────── */
+function createPieces(){
+  piecesEl.innerHTML="";
+  pieces=[];
+
+  for(let i=0;i<3;i++){
+    const shape = shapes[Math.floor(Math.random()*shapes.length)];
+    const color = COLORS[Math.floor(Math.random()*COLORS.length)];
+    const cols  = shape[0].length;
+    const rows  = shape.length;
+    const cs    = 20;
+
+    const wrap = document.createElement("div");
+    wrap.className = "piece-wrap";
+
+    const canvas = document.createElement("canvas");
+    canvas.width  = cols*cs;
+    canvas.height = rows*cs;
+
+    drawShape(canvas.getContext("2d"), shape, color, cs);
+
+    const piece = { shape, color, el:canvas, wrap };
+    pieces.push(piece);
+
+    wrap.appendChild(canvas);
+    wrap.onpointerdown = e => startDrag(e, piece);
+    piecesEl.appendChild(wrap);
+  }
+  // Don't call checkGameOver here — pieces were just created
+}
+
+/* ── DRAG ─────────────────────────────────────────────── */
+function startDrag(e, piece){
+  dragging = piece;
+  boardEl.classList.add("drag-active");
+
+  const cs = 20;
+  ghost = document.createElement("canvas");
+  ghost.width  = piece.shape[0].length * cs;
+  ghost.height = piece.shape.length    * cs;
+  ghost.className = "ghost";
+  drawShape(ghost.getContext("2d"), piece.shape, piece.color, cs);
+  document.body.appendChild(ghost);
+
+  moveGhost(e);
+  // Do NOT call e.preventDefault() here — it breaks pointerup on some browsers
+}
+
+function moveGhost(e){
+  if(!ghost) return;
+  ghost.style.left = e.clientX + "px";
+  ghost.style.top  = e.clientY + "px";
+
+  // board preview
+  const rect = boardEl.getBoundingClientRect();
+  const bx = Math.floor((e.clientX - rect.left)  / CELL);
+  const by = Math.floor((e.clientY - rect.top)    / CELL);
+
+  if(canPlace(dragging.shape, bx, by)){
+    const cells = [];
+    dragging.shape.forEach((row,y)=>row.forEach((v,x)=>{
+      if(v) cells.push([bx+x, by+y]);
+    }));
+    drawBoard(cells);
+  } else {
+    drawBoard();
+  }
+}
+
+document.onpointermove = e => { if(dragging) moveGhost(e); };
+
+/* ── DROP ─────────────────────────────────────────────── */
+document.onpointerup = e => {
+  if(!dragging) return;
+
+  const rect = boardEl.getBoundingClientRect();
+  const bx = Math.floor((e.clientX - rect.left) / CELL);
+  const by = Math.floor((e.clientY - rect.top)  / CELL);
+  const piece = dragging;
+
+  if(canPlace(piece.shape, bx, by)){
+    place(piece.shape, bx, by, piece.color);
+
+    // visually hide placed piece
+    piece.wrap.style.visibility = "hidden";
+    pieces = pieces.filter(p => p !== piece);
+
+    if(pieces.length === 0){
+      setTimeout(createPieces, 200);
+    } else {
+      // check game over only after placement, with remaining pieces
+      checkGameOver();
+    }
+  }
+
+  if(ghost) ghost.remove();
+  ghost = null;
+  dragging = null;
+  boardEl.classList.remove("drag-active");
+  drawBoard();
+};
+
+/* ── RULES ────────────────────────────────────────────── */
+function canPlace(shape, bx, by){
+  for(let y=0;y<shape.length;y++){
+    for(let x=0;x<shape[y].length;x++){
+      if(shape[y][x]){
+        const nx=bx+x, ny=by+y;
+        if(nx<0||ny<0||nx>=SIZE||ny>=SIZE) return false;
+        if(board[ny][nx]) return false;
+      }
+    }
+  }
+  return true;
+}
+
+function place(shape, bx, by, color){
+  let placed = 0;
+  shape.forEach((row,y)=>row.forEach((v,x)=>{
+    if(v){ board[by+y][bx+x]=color; placed++; }
+  }));
+  addScore(placed * 10);
+  clearLines(bx, by);
+}
+
+/* ── CLEAR LINES ──────────────────────────────────────── */
+function clearLines(){
+  const rowsToClear = [];
+  const colsToClear = [];
+
+  for(let y=0;y<SIZE;y++){
+    if(board[y].every(v=>v)) rowsToClear.push(y);
+  }
+  for(let x=0;x<SIZE;x++){
+    if(board.every(row=>row[x])) colsToClear.push(x);
+  }
+
+  const linesCleared = rowsToClear.length + colsToClear.length;
+
+  for(const y of rowsToClear) board[y].fill(0);
+  for(const x of colsToClear) for(let y=0;y<SIZE;y++) board[y][x]=0;
+
+  if(linesCleared > 0){
+    const pts = linesCleared * 100 * linesCleared; // bonus for combos
+    addScore(pts);
+    showScorePop(pts, linesCleared);
+  }
+}
+
+/* ── SCORE ────────────────────────────────────────────── */
+function addScore(pts){
+  score += pts;
+  scoreDisp.textContent = score;
+  if(score > highscore){
+    highscore = score;
+    localStorage.setItem("bbHighscore", highscore);
+    highDisp.textContent = highscore;
+  }
+}
+
+function showScorePop(pts, lines){
+  const el = document.createElement("div");
+  el.className = "score-pop";
+  el.textContent = (lines > 1 ? `${lines}x COMBO! ` : "") + `+${pts}`;
+  el.style.left  = (boardEl.getBoundingClientRect().left + 120) + "px";
+  el.style.top   = (boardEl.getBoundingClientRect().top  + 140) + "px";
+  document.body.appendChild(el);
+  setTimeout(()=>el.remove(), 900);
+}
+
+/* ── GAME OVER CHECK ──────────────────────────────────── */
+function checkGameOver(){
+  // Only pieces that are still active (not yet placed)
+  if(pieces.length === 0) return; // new set incoming
+
+  for(const p of pieces){
+    for(let y=0;y<SIZE;y++){
+      for(let x=0;x<SIZE;x++){
+        if(canPlace(p.shape, x, y)) return; // at least one move possible
+      }
+    }
+  }
+
+  // No move possible → Game Over
+  goScoreVal.textContent = score;
+  if(score >= highscore && score > 0){
+    goHighMsg.textContent = "🏆 New Highscore!";
+  } else {
+    goHighMsg.textContent = `Best: ${highscore}`;
+  }
+  gameoverEl.style.display = "flex";
+}
+
+/* ── RESTART ──────────────────────────────────────────── */
+restartBtn.onclick = init;
+
+/* ── START ────────────────────────────────────────────── */
+init();
+</script>
+
+</body>
+</html>
