@@ -135,10 +135,9 @@ user-select: none;
 .ghost {
 position: fixed;
 pointer-events: none;
-opacity: 0.8;
+opacity: 0.75;
 z-index: 9999;
-transform: translate(-50%, -50%);
-filter: drop-shadow(0 0 8px rgba(0,200,255,0.7));
+filter: drop-shadow(0 0 8px rgba(0,200,255,0.6));
 }
 
 /* BOARD HIGHLIGHT */
@@ -311,71 +310,67 @@ function drawBoard(highlightCells){
   // empty cell backgrounds
   for(let y=0;y<SIZE;y++){
     for(let x=0;x<SIZE;x++){
-      ctx.fillStyle = "rgba(255,255,255,0.04)";
-      ctx.fillRect(x*CELL+1, y*CELL+1, CELL-2, CELL-2);
+      ctx.fillStyle = "rgba(255,255,255,0.05)";
+      ctx.fillRect(x*CELL, y*CELL, CELL, CELL);
     }
   }
 
-  // grid lines
-  ctx.strokeStyle = "rgba(255,255,255,0.18)";
-  ctx.lineWidth = 1;
-  for(let i=0;i<=SIZE;i++){
-    ctx.beginPath(); ctx.moveTo(i*CELL,0); ctx.lineTo(i*CELL,320); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(0,i*CELL); ctx.lineTo(320,i*CELL); ctx.stroke();
-  }
-
-  // cells
+  // filled cells — draw edge-to-edge so no gaps, shine on top
   for(let y=0;y<SIZE;y++){
     for(let x=0;x<SIZE;x++){
       if(board[y][x]){
         const color = board[y][x];
         ctx.fillStyle = color;
-        ctx.beginPath();
-        roundRect(ctx, x*CELL+2, y*CELL+2, CELL-4, CELL-4, 5);
-        ctx.fill();
-        // shine
-        ctx.fillStyle = "rgba(255,255,255,0.18)";
-        ctx.beginPath();
-        roundRect(ctx, x*CELL+4, y*CELL+4, CELL-8, 8, 3);
-        ctx.fill();
+        ctx.fillRect(x*CELL, y*CELL, CELL, CELL);
+        // subtle inner shine
+        ctx.fillStyle = "rgba(255,255,255,0.15)";
+        ctx.fillRect(x*CELL+3, y*CELL+3, CELL-6, 8);
       }
     }
   }
 
-  // drop preview highlight
+  // drop preview highlight (drawn before grid so grid shows on top)
   if(highlightCells){
     for(const [hx,hy] of highlightCells){
-      ctx.fillStyle="rgba(255,255,255,0.18)";
-      ctx.beginPath();
-      roundRect(ctx, hx*CELL+2, hy*CELL+2, CELL-4, CELL-4, 5);
-      ctx.fill();
+      ctx.fillStyle = dragging ? dragging.color + "99" : "rgba(255,255,255,0.25)";
+      ctx.fillRect(hx*CELL, hy*CELL, CELL, CELL);
+      ctx.fillStyle = "rgba(255,255,255,0.12)";
+      ctx.fillRect(hx*CELL+3, hy*CELL+3, CELL-6, 8);
     }
+  }
+
+  // grid lines drawn LAST so they appear on top of everything
+  ctx.strokeStyle = "rgba(0,0,0,0.35)";
+  ctx.lineWidth = 1;
+  for(let i=0;i<=SIZE;i++){
+    ctx.beginPath(); ctx.moveTo(i*CELL+0.5, 0); ctx.lineTo(i*CELL+0.5, 320); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0, i*CELL+0.5); ctx.lineTo(320, i*CELL+0.5); ctx.stroke();
+  }
+  // also a lighter overlay so grid is visible on dark empty cells
+  ctx.strokeStyle = "rgba(255,255,255,0.13)";
+  for(let i=0;i<=SIZE;i++){
+    ctx.beginPath(); ctx.moveTo(i*CELL+0.5, 0); ctx.lineTo(i*CELL+0.5, 320); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0, i*CELL+0.5); ctx.lineTo(320, i*CELL+0.5); ctx.stroke();
   }
 }
 
-function roundRect(c,x,y,w,h,r){
-  c.moveTo(x+r,y);
-  c.lineTo(x+w-r,y); c.arcTo(x+w,y,x+w,y+r,r);
-  c.lineTo(x+w,y+h-r); c.arcTo(x+w,y+h,x+w-r,y+h,r);
-  c.lineTo(x+r,y+h); c.arcTo(x,y+h,x,y+h-r,r);
-  c.lineTo(x,y+r); c.arcTo(x,y,x+r,y,r);
-  c.closePath();
-}
-
 /* ── DRAW PIECE CANVAS ────────────────────────────────── */
-function drawShape(c, shape, color, cellSize=20){
+// Pieces preview uses small cell size; ghost uses CELL (40px) = board size
+function drawShape(c, shape, color, cellSize){
   const cs = cellSize;
   c.clearRect(0,0,c.canvas.width,c.canvas.height);
   shape.forEach((row,y)=>row.forEach((v,x)=>{
     if(v){
+      // fill edge-to-edge
       c.fillStyle = color;
-      c.beginPath();
-      roundRect(c, x*cs+1, y*cs+1, cs-2, cs-2, 3);
-      c.fill();
-      c.fillStyle="rgba(255,255,255,0.2)";
-      c.beginPath();
-      roundRect(c, x*cs+2, y*cs+2, cs-4, 5, 2);
-      c.fill();
+      c.fillRect(x*cs, y*cs, cs, cs);
+      // shine
+      c.fillStyle="rgba(255,255,255,0.18)";
+      c.fillRect(x*cs+3, y*cs+3, cs-6, Math.max(4, cs*0.2));
+      // inner grid lines
+      c.strokeStyle="rgba(0,0,0,0.3)";
+      c.lineWidth=1;
+      c.strokeRect(x*cs+0.5, y*cs+0.5, cs-1, cs-1);
     }
   }));
 }
@@ -399,7 +394,7 @@ function createPieces(){
     canvas.width  = cols*cs;
     canvas.height = rows*cs;
 
-    drawShape(canvas.getContext("2d"), shape, color, cs);
+    drawShape(canvas.getContext("2d"), shape, color, 20);
 
     const piece = { shape, color, el:canvas, wrap };
     pieces.push(piece);
@@ -412,32 +407,48 @@ function createPieces(){
 }
 
 /* ── DRAG ─────────────────────────────────────────────── */
+let grabOffsetX = 0, grabOffsetY = 0; // which cell within the piece was grabbed
+
 function startDrag(e, piece){
   dragging = piece;
   boardEl.classList.add("drag-active");
 
-  const cs = 20;
+  // Figure out which cell within the piece the user grabbed
+  // We use the canvas bounding rect for this
+  const pieceRect = piece.el.getBoundingClientRect();
+  const localX = e.clientX - pieceRect.left;
+  const localY = e.clientY - pieceRect.top;
+  const previewCS = pieceRect.width / piece.shape[0].length;
+  grabOffsetX = Math.floor(localX / previewCS);
+  grabOffsetY = Math.floor(localY / piece.shape.length / (pieceRect.height / piece.shape.length));
+  // clamp
+  grabOffsetX = Math.max(0, Math.min(grabOffsetX, piece.shape[0].length - 1));
+  grabOffsetY = Math.max(0, Math.min(grabOffsetY, piece.shape.length - 1));
+
+  // Ghost uses full board cell size (CELL = 40px)
   ghost = document.createElement("canvas");
-  ghost.width  = piece.shape[0].length * cs;
-  ghost.height = piece.shape.length    * cs;
+  ghost.width  = piece.shape[0].length * CELL;
+  ghost.height = piece.shape.length    * CELL;
   ghost.className = "ghost";
-  drawShape(ghost.getContext("2d"), piece.shape, piece.color, cs);
+  drawShape(ghost.getContext("2d"), piece.shape, piece.color, CELL);
   document.body.appendChild(ghost);
 
   moveGhost(e);
-  // Do NOT call e.preventDefault() here — it breaks pointerup on some browsers
 }
 
 function moveGhost(e){
   if(!ghost) return;
-  ghost.style.left = e.clientX + "px";
-  ghost.style.top  = e.clientY + "px";
+
+  const rect = boardEl.getBoundingClientRect();
+  // board cell under cursor
+  const bx = Math.floor((e.clientX - rect.left) / CELL) - grabOffsetX;
+  const by = Math.floor((e.clientY - rect.top)  / CELL) - grabOffsetY;
+
+  // Position ghost so its top-left aligns with that board cell
+  ghost.style.left = (rect.left + bx * CELL) + "px";
+  ghost.style.top  = (rect.top  + by * CELL) + "px";
 
   // board preview
-  const rect = boardEl.getBoundingClientRect();
-  const bx = Math.floor((e.clientX - rect.left)  / CELL);
-  const by = Math.floor((e.clientY - rect.top)    / CELL);
-
   if(canPlace(dragging.shape, bx, by)){
     const cells = [];
     dragging.shape.forEach((row,y)=>row.forEach((v,x)=>{
@@ -456,8 +467,8 @@ document.onpointerup = e => {
   if(!dragging) return;
 
   const rect = boardEl.getBoundingClientRect();
-  const bx = Math.floor((e.clientX - rect.left) / CELL);
-  const by = Math.floor((e.clientY - rect.top)  / CELL);
+  const bx = Math.floor((e.clientX - rect.left) / CELL) - grabOffsetX;
+  const by = Math.floor((e.clientY - rect.top)  / CELL) - grabOffsetY;
   const piece = dragging;
 
   if(canPlace(piece.shape, bx, by)){
