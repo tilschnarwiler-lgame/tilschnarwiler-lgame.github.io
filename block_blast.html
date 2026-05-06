@@ -433,6 +433,9 @@ function startDrag(e, piece){
   drawShape(ghost.getContext("2d"), piece.shape, piece.color, CELL);
   document.body.appendChild(ghost);
 
+  // Hide the piece in the tray immediately while dragging
+  piece.wrap.style.visibility = "hidden";
+
   moveGhost(e);
 }
 
@@ -473,17 +476,16 @@ document.onpointerup = e => {
 
   if(canPlace(piece.shape, bx, by)){
     place(piece.shape, bx, by, piece.color);
-
-    // visually hide placed piece
-    piece.wrap.style.visibility = "hidden";
     pieces = pieces.filter(p => p !== piece);
 
     if(pieces.length === 0){
       setTimeout(createPieces, 200);
     } else {
-      // check game over only after placement, with remaining pieces
       checkGameOver();
     }
+  } else {
+    // Dropped outside or invalid — restore piece in tray
+    piece.wrap.style.visibility = "visible";
   }
 
   if(ghost) ghost.remove();
