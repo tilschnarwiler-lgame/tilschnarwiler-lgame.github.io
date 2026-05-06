@@ -83,30 +83,6 @@ box-shadow:
 0 0 60px rgba(74,222,128,0.05);
 }
 
-.home-top {
-display:flex; flex-direction:column;
-align-items:center; gap:10px; width:100%;
-}
-
-.home-title {
-font-size: 32px;
-font-weight: 600;
-letter-spacing: -0.03em;
-color: var(–text);
-line-height: 1;
-}
-
-.home-title span {
-color: var(–accent);
-text-shadow: 0 0 20px rgba(74,222,128,0.5);
-}
-
-.home-divider {
-width: 100%;
-height: 1px;
-background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
-}
-
 .home-hs-row {
 display:flex; align-items:center; justify-content:space-between;
 width:100%; padding:0 2px;
@@ -128,31 +104,33 @@ display:flex; flex-direction:column;
 gap:9px; width:100%;
 }
 
-/* ─── BUTTONS ─── */
+/* ─── BUTTONS — both solid green ─── */
 .btn-main {
 width:100%; padding:13px;
-background:var(–accent); color:#080808;
+background:#4ade80; color:#080808;
 border:none; border-radius:11px;
 font-family:‘DM Sans’,sans-serif;
 font-size:15px; font-weight:600;
 cursor:pointer; letter-spacing:0.01em;
 transition:opacity .15s, transform .12s, box-shadow .15s;
-box-shadow: 0 4px 18px rgba(74,222,128,0.25);
+box-shadow: 0 4px 18px rgba(74,222,128,0.30);
 }
-.btn-main:hover{opacity:.88;transform:translateY(-1px);box-shadow:0 6px 26px rgba(74,222,128,0.38);}
+.btn-main:hover{opacity:.88;transform:translateY(-1px);box-shadow:0 6px 26px rgba(74,222,128,0.45);}
 .btn-main:active{transform:scale(.97);opacity:.8;}
 
 .btn-outline {
 width:100%; padding:12px;
-background:rgba(255,255,255,0.04); color:var(–text-muted);
-border:1px solid var(–border2); border-radius:11px;
+background:#4ade80; color:#080808;
+border:none; border-radius:11px;
 font-family:‘DM Sans’,sans-serif;
-font-size:15px; font-weight:400;
+font-size:15px; font-weight:600;
 cursor:pointer; letter-spacing:0.01em;
-transition:background .15s, color .15s, border-color .15s, transform .12s;
+opacity:0.72;
+transition:opacity .15s, transform .12s, box-shadow .15s;
+box-shadow: 0 4px 18px rgba(74,222,128,0.18);
 }
-.btn-outline:hover{background:rgba(255,255,255,0.08);color:var(–text);border-color:rgba(255,255,255,.18);transform:translateY(-1px);}
-.btn-outline:active{transform:scale(.97);}
+.btn-outline:hover{opacity:.88;transform:translateY(-1px);box-shadow:0 6px 26px rgba(74,222,128,0.38);}
+.btn-outline:active{transform:scale(.97);opacity:.8;}
 
 /* ══════════════════════════════════════
 SKIN SCREEN
@@ -207,10 +185,10 @@ background:rgba(8,8,8,.86);backdrop-filter:blur(12px);border-radius:6px;
 .overlay-sub strong{color:var(–text);font-weight:500;}
 .overlay-btns{display:flex;gap:10px;margin-top:4px;}
 .btn-s{padding:10px 20px;border-radius:8px;font-family:‘DM Sans’,sans-serif;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:opacity .15s,transform .12s;}
-.btn-s.green{background:var(–accent);color:#080808;box-shadow:0 3px 14px rgba(74,222,128,0.25);}
+.btn-s.green{background:#4ade80;color:#080808;box-shadow:0 3px 14px rgba(74,222,128,0.28);}
 .btn-s.green:hover{opacity:.88;transform:translateY(-1px);}
-.btn-s.ghost{background:transparent;color:var(–text-muted);border:1px solid var(–border2);font-weight:400;}
-.btn-s.ghost:hover{background:var(–surface2);color:var(–text);transform:translateY(-1px);}
+.btn-s.ghost{background:#4ade80;color:#080808;font-weight:600;box-shadow:0 3px 14px rgba(74,222,128,0.28);}
+.btn-s.ghost:hover{opacity:.88;transform:translateY(-1px);}
 .btn-s:active{transform:scale(.97)!important;}
 </style>
 
@@ -223,13 +201,9 @@ background:rgba(8,8,8,.86);backdrop-filter:blur(12px);border-radius:6px;
   <canvas id="homeBgCanvas"></canvas>
   <div class="home-ui">
     <div class="home-card">
-      <div class="home-top">
-        <div class="home-title">Sna<span>ke</span></div>
-        <div class="home-divider"></div>
-        <div class="home-hs-row">
-          <span class="home-hs-label">Highscore</span>
-          <span class="home-hs-val" id="homeHighscore">0</span>
-        </div>
+      <div class="home-hs-row">
+        <span class="home-hs-label">Highscore</span>
+        <span class="home-hs-val" id="homeHighscore">0</span>
       </div>
       <div class="home-buttons">
         <button class="btn-main" onclick="goToGame()">Start</button>
@@ -432,7 +406,7 @@ const homeBgCtx    = homeBgCanvas.getContext("2d");
 let bgAnimId = null;
 
 const BG_B     = 22;
-const BG_LEN   = 18;
+const BG_LEN   = 35;
 const BG_SPEED = 0.016;
 const NUM_BG_SNAKES = 3;
 
@@ -465,36 +439,34 @@ function initBgSnakes() {
   const bgSkinIds = ["classic", "neon", "ice"];
   startPositions.slice(0, NUM_BG_SNAKES).forEach((sp, i) => {
     const pts = [];
-    for (let j = 0; j < BG_LEN + 4; j++) {
+    for (let j = 0; j < BG_LEN; j++) {
       pts.push({ x: sp.x - sp.dx*j*BG_B, y: sp.y - sp.dy*j*BG_B });
     }
-    bgSnakes.push({ pts, dirX: sp.dx, dirY: sp.dy, stepAcc: BG_B, skinIdx: bgSkinIds[i] });
+    bgSnakes.push({ pts, dirX: sp.dx, dirY: sp.dy, acc: 0, skinIdx: bgSkinIds[i] });
   });
 }
 
 function bgFrame() {
   const W = homeBgCanvas.width, H = homeBgCanvas.height;
-  // clear with dark bg
   homeBgCtx.fillStyle = "#080808";
   homeBgCtx.fillRect(0,0,W,H);
 
-  // draw dot grid
   if (dotPatternCanvas) {
     const pat = homeBgCtx.createPattern(dotPatternCanvas, "repeat");
     homeBgCtx.fillStyle = pat;
     homeBgCtx.fillRect(0,0,W,H);
   }
 
-  // update + draw each snake
   bgSnakes.forEach(snake => {
-    const head = snake.pts[0];
-    const newHead = { x: head.x + snake.dirX * BG_B * BG_SPEED, y: head.y + snake.dirY * BG_B * BG_SPEED };
-    snake.pts.unshift(newHead);
-    while (snake.pts.length > BG_LEN + 4) snake.pts.pop();
-    snake.stepAcc -= BG_B * BG_SPEED;
+    snake.acc += BG_B * BG_SPEED;
 
-    if (snake.stepAcc <= 0) {
-      snake.stepAcc = BG_B;
+    if (snake.acc >= BG_B) {
+      snake.acc -= BG_B;
+      const head = snake.pts[0];
+      const newHead = { x: head.x + snake.dirX * BG_B, y: head.y + snake.dirY * BG_B };
+      snake.pts.unshift(newHead);
+      while (snake.pts.length > BG_LEN) snake.pts.pop();
+
       const margin = BG_B * 3;
       const nx = newHead.x, ny = newHead.y;
       const nearEdge = nx < margin || nx > W-margin || ny < margin || ny > H-margin;
@@ -504,7 +476,7 @@ function bgFrame() {
         else if (nx > W-margin) { snake.dirX=0; snake.dirY=(cy>ny)?1:-1; }
         else if (ny < margin)   { snake.dirX=(cx>nx)?1:-1; snake.dirY=0; }
         else if (ny > H-margin) { snake.dirX=(cx>nx)?1:-1; snake.dirY=0; }
-      } else if (Math.random() < 0.16) {
+      } else if (Math.random() < 0.18) {
         const opts = [{x:1,y:0},{x:-1,y:0},{x:0,y:1},{x:0,y:-1}]
           .filter(d=>!(d.x===-snake.dirX&&d.y===-snake.dirY));
         const t=opts[Math.floor(Math.random()*opts.length)];
@@ -512,9 +484,15 @@ function bgFrame() {
       }
     }
 
-    const skin = SKINS.find(s=>s.id===snake.skinIdx) || SKINS[0];
-    const drawSegs = snake.pts.slice(0,BG_LEN).map(p=>({x:p.x-BG_B/2, y:p.y-BG_B/2}));
+    const interp = snake.acc / BG_B;
+    const visualHead = {
+      x: snake.pts[0].x + snake.dirX * BG_B * interp,
+      y: snake.pts[0].y + snake.dirY * BG_B * interp
+    };
+    const drawPts = [visualHead, ...snake.pts.slice(0, BG_LEN - 1)];
+    const drawSegs = drawPts.map(p=>({x: p.x - BG_B/2, y: p.y - BG_B/2}));
 
+    const skin = SKINS.find(s=>s.id===snake.skinIdx) || SKINS[0];
     homeBgCtx.globalAlpha = 0.28;
     drawSnakeSmooth(homeBgCtx, drawSegs, skin, BG_B);
     homeBgCtx.globalAlpha = 1;
