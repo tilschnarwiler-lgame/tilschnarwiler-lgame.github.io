@@ -269,10 +269,10 @@ const SKINS = [
   {id:"fire",    name:"Fire",    head:"#b91c1c", body:"#ef4444", bodyGrad:"#f97316",  food:{type:"flame",   color:"#f97316"}, eyes:true,  glow:"#ef4444" },
   {id:"galaxy",  name:"Galaxy",  head:"#6d28d9", body:"#8b5cf6", bodyGrad:"#a78bfa",  food:{type:"star",    color:"#c4b5fd"}, eyes:true,  glow:"#8b5cf6" },
   {id:"gold",    name:"Gold",    head:"#92400e", body:"#d97706", bodyGrad:"#fbbf24",  food:{type:"coin",    color:"#fde68a"}, eyes:true,  glow:"#d97706" },
-  {id:"matrix",  name:"Matrix",  head:"#052e16", body:"#15803d", bodyGrad:null,       food:{type:"square",  color:"#4ade80"}, eyes:false, glow:"#4ade80" },
+  {id:"matrix",  name:"Matrix",  head:"#052e16", body:"#15803d", bodyGrad:null,       food:{type:"square",  color:"#4ade80"}, eyes:true, glow:"#4ade80" },
   {id:"candy",   name:"Candy",   head:"#be185d", body:"#f472b6", bodyGrad:"#fbcfe8",  food:{type:"heart",   color:"#f472b6"}, eyes:true,  glow:"#f472b6" },
   {id:"ocean",   name:"Ocean",   head:"#1e3a5f", body:"#2563eb", bodyGrad:"#60a5fa",  food:{type:"fish",    color:"#93c5fd"}, eyes:true,  glow:"#3b82f6" },
-  {id:"toxic",   name:"Toxic",   head:"#1a2e05", body:"#65a30d", bodyGrad:"#a3e635",  food:{type:"circle",  color:"#d9f99d"}, eyes:false, glow:"#84cc16" }
+  {id:"toxic",   name:"Toxic",   head:"#1a2e05", body:"#65a30d", bodyGrad:"#a3e635",  food:{type:"circle",  color:"#d9f99d"}, eyes:true, glow:"#84cc16" }
 ];
 let selectedSkinId = "classic";
 const getSkin = () => SKINS.find(s => s.id === selectedSkinId) || SKINS[0];
@@ -429,21 +429,33 @@ function initBgSnakes() {
   homeBgCanvas.height = H;
   makeDotPattern();
   bgSnakes = [];
-  // spawn snakes at different positions
-  const startPositions = [
-    { x: W*.25, y: H*.3,  dx:1,  dy:0  },
-    { x: W*.7,  y: H*.65, dx:0,  dy:-1 },
-    { x: W*.5,  y: H*.8,  dx:-1, dy:0  },
-  ];
-  // Skin indices for bg snakes — cycle through a few contrasting ones
   const bgSkinIds = ["classic", "neon", "ice"];
-  startPositions.slice(0, NUM_BG_SNAKES).forEach((sp, i) => {
+  const dirs = [{x:1,y:0},{x:-1,y:0},{x:0,y:1},{x:0,y:-1}];
+  const margin = BG_B * 4;
+
+  for (let i = 0; i < NUM_BG_SNAKES; i++) {
+    // random start position well inside the screen
+    const sx = margin + Math.random() * (W - margin*2);
+    const sy = margin + Math.random() * (H - margin*2);
+    // random start direction
+    const d = dirs[Math.floor(Math.random() * dirs.length)];
     const pts = [];
     for (let j = 0; j < BG_LEN; j++) {
-      pts.push({ x: sp.x - sp.dx*j*BG_B, y: sp.y - sp.dy*j*BG_B });
+      pts.push({ x: sx - d.x*j*BG_B, y: sy - d.y*j*BG_B });
     }
-    bgSnakes.push({ pts, dirX: sp.dx, dirY: sp.dy, acc: 0, skinIdx: bgSkinIds[i] });
+    bgSnakes.push({ pts, dirX: d.x, dirY: d.y, acc: 0, skinIdx: bgSkinIds[i] });
+  }
+}
+
+// returns all occupied grid cells for a snake (its body pts snapped to grid)
+function bgOccupied(snake) {
+  const set = new Set();
+  snake.pts.forEach(p => {
+    const gx = Math.round(p.x / BG_B);
+    const gy = Math.round(p.y / BG_B);
+    set.add(gx + ',' + gy);
   });
+  return set;
 }
 
 function bgFrame() {
@@ -457,7 +469,7 @@ function bgFrame() {
     homeBgCtx.fillRect(0,0,W,H);
   }
 
-  bgSnakes.forEach(snake => {
+  bgSnakes.forEach((snake, si) => {
     snake.acc += BG_B * BG_SPEED;
 
     if (snake.acc >= BG_B) {
@@ -467,20 +479,69 @@ function bgFrame() {
       snake.pts.unshift(newHead);
       while (snake.pts.length > BG_LEN) snake.pts.pop();
 
+      // build set of all occupied cells by OTHER snakes
+      const otherCells = new Set();
+      bgSnakes.forEach((other, oi) => {
+        if (oi === si) return;
+        other.pts.forEach(p => {
+          const gx = Math.round(p.x / BG_B);
+          const gy = Math.round(p.y / BG_B);
+          otherCells.add(gx + ',' + gy);
+        });
+      });
+
+      // choose next direction
       const margin = BG_B * 3;
       const nx = newHead.x, ny = newHead.y;
       const nearEdge = nx < margin || nx > W-margin || ny < margin || ny > H-margin;
+
+      const allDirs = [{x:1,y:0},{x:-1,y:0},{x:0,y:1},{x:0,y:-1}];
+
+      // score each candidate direction: prefer current, avoid walls and other snakes
+      function isSafe(dx, dy) {
+        // no U-turn
+        if (dx === -snake.dirX && dy === -snake.dirY) return false;
+        const nx2 = newHead.x + dx * BG_B;
+        const ny2 = newHead.y + dy * BG_B;
+        // wall check
+        if (nx2 < BG_B || nx2 > W-BG_B || ny2 < BG_B || ny2 > H-BG_B) return false;
+        // other snake body check
+        const key = Math.round(nx2/BG_B) + ',' + Math.round(ny2/BG_B);
+        if (otherCells.has(key)) return false;
+        return true;
+      }
+
       if (nearEdge) {
-        const cx=W/2, cy=H/2;
-        if      (nx < margin)   { snake.dirX=0; snake.dirY=(cy>ny)?1:-1; }
-        else if (nx > W-margin) { snake.dirX=0; snake.dirY=(cy>ny)?1:-1; }
-        else if (ny < margin)   { snake.dirX=(cx>nx)?1:-1; snake.dirY=0; }
-        else if (ny > H-margin) { snake.dirX=(cx>nx)?1:-1; snake.dirY=0; }
-      } else if (Math.random() < 0.18) {
-        const opts = [{x:1,y:0},{x:-1,y:0},{x:0,y:1},{x:0,y:-1}]
-          .filter(d=>!(d.x===-snake.dirX&&d.y===-snake.dirY));
-        const t=opts[Math.floor(Math.random()*opts.length)];
-        snake.dirX=t.x; snake.dirY=t.y;
+        // must turn away — pick safest turn that avoids walls and others
+        const safeTurns = allDirs.filter(d => isSafe(d.x, d.y));
+        if (safeTurns.length > 0) {
+          // prefer the turn that heads most toward center
+          const cx = W/2, cy = H/2;
+          safeTurns.sort((a,b) => {
+            const da = Math.abs((newHead.x+a.x*BG_B)-cx)+Math.abs((newHead.y+a.y*BG_B)-cy);
+            const db = Math.abs((newHead.x+b.x*BG_B)-cx)+Math.abs((newHead.y+b.y*BG_B)-cy);
+            return da - db;
+          });
+          snake.dirX = safeTurns[0].x; snake.dirY = safeTurns[0].y;
+        }
+      } else {
+        // random turn occasionally, but only to safe directions
+        if (Math.random() < 0.18) {
+          const safe = allDirs.filter(d => isSafe(d.x, d.y));
+          if (safe.length > 0) {
+            const t = safe[Math.floor(Math.random() * safe.length)];
+            snake.dirX = t.x; snake.dirY = t.y;
+          }
+        } else {
+          // even when going straight, check for upcoming other-snake collision
+          if (!isSafe(snake.dirX, snake.dirY)) {
+            const safe = allDirs.filter(d => isSafe(d.x, d.y));
+            if (safe.length > 0) {
+              const t = safe[Math.floor(Math.random() * safe.length)];
+              snake.dirX = t.x; snake.dirY = t.y;
+            }
+          }
+        }
       }
     }
 
