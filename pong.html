@@ -9,9 +9,14 @@ body {
   margin:0;
   overflow:hidden;
   height:100vh;
+  width:100vw;
+
   display:flex;
   justify-content:center;
   align-items:center;
+
+  position:relative;
+
   font-family:Arial;
   background:#000;
   color:white;
@@ -29,42 +34,60 @@ canvas#bg {
 
 /* GAME */
 canvas#game {
+  position:relative;
   z-index:2;
+
   border:2px solid rgba(255,255,255,0.15);
   border-radius:14px;
+
   background: rgba(0,0,0,0.35);
-  box-shadow: 0 0 40px rgba(0,255,255,0.12);
+
+  box-shadow:
+    0 0 40px rgba(0,255,255,0.12);
 }
 
 /* MENU */
 #menu {
   position:absolute;
   z-index:3;
+
   text-align:center;
+
   padding:40px;
+
   border-radius:16px;
+
   background: rgba(0,0,0,0.7);
+
   backdrop-filter: blur(10px);
 }
 
 #menu h1{
   letter-spacing:4px;
+  margin-bottom:20px;
 }
 
 /* BUTTONS */
 button {
   width:180px;
+
   padding:12px;
+
   margin:10px;
+
   border:none;
   border-radius:10px;
+
   cursor:pointer;
+
   color:white;
+
   background: linear-gradient(
     90deg,
     rgba(0,255,255,0.25),
     rgba(0,120,255,0.25)
   );
+
   transition:0.2s;
 }
 
@@ -75,25 +98,39 @@ button:hover{
 /* BACK BUTTON */
 #backBtn {
   position:absolute;
+
   top:15px;
   left:15px;
+
   z-index:5;
+
   display:none;
+
   width:auto;
+
   padding:10px 16px;
+
   border-radius:8px;
+
   background: rgba(255,255,255,0.1);
 }
 
 /* GAME OVER */
 #gameOverScreen {
   position:absolute;
+
   z-index:4;
+
   display:none;
+
   text-align:center;
+
   padding:40px;
+
   border-radius:16px;
+
   background: rgba(0,0,0,0.75);
+
   backdrop-filter: blur(10px);
 }
 </style>
@@ -101,49 +138,83 @@ button:hover{
 
 <body>
 
+<!-- BACKGROUND -->
 <canvas id="bg"></canvas>
 
+<!-- BACK BUTTON -->
 <button id="backBtn" onclick="goMenu()">← Back</button>
 
+<!-- MENU -->
 <div id="menu">
   <h1>PONG</h1>
-  <button onclick="startGame(1)">1 PLAYER</button>
-  <button onclick="startGame(2)">2 PLAYER</button>
+
+  <button onclick="startGame(1)">
+    1 PLAYER
+  </button>
+
+  <button onclick="startGame(2)">
+    2 PLAYER
+  </button>
 </div>
 
+<!-- GAME OVER -->
 <div id="gameOverScreen">
+
   <h1 id="resultText"></h1>
-  <button onclick="restartGame()">RESTART</button>
-  <button onclick="goMenu()">MENU</button>
+
+  <button onclick="restartGame()">
+    RESTART
+  </button>
+
+  <button onclick="goMenu()">
+    MENU
+  </button>
+
 </div>
 
+<!-- GAME -->
 <canvas id="game" width="800" height="500"></canvas>
 
 <script>
-/* ───── BACKGROUND ───── */
+/* ───────────────── BACKGROUND ───────────────── */
+
 const bg=document.getElementById("bg");
 const bgCtx=bg.getContext("2d");
 
 function resizeBG(){
+
   bg.width=window.innerWidth;
   bg.height=window.innerHeight;
+
+  createParticles();
 }
-resizeBG();
 
 window.addEventListener("resize",resizeBG);
 
 let particles=[];
 
-for(let i=0;i<140;i++){
-  particles.push({
-    x:Math.random()*bg.width,
-    y:Math.random()*bg.height,
-    dx:(Math.random()-0.5)*0.6,
-    dy:(Math.random()-0.5)*0.6
-  });
+/* FIXED PARTICLE SPAWN */
+function createParticles(){
+
+  particles=[];
+
+  for(let i=0;i<140;i++){
+
+    particles.push({
+
+      x:Math.random()*window.innerWidth,
+      y:Math.random()*window.innerHeight,
+
+      dx:(Math.random()-0.5)*0.6,
+      dy:(Math.random()-0.5)*0.6
+    });
+  }
 }
 
+resizeBG();
+
 function bgLoop(){
+
   bgCtx.fillStyle="rgba(0,0,0,0.25)";
   bgCtx.fillRect(0,0,bg.width,bg.height);
 
@@ -152,25 +223,43 @@ function bgLoop(){
     p.x+=p.dx;
     p.y+=p.dy;
 
-    if(p.x<0||p.x>bg.width)p.dx*=-1;
-    if(p.y<0||p.y>bg.height)p.dy*=-1;
+    if(p.x<0||p.x>bg.width){
+      p.dx*=-1;
+    }
+
+    if(p.y<0||p.y>bg.height){
+      p.dy*=-1;
+    }
 
     bgCtx.fillStyle="rgba(0,255,255,0.4)";
+
     bgCtx.beginPath();
-    bgCtx.arc(p.x,p.y,2,0,Math.PI*2);
+
+    bgCtx.arc(
+      p.x,
+      p.y,
+      2,
+      0,
+      Math.PI*2
+    );
+
     bgCtx.fill();
   }
 
   requestAnimationFrame(bgLoop);
 }
+
 bgLoop();
 
-/* ───── GAME ───── */
+/* ───────────────── GAME ───────────────── */
+
 const canvas=document.getElementById("game");
 const ctx=canvas.getContext("2d");
 
 let mode=0;
+
 let ball=null;
+
 let left,right;
 
 let score1=0;
@@ -189,57 +278,82 @@ document.addEventListener("keyup",e=>{
 });
 
 /* START */
+
 function startGame(m){
 
   mode=m;
 
   document.getElementById("menu").style.display="none";
+
   document.getElementById("gameOverScreen").style.display="none";
+
   document.getElementById("backBtn").style.display="block";
 
   score1=0;
   score2=0;
+
   gameOver=false;
 
-  left={x:20,y:200};
-  right={x:770,y:200};
+  left={
+    x:20,
+    y:200
+  };
+
+  right={
+    x:770,
+    y:200
+  };
 
   resetBall();
 }
 
 /* RESET BALL */
+
 function resetBall(){
 
   ball={
+
     x:400,
     y:250,
+
     dx:(Math.random()>0.5?4:-4),
+
     dy:(Math.random()*4-2)
   };
 }
 
 /* MENU */
+
 function goMenu(){
 
   mode=0;
+
   ball=null;
 
   document.getElementById("menu").style.display="block";
+
   document.getElementById("backBtn").style.display="none";
+
   document.getElementById("gameOverScreen").style.display="none";
 }
 
 /* RESTART */
+
 function restartGame(){
+
   startGame(mode);
 }
 
 /* UPDATE */
+
 function update(){
 
-  if(!ball||mode===0||gameOver)return;
+  if(!ball||mode===0||gameOver){
+    return;
+  }
 
   /* WIN */
+
   if(score1>=5||score2>=5){
 
     gameOver=true;
@@ -255,138 +369,231 @@ function update(){
   }
 
   /* LEFT PLAYER */
-  if(keys["w"]) left.y-=6;
-  if(keys["s"]) left.y+=6;
+
+  if(keys["w"]){
+    left.y-=6;
+  }
+
+  if(keys["s"]){
+    left.y+=6;
+  }
 
   /* RIGHT PLAYER / AI */
+
   if(mode===2){
 
-    if(keys["ArrowUp"]) right.y-=6;
-    if(keys["ArrowDown"]) right.y+=6;
+    if(keys["ArrowUp"]){
+      right.y-=6;
+    }
+
+    if(keys["ArrowDown"]){
+      right.y+=6;
+    }
 
   } else {
 
-    // 1 PLAYER:
-    // Pfeiltasten steuern jetzt auch den Spieler
-    if(keys["ArrowUp"]) left.y-=6;
-    if(keys["ArrowDown"]) left.y+=6;
+    /* 1 PLAYER:
+       Pfeiltasten steuern auch den Spieler */
 
-    // AI
+    if(keys["ArrowUp"]){
+      left.y-=6;
+    }
+
+    if(keys["ArrowDown"]){
+      left.y+=6;
+    }
+
+    /* AI */
+
     right.y+=(ball.y-right.y-50)*0.08;
   }
 
-  left.y=Math.max(0,Math.min(400,left.y));
-  right.y=Math.max(0,Math.min(400,right.y));
+  left.y=Math.max(
+    0,
+    Math.min(400,left.y)
+  );
+
+  right.y=Math.max(
+    0,
+    Math.min(400,right.y)
+  );
+
+  /* BALL MOVE */
 
   ball.x+=ball.dx;
   ball.y+=ball.dy;
+
+  /* WALL */
 
   if(ball.y<0||ball.y>490){
     ball.dy*=-1;
   }
 
   /* LEFT HIT */
-  if(ball.x<left.x+10 &&
-     ball.y>left.y &&
-     ball.y<left.y+100){
+
+  if(
+    ball.x<left.x+10 &&
+    ball.y>left.y &&
+    ball.y<left.y+100
+  ){
 
     let hit=(ball.y-left.y)/100;
 
     ball.dx=Math.abs(ball.dx)*1.1;
+
     ball.dy=(hit-0.5)*10;
 
     ball.x=left.x+10;
   }
 
   /* RIGHT HIT */
-  if(ball.x>right.x-10 &&
-     ball.y>right.y &&
-     ball.y<right.y+100){
+
+  if(
+    ball.x>right.x-10 &&
+    ball.y>right.y &&
+    ball.y<right.y+100
+  ){
 
     let hit=(ball.y-right.y)/100;
 
     ball.dx=-Math.abs(ball.dx)*1.1;
+
     ball.dy=(hit-0.5)*10;
 
     ball.x=right.x-10;
   }
 
   /* SCORE */
+
   if(ball.x<0){
+
     score2++;
+
     resetBall();
   }
 
   if(ball.x>800){
+
     score1++;
+
     resetBall();
   }
 }
 
 /* DRAW */
+
 function draw(){
 
   ctx.clearRect(0,0,800,500);
 
-  if(mode===0)return;
+  if(mode===0){
+    return;
+  }
 
   /* FIELD */
+
   ctx.strokeStyle="rgba(255,255,255,0.15)";
+
   ctx.lineWidth=2;
-  ctx.strokeRect(0,0,800,500);
+
+  ctx.strokeRect(
+    0,
+    0,
+    800,
+    500
+  );
 
   /* MID LINE */
+
   ctx.fillStyle="rgba(0,255,255,0.1)";
 
   for(let i=0;i<500;i+=20){
-    ctx.fillRect(399,i,2,10);
+
+    ctx.fillRect(
+      399,
+      i,
+      2,
+      10
+    );
   }
 
   /* LABELS */
+
   ctx.fillStyle="white";
+
   ctx.font="20px Arial";
+
   ctx.textAlign="center";
 
   if(mode===1){
 
     ctx.fillText("YOU",200,30);
+
     ctx.fillText("ENEMY",600,30);
 
   } else {
 
     ctx.fillText("PLAYER 1",200,30);
+
     ctx.fillText("PLAYER 2",600,30);
   }
 
   /* SCORE */
+
   ctx.font="28px Arial";
 
   ctx.fillText(score1,350,60);
+
   ctx.fillText(score2,450,60);
 
   /* LEFT PADDLE */
+
   ctx.shadowBlur=20;
+
   ctx.shadowColor="#00ffff";
 
   ctx.fillStyle="#00ffff";
-  ctx.fillRect(left.x,left.y,10,100);
+
+  ctx.fillRect(
+    left.x,
+    left.y,
+    10,
+    100
+  );
 
   /* RIGHT PADDLE */
+
   ctx.shadowColor="#ff3b3b";
 
   ctx.fillStyle="#ff3b3b";
-  ctx.fillRect(right.x,right.y,10,100);
+
+  ctx.fillRect(
+    right.x,
+    right.y,
+    10,
+    100
+  );
 
   /* BALL */
+
   if(ball){
 
     ctx.shadowBlur=25;
+
     ctx.shadowColor="white";
 
     ctx.fillStyle="white";
 
     ctx.beginPath();
-    ctx.arc(ball.x,ball.y,6,0,Math.PI*2);
+
+    ctx.arc(
+      ball.x,
+      ball.y,
+      6,
+      0,
+      Math.PI*2
+    );
+
     ctx.fill();
   }
 
@@ -394,15 +601,18 @@ function draw(){
 }
 
 /* LOOP */
+
 function loop(){
 
   update();
+
   draw();
 
   requestAnimationFrame(loop);
 }
 
 loop();
+
 </script>
 
 </body>
