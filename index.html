@@ -555,6 +555,10 @@ iframe {
             <span class="card-icon">🟥</span>
             <span class="card-title">Block Blast</span>
         </div>
+        <div class="game-card" onclick="showGame('pong')">
+            <span class="card-icon">⚪️</span>
+            <span class="card-title">Pong</span>
+        </div>
     </div>
 </div>
 
@@ -666,6 +670,17 @@ iframe {
     </div>
     <div class="iframe-wrap" style="--iframe-h:600px; --mobile-ratio:1/1;">
         <iframe src="block_blast.html" width="600" height="600" scrolling="no"></iframe>
+    </div>
+</div>    
+
+<!-- PONG -->
+<div id="pong" class="game">
+    <div class="game-header">
+        <button class="backBtn" onclick="showGame('menu')">⬅ Zurück</button>
+        <span class="game-title">⚪️ Pong</span>
+    </div>
+    <div class="iframe-wrap" style="--iframe-h:600px; --mobile-ratio:1/1;">
+        <iframe src=pong.html" width="800" height="600" scrolling="no"></iframe>
     </div>
 </div>    
 ```
