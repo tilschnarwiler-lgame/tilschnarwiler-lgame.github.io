@@ -596,22 +596,36 @@ function update(){
   cube.trail.forEach(t=>t.life-=.09);
   for(let t of tiles){
     if(t.type==='plat') continue;
-    const sh=5;
+
+    // Broad overlap check (generous hitbox for blocks, tight for spikes)
+    const isSp = t.type==='spike';
+    const sh = isSp ? 4 : 2;  // smaller shrink = more forgiving on blocks
     const overlapX = cube.worldX+sh < t.x+t.w-sh && cube.worldX+CS-sh > t.x+sh;
     const overlapY = cube.y+sh < t.y+t.h && cube.y+CS-sh > t.y;
-    if(!overlapX||!overlapY) continue;
+    if(!overlapX || !overlapY) continue;
+
     if(t.type==='block'){
-      // Land on top of block (coming from above)
-      const prevY = cube.y - cube.vy;
-      if(prevY+CS <= t.y+4 && cube.vy>=0 && overlapX){
-        cube.y = t.y - CS;
-        cube.vy = 0;
+      // TOP LANDING: cube is coming from above if its bottom is near the block top.
+      // We check the cube bottom against block top with a generous threshold
+      // to handle fast-falling (vy can be large, so prevY check alone fails).
+      const blockTop = t.y;
+      const cubeBotNow  = cube.y + CS;
+      const cubeBotPrev = cube.y - cube.vy + CS;  // where bottom was last frame
+      // Landing condition: bottom crossed or is near the top surface, moving downward
+      const crossedTop = cubeBotPrev <= blockTop + 6 && cubeBotNow >= blockTop - 4;
+      const nearTop    = cubeBotNow <= blockTop + 14;  // extra leniency at low speed
+      if((crossedTop || nearTop) && cube.vy >= 0){
+        cube.y   = blockTop - CS;
+        cube.vy  = 0;
         if(!cube.onGround) land();
         cube.onGround = true;
         continue;
       }
+      // Side / bottom hit = death
+      cube.dead=true;spawnDeathParts();state='dying';setTimeout(()=>{state='dead';showDead();},900);return;
     }
-    // Spike or side/bottom hit on block = death
+
+    // Spike = always death on overlap
     cube.dead=true;spawnDeathParts();state='dying';setTimeout(()=>{state='dead';showDead();},900);return;
   }
   if(cube.worldX>=finishX){
