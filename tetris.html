@@ -84,11 +84,17 @@ let dropCounter=0, lastTime=0;
 let score=0, lines=0, level=1, dropInterval=600;
 let highscore=0;
 
+// Animation state
+let clearingRows = [];      // Reihen die gerade animiert werden
+let clearAnim = 0;          // Fortschritt 0..1
+let clearAnimActive = false;
+const CLEAR_ANIM_DURATION = 300; // ms
+
 // Touch
 let touchStartX=0, touchStartY=0, touchStartTime=0;
-const SWIPE_THRESHOLD = 30;  // Mindest-Pixel für Swipe
-const TAP_MAX_MOVE = 10;     // Max Bewegung damit es als Tap gilt
-const TAP_MAX_TIME = 200;    // Max ms für Tap
+const SWIPE_THRESHOLD = 30;
+const TAP_MAX_MOVE = 10;
+const TAP_MAX_TIME = 200;
 
 canvas.addEventListener("touchstart", e=>{
  e.preventDefault();
@@ -104,25 +110,16 @@ canvas.addEventListener("touchend", e=>{
  let dt = Date.now() - touchStartTime;
  let dist = Math.sqrt(dx*dx + dy*dy);
 
- // Tap → rotieren
  if(dist < TAP_MAX_MOVE && dt < TAP_MAX_TIME){
-  rotate(piece);
+  rotateSafe(piece);
   return;
  }
 
- // Swipe
  if(Math.abs(dx) > Math.abs(dy)){
-  // Horizontal
-  if(dx > SWIPE_THRESHOLD){
-   piece.x++; if(collide(board,piece)) piece.x--;
-  } else if(dx < -SWIPE_THRESHOLD){
-   piece.x--; if(collide(board,piece)) piece.x++;
-  }
+  if(dx > SWIPE_THRESHOLD){ piece.x++; if(collide(board,piece)) piece.x--; }
+  else if(dx < -SWIPE_THRESHOLD){ piece.x--; if(collide(board,piece)) piece.x++; }
  } else {
-  // Vertikal
-  if(dy > SWIPE_THRESHOLD){
-   piece.y++; if(collide(board,piece)) piece.y--;
-  }
+  if(dy > SWIPE_THRESHOLD){ piece.y++; if(collide(board,piece)) piece.y--; }
  }
 }, {passive:false});
 
@@ -134,39 +131,70 @@ function createPiece(){
 function collide(board,p){
  return p.shape.some((r,y)=>r.some((v,x)=>{
   if(!v)return false;
-  let bx=x+p.x,by=y+p.y;
+  let bx=x+p.x, by=y+p.y;
   return bx<0||bx>=COLS||by>=ROWS||board[by][bx];
  }));
 }
 
 function merge(board,p){
  p.shape.forEach((r,y)=>r.forEach((v,x)=>{
-  if(v)board[y+p.y][x+p.x]=v;
+  if(v) board[y+p.y][x+p.x]=v;
  }));
 }
 
+// FIX 1: Alle vollen Reihen auf einmal finden & animieren
 function clearRows(){
- outer:
- for(let y=ROWS-1;y>=0;y--){
-  for(let x=0;x<COLS;x++) if(!board[y][x]) continue outer;
+ let full = [];
+ for(let y=0; y<ROWS; y++){
+  if(board[y].every(v=>v!==0)) full.push(y);
+ }
+ if(full.length===0) return;
+
+ clearingRows = full;
+ clearAnim = 0;
+ clearAnimActive = true;
+}
+
+// Nach Animation: Reihen wirklich löschen
+function removeClearedRows(){
+ // Von unten nach oben löschen damit Indizes stimmen
+ clearingRows.slice().reverse().forEach(y=>{
   board.splice(y,1);
   board.unshift(Array(COLS).fill(0));
-  score+=10; lines++;
-  level=Math.floor(lines/4)+1;
-  dropInterval=Math.max(60,600*Math.pow(0.88,level));
-  updateUI();
+ });
+
+ score += clearingRows.length * 10;
+ lines += clearingRows.length;
+ level = Math.floor(lines/4)+1;
+ dropInterval = Math.max(60, 600*Math.pow(0.88,level));
+ clearingRows = [];
+ clearAnimActive = false;
+ updateUI();
+}
+
+// FIX 2: Wall kick – nach Rotation aus der Wand schieben
+function rotateSafe(p){
+ let m = p.shape;
+ p.shape = m[0].map((_,i)=>m.map(row=>row[i])).reverse();
+
+ // Aus linker/rechter Wand schieben
+ let kicks = [0, 1, -1, 2, -2];
+ for(let k of kicks){
+  p.x += k;
+  if(!collide(board,p)) return; // passt!
+  p.x -= k;
  }
+ // Kein Kick möglich → Rotation rückgängig
+ p.shape = p.shape[0].map((_,i)=>p.shape.map(row=>row[i])).reverse();
+ p.shape = p.shape[0].map((_,i)=>p.shape.map(row=>row[i])).reverse();
+ p.shape = p.shape[0].map((_,i)=>p.shape.map(row=>row[i])).reverse();
 }
 
-function rotate(p){
- let m=p.shape;
- p.shape=m[0].map((_,i)=>m.map(row=>row[i])).reverse();
-}
-
-function drawMatrix(m,o){
+function drawMatrix(m,o, alpha=1){
+ ctx.globalAlpha = alpha;
  m.forEach((r,y)=>r.forEach((v,x)=>{
   if(v){
-   let px=(x+o.x)*SIZE,py=(y+o.y)*SIZE;
+   let px=(x+o.x)*SIZE, py=(y+o.y)*SIZE;
    ctx.shadowColor=COLORS[v]; ctx.shadowBlur=18;
    ctx.fillStyle=COLORS[v];
    ctx.fillRect(px,py,SIZE,SIZE);
@@ -175,6 +203,40 @@ function drawMatrix(m,o){
    ctx.strokeRect(px,py,SIZE,SIZE);
   }
  }));
+ ctx.globalAlpha=1;
+}
+
+// FIX 3: Reihen-Lösch-Animation
+function drawClearAnimation(){
+ let progress = clearAnim; // 0..1
+ // Weißer Flash → dann ausblenden
+ clearingRows.forEach(y=>{
+  let py = y*SIZE;
+  // Heller Flash
+  ctx.globalAlpha = 1 - progress;
+  ctx.fillStyle = `rgba(255,255,255,${1-progress})`;
+  ctx.shadowColor = "#fff";
+  ctx.shadowBlur = 30*(1-progress);
+  ctx.fillRect(0, py, COLS*SIZE, SIZE);
+  ctx.shadowBlur=0;
+  ctx.globalAlpha=1;
+
+  // Blöcke schrumpfen zur Mitte
+  board[y].forEach((v,x)=>{
+   if(!v) return;
+   let shrink = progress;
+   let px = (x+0.5)*SIZE;
+   let centerY = (y+0.5)*SIZE;
+   let s = SIZE*(1-shrink);
+   ctx.globalAlpha = 1-progress;
+   ctx.fillStyle = COLORS[v];
+   ctx.shadowColor = COLORS[v];
+   ctx.shadowBlur = 18;
+   ctx.fillRect(px-s/2, centerY-s/2, s, s);
+   ctx.shadowBlur=0;
+   ctx.globalAlpha=1;
+  });
+ });
 }
 
 function updateUI(){
@@ -189,6 +251,18 @@ function updateUI(){
 
 function update(t=0){
  let delta=t-lastTime; lastTime=t;
+
+ // Während Animation läuft: nur animieren, kein Drop
+ if(clearAnimActive){
+  clearAnim += delta / CLEAR_ANIM_DURATION;
+  if(clearAnim >= 1){
+   removeClearedRows();
+  }
+  draw();
+  requestAnimationFrame(update);
+  return;
+ }
+
  dropCounter+=delta;
  if(dropCounter>dropInterval){
   piece.y++;
@@ -197,7 +271,8 @@ function update(t=0){
    merge(board,piece);
    piece=createPiece();
    clearRows();
-   if(collide(board,piece)){
+
+   if(!clearAnimActive && collide(board,piece)){
     if(score>highscore){
      highscore=score;
      document.getElementById("highscore").textContent=highscore;
@@ -209,30 +284,51 @@ function update(t=0){
   }
   dropCounter=0;
  }
- ctx.clearRect(0,0,canvas.width,canvas.height);
- drawMatrix(board,{x:0,y:0});
- drawMatrix(piece.shape,piece);
+
+ draw();
  requestAnimationFrame(update);
 }
 
+function draw(){
+ ctx.clearRect(0,0,canvas.width,canvas.height);
+
+ // Board zeichnen, volle Reihen überspringen (werden per Animation gezeichnet)
+ board.forEach((r,y)=>{
+  if(clearingRows.includes(y)) return;
+  r.forEach((v,x)=>{
+   if(v){
+    let px=x*SIZE, py=y*SIZE;
+    ctx.shadowColor=COLORS[v]; ctx.shadowBlur=18;
+    ctx.fillStyle=COLORS[v];
+    ctx.fillRect(px,py,SIZE,SIZE);
+    ctx.shadowBlur=0;
+    ctx.strokeStyle="rgba(0,0,0,0.7)";
+    ctx.strokeRect(px,py,SIZE,SIZE);
+   }
+  });
+ });
+
+ if(clearAnimActive) drawClearAnimation();
+
+ if(!clearAnimActive) drawMatrix(piece.shape, piece);
+}
+
 document.addEventListener("keydown",e=>{
+ if(clearAnimActive) return;
  if(e.key==="ArrowLeft"){piece.x--;if(collide(board,piece))piece.x++;}
  if(e.key==="ArrowRight"){piece.x++;if(collide(board,piece))piece.x--;}
  if(e.key==="ArrowDown"){piece.y++;if(collide(board,piece))piece.y--;}
- if(e.key==="ArrowUp") rotate(piece);
+ if(e.key==="ArrowUp") rotateSafe(piece);
 });
+
+window.addEventListener("keydown", function(e){
+ if(["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"," "].includes(e.key)){
+  e.preventDefault();
+ }
+}, {passive:false});
 
 updateUI();
 requestAnimationFrame(update);
 </script>
-
- <script>
-window.addEventListener("keydown", function(e) {
-    if (["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"," "].includes(e.key)) {
-        e.preventDefault();
-    }
-}, { passive: false });
-</script>
-
 </body>
 </html>
