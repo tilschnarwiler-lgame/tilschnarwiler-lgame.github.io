@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
+<title>NOVA BLASTER — ARCADE</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Orbitron:wght@400;700;900&display=swap');
 
@@ -269,7 +269,10 @@
 <div class="scanlines"></div>
 
 <div id="game-wrapper">
-
+  <div class="title-bar">
+    <h1>★ NOVA BLASTER ★</h1>
+  </div>
+  <div class="subtitle">INSERT COIN — PRESS START</div>
 
   <div class="hud">
     <div class="hud-item">
@@ -292,7 +295,9 @@
 
   <div style="position:relative;">
     <canvas id="gameCanvas" width="600" height="500"></canvas>
-    <div id="overlay"
+    <div id="overlay">
+      <div class="overlay-title cyan">NOVA<br>BLASTER</div>
+      <div class="overlay-sub">Destroy all enemies • Survive the waves<br>Collect stars for bonus</div>
       <button class="start-btn" id="startBtn">► START GAME</button>
       <div class="controls" style="color:rgba(255,255,255,0.5); margin-top:4px;">
         <span><span class="key">←→</span> MOVE</span>
