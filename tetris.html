@@ -85,10 +85,10 @@ let score=0, lines=0, level=1, dropInterval=600;
 let highscore=0;
 
 // Animation state
-let clearingRows = [];      // Reihen die gerade animiert werden
-let clearAnim = 0;          // Fortschritt 0..1
+let clearingRows = [];
+let clearAnim = 0;
 let clearAnimActive = false;
-const CLEAR_ANIM_DURATION = 300; // ms
+const CLEAR_ANIM_DURATION = 300;
 
 // Touch
 let touchStartX=0, touchStartY=0, touchStartTime=0;
@@ -142,7 +142,6 @@ function merge(board,p){
  }));
 }
 
-// FIX 1: Alle vollen Reihen auf einmal finden & animieren
 function clearRows(){
  let full = [];
  for(let y=0; y<ROWS; y++){
@@ -155,13 +154,14 @@ function clearRows(){
  clearAnimActive = true;
 }
 
-// Nach Animation: Reihen wirklich löschen
 function removeClearedRows(){
- // Von unten nach oben löschen damit Indizes stimmen
- clearingRows.slice().reverse().forEach(y=>{
-  board.splice(y,1);
+ // Alle vollen Reihen auf einmal rausfiltern
+ board = board.filter((_, y) => !clearingRows.includes(y));
+
+ // Oben auffüllen
+ while(board.length < ROWS){
   board.unshift(Array(COLS).fill(0));
- });
+ }
 
  score += clearingRows.length * 10;
  lines += clearingRows.length;
@@ -172,47 +172,26 @@ function removeClearedRows(){
  updateUI();
 }
 
-// FIX 2: Wall kick – nach Rotation aus der Wand schieben
 function rotateSafe(p){
  let m = p.shape;
  p.shape = m[0].map((_,i)=>m.map(row=>row[i])).reverse();
 
- // Aus linker/rechter Wand schieben
  let kicks = [0, 1, -1, 2, -2];
  for(let k of kicks){
   p.x += k;
-  if(!collide(board,p)) return; // passt!
+  if(!collide(board,p)) return;
   p.x -= k;
  }
- // Kein Kick möglich → Rotation rückgängig
+ // Rotation rückgängig (3x drehen = rückwärts)
  p.shape = p.shape[0].map((_,i)=>p.shape.map(row=>row[i])).reverse();
  p.shape = p.shape[0].map((_,i)=>p.shape.map(row=>row[i])).reverse();
  p.shape = p.shape[0].map((_,i)=>p.shape.map(row=>row[i])).reverse();
 }
 
-function drawMatrix(m,o, alpha=1){
- ctx.globalAlpha = alpha;
- m.forEach((r,y)=>r.forEach((v,x)=>{
-  if(v){
-   let px=(x+o.x)*SIZE, py=(y+o.y)*SIZE;
-   ctx.shadowColor=COLORS[v]; ctx.shadowBlur=18;
-   ctx.fillStyle=COLORS[v];
-   ctx.fillRect(px,py,SIZE,SIZE);
-   ctx.shadowBlur=0;
-   ctx.strokeStyle="rgba(0,0,0,0.7)";
-   ctx.strokeRect(px,py,SIZE,SIZE);
-  }
- }));
- ctx.globalAlpha=1;
-}
-
-// FIX 3: Reihen-Lösch-Animation
 function drawClearAnimation(){
- let progress = clearAnim; // 0..1
- // Weißer Flash → dann ausblenden
+ let progress = clearAnim;
  clearingRows.forEach(y=>{
   let py = y*SIZE;
-  // Heller Flash
   ctx.globalAlpha = 1 - progress;
   ctx.fillStyle = `rgba(255,255,255,${1-progress})`;
   ctx.shadowColor = "#fff";
@@ -221,7 +200,6 @@ function drawClearAnimation(){
   ctx.shadowBlur=0;
   ctx.globalAlpha=1;
 
-  // Blöcke schrumpfen zur Mitte
   board[y].forEach((v,x)=>{
    if(!v) return;
    let shrink = progress;
@@ -252,11 +230,20 @@ function updateUI(){
 function update(t=0){
  let delta=t-lastTime; lastTime=t;
 
- // Während Animation läuft: nur animieren, kein Drop
  if(clearAnimActive){
   clearAnim += delta / CLEAR_ANIM_DURATION;
   if(clearAnim >= 1){
    removeClearedRows();
+   // Game over check nach Animation
+   if(collide(board,piece)){
+    if(score>highscore){
+     highscore=score;
+     document.getElementById("highscore").textContent=highscore;
+    }
+    board=Array.from({length:ROWS},()=>Array(COLS).fill(0));
+    score=0; lines=0; level=1; dropInterval=600;
+    updateUI();
+   }
   }
   draw();
   requestAnimationFrame(update);
@@ -292,7 +279,6 @@ function update(t=0){
 function draw(){
  ctx.clearRect(0,0,canvas.width,canvas.height);
 
- // Board zeichnen, volle Reihen überspringen (werden per Animation gezeichnet)
  board.forEach((r,y)=>{
   if(clearingRows.includes(y)) return;
   r.forEach((v,x)=>{
@@ -309,8 +295,21 @@ function draw(){
  });
 
  if(clearAnimActive) drawClearAnimation();
-
  if(!clearAnimActive) drawMatrix(piece.shape, piece);
+}
+
+function drawMatrix(m,o){
+ m.forEach((r,y)=>r.forEach((v,x)=>{
+  if(v){
+   let px=(x+o.x)*SIZE, py=(y+o.y)*SIZE;
+   ctx.shadowColor=COLORS[v]; ctx.shadowBlur=18;
+   ctx.fillStyle=COLORS[v];
+   ctx.fillRect(px,py,SIZE,SIZE);
+   ctx.shadowBlur=0;
+   ctx.strokeStyle="rgba(0,0,0,0.7)";
+   ctx.strokeRect(px,py,SIZE,SIZE);
+  }
+ }));
 }
 
 document.addEventListener("keydown",e=>{
