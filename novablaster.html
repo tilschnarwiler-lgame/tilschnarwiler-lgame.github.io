@@ -674,7 +674,7 @@ function applyPowerup(pu, x, y) {
       break;
     case 'rapid':
       rapidFire = true;
-      playerMaxCooldown = 7;
+      playerMaxCooldown = 11;
       break;
     case 'life':
       if (lives < 5) lives++;
@@ -720,9 +720,10 @@ function update() {
   if (movL && player.x > player.w/2) player.x -= player.speed;
   if (movR && player.x < W - player.w/2) player.x += player.speed;
 
-  // Apply swipe
+  // Apply swipe — capped to keyboard speed
   if (Math.abs(swipeMove) > 0) {
-    player.x = Math.max(player.w/2, Math.min(W - player.w/2, player.x + swipeMove));
+    const capped = Math.max(-player.speed, Math.min(player.speed, swipeMove));
+    player.x = Math.max(player.w/2, Math.min(W - player.w/2, player.x + capped));
   }
 
   // Shooting
