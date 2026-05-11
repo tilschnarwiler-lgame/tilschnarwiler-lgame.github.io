@@ -115,10 +115,21 @@ const TOWER_DEFS={
   cannon:{cost:100,range:120,cooldown:96,dmg:5,color:'#a05a28',label:'Kanonenturm'},
   mage:{cost:120,range:100,cooldown:96,dmg:4,color:'#8a28c0',label:'Magierturm',splash:55}
 };
+
+// Each tower has upgrades per level: index 0 = lvl1->lvl2, index 1 = lvl2->lvl3
 const UPGRADE_DEFS={
-  archer:{cost:50,rangeBonus:0.167,dmgBonus:2,label:'Schaden: 3 → 5<br>Reichweite: 150 → 175'},
-  cannon:{cost:70,rangeBonus:0.25,dmgBonus:2,label:'Schaden: 5 → 7<br>Reichweite: 120 → 150'},
-  mage:{cost:80,rangeBonus:0.40,dmgBonus:2,label:'Schaden: 4 → 6<br>Reichweite: 100 → 140'}
+  archer:[
+    {cost:50, newDmg:5, newRange:175, label:'Schaden: 3 → 5<br>Reichweite: 150 → 175'},
+    {cost:70, newDmg:7, newRange:200, label:'Schaden: 5 → 7<br>Reichweite: 175 → 200'}
+  ],
+  cannon:[
+    {cost:70, newDmg:7, newRange:150, label:'Schaden: 5 → 7<br>Reichweite: 120 → 150'},
+    {cost:100,newDmg:10,newRange:175, label:'Schaden: 7 → 10<br>Reichweite: 150 → 175'}
+  ],
+  mage:[
+    {cost:80, newDmg:6, newRange:130, label:'Schaden: 4 → 6<br>Reichweite: 100 → 130'},
+    {cost:120,newDmg:8, newRange:160, label:'Schaden: 6 → 8<br>Reichweite: 130 → 160'}
+  ]
 };
 
 const terrain=[];
@@ -225,7 +236,11 @@ function getMouse(e){
 }
 
 function getSellPrice(tw){
-  return Math.floor(TOWER_DEFS[tw.type].cost/2)+(tw.upgraded?Math.floor(UPGRADE_DEFS[tw.type].cost/2):0);
+  const def=TOWER_DEFS[tw.type];
+  const upgrades=UPGRADE_DEFS[tw.type];
+  let total=Math.floor(def.cost/2);
+  for(let i=0;i<tw.level-1;i++) total+=Math.floor(upgrades[i].cost/2);
+  return total;
 }
 
 function sellTower(tw){
@@ -240,20 +255,22 @@ function sellTower(tw){
 
 function showUpgPanel(tw){
   selectedTower=tw;
-  const def=TOWER_DEFS[tw.type],upd=UPGRADE_DEFS[tw.type];
-  document.getElementById('upgTitle').textContent=(tw.upgraded?'★ ':'')+def.label;
+  const def=TOWER_DEFS[tw.type];
+  const upgrades=UPGRADE_DEFS[tw.type];
+  document.getElementById('upgTitle').textContent=def.label+' (Level '+tw.level+')';
   document.getElementById('upgStats').innerHTML='Schaden: '+tw.dmg+'<br>Reichweite: '+Math.round(tw.range);
   const bot=document.getElementById('upgBottom');
   const sellPrice=getSellPrice(tw);
   const sellBtn='<button class="sell-btn" id="doSellBtn">Verkaufen (+'+sellPrice+' 💰)</button>';
-  if(!tw.upgraded){
+  if(tw.level<3){
+    const upd=upgrades[tw.level-1];
     bot.innerHTML=
       '<div class="upg-info">'+upd.label+'</div>'+
       '<button class="upg-btn" id="doUpgBtn"'+(money<upd.cost?' disabled':'')+'>Upgrade ('+upd.cost+' 💰)</button>'+
       sellBtn;
     document.getElementById('doUpgBtn').onclick=doUpgrade;
   } else {
-    bot.innerHTML='<div class="upg-done">Bereits aufgewertet ✓</div>'+sellBtn;
+    bot.innerHTML='<div class="upg-done">Max. Level erreicht ✓</div>'+sellBtn;
   }
   document.getElementById('doSellBtn').onclick=()=>sellTower(tw);
   document.getElementById('upgPanel').style.display='block';
@@ -263,10 +280,17 @@ function hideUpgPanel(){selectedTower=null;document.getElementById('upgPanel').s
 
 function doUpgrade(){
   if(!selectedTower)return;
-  const tw=selectedTower,upd=UPGRADE_DEFS[tw.type];
-  if(tw.upgraded||money<upd.cost)return;
-  money-=upd.cost;tw.range=Math.round(tw.range*(1+upd.rangeBonus));tw.dmg+=upd.dmgBonus;tw.upgraded=true;
-  showMsg('Turm aufgewertet!');showUpgPanel(tw);updateUI();
+  const tw=selectedTower;
+  if(tw.level>=3)return;
+  const upd=UPGRADE_DEFS[tw.type][tw.level-1];
+  if(money<upd.cost)return;
+  money-=upd.cost;
+  tw.dmg=upd.newDmg;
+  tw.range=upd.newRange;
+  tw.level++;
+  showMsg('Turm auf Level '+tw.level+' aufgewertet!');
+  showUpgPanel(tw);
+  updateUI();
 }
 
 document.getElementById('upgClose').onclick=hideUpgPanel;
@@ -288,7 +312,9 @@ function updateUI(){
   document.getElementById('hpBar').style.background=ratio>0.5?'#27ae60':ratio>0.25?'#e67e22':'#e74c3c';
   document.getElementById('hpText').textContent=baseHP+' / 100';
   const btn=document.getElementById('doUpgBtn');
-  if(btn&&selectedTower)btn.disabled=money<UPGRADE_DEFS[selectedTower.type].cost;
+  if(btn&&selectedTower&&selectedTower.level<3){
+    btn.disabled=money<UPGRADE_DEFS[selectedTower.type][selectedTower.level-1].cost;
+  }
 }
 
 document.getElementById('btnArcher').onclick=()=>{if(!document.getElementById('btnArcher').disabled){buildMode=buildMode==='archer'?null:'archer';hideUpgPanel();updateUI();}};
@@ -323,7 +349,7 @@ canvas.addEventListener('click',e=>{
     const def=TOWER_DEFS[buildMode];
     if(money<def.cost){showMsg('Nicht genug Gold!');return;}
     money-=def.cost;grid[gy][gx]=true;
-    towers.push({x:gx,y:gy,cooldown:0,type:buildMode,upgraded:false,range:def.range,dmg:def.dmg,cd:def.cooldown});
+    towers.push({x:gx,y:gy,cooldown:0,type:buildMode,level:1,range:def.range,dmg:def.dmg,cd:def.cooldown});
     buildMode=null;showMsg('Turm gebaut!');updateUI();
   }
 });
@@ -412,47 +438,53 @@ function drawCastle(px,py){
   ctx.fillStyle='#b7410e';ctx.fillRect(px+17,py+10,3,11);ctx.fillRect(px+13,py+14,11,3);
   ctx.fillStyle='#922b21';ctx.beginPath();ctx.moveTo(px+18,py+6);ctx.lineTo(px+21,py+10);ctx.lineTo(px+15,py+10);ctx.closePath();ctx.fill();
 }
-function drawTowerArcher(px,py,upg){
-  ctx.fillStyle=upg?'#2a6a4a':'#6d4c41';ctx.fillRect(px+11,py+20,18,18);
-  ctx.fillStyle=upg?'#1a5a3a':'#5d4037';ctx.fillRect(px+9,py+12,22,12);
-  ctx.fillStyle=upg?'#1a4a2a':'#4e342e';
+function drawTowerArcher(px,py,lvl){
+  const upg=lvl>1;
+  ctx.fillStyle=lvl===3?'#1a4a2a':upg?'#2a6a4a':'#6d4c41';ctx.fillRect(px+11,py+20,18,18);
+  ctx.fillStyle=lvl===3?'#0e3a1e':upg?'#1a5a3a':'#5d4037';ctx.fillRect(px+9,py+12,22,12);
+  ctx.fillStyle=lvl===3?'#0a2a14':upg?'#1a4a2a':'#4e342e';
   ctx.fillRect(px+9,py+7,6,9);ctx.fillRect(px+17,py+7,6,9);ctx.fillRect(px+25,py+7,6,9);
-  ctx.fillStyle=upg?'#0e3a1e':'#3e2723';
+  ctx.fillStyle=lvl===3?'#061a0a':upg?'#0e3a1e':'#3e2723';
   ctx.fillRect(px+11,py+7,4,6);ctx.fillRect(px+19,py+7,4,6);ctx.fillRect(px+27,py+7,4,6);
-  ctx.fillStyle=upg?'#2a8a4a':'#795548';ctx.fillRect(px+9,py+35,22,4);
-  if(upg){ctx.fillStyle='rgba(50,255,100,0.15)';ctx.fillRect(px+9,py+7,22,32);}
+  ctx.fillStyle=lvl===3?'#1a6a2a':upg?'#2a8a4a':'#795548';ctx.fillRect(px+9,py+35,22,4);
+  if(upg){ctx.fillStyle=lvl===3?'rgba(50,255,80,0.25)':'rgba(50,255,100,0.15)';ctx.fillRect(px+9,py+7,22,32);}
   const cx=px+20,cy=py+11;
   ctx.fillStyle='#d4a96e';ctx.beginPath();ctx.arc(cx,cy-5,3.5,0,Math.PI*2);ctx.fill();
-  ctx.fillStyle=upg?'#1a6a3a':'#4a4a4a';ctx.beginPath();ctx.arc(cx,cy-8,4,Math.PI,0);ctx.fill();
-  ctx.fillStyle=upg?'#2a8a5a':'#546e7a';ctx.fillRect(cx-3.5,cy-2,7,6);
+  ctx.fillStyle=lvl===3?'#0a4a1e':upg?'#1a6a3a':'#4a4a4a';ctx.beginPath();ctx.arc(cx,cy-8,4,Math.PI,0);ctx.fill();
+  ctx.fillStyle=lvl===3?'#1a6a3a':upg?'#2a8a5a':'#546e7a';ctx.fillRect(cx-3.5,cy-2,7,6);
   ctx.strokeStyle='#5d4037';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(cx-7,cy-3);ctx.lineTo(cx-7,cy+4);ctx.stroke();
-  ctx.strokeStyle=upg?'#aaffcc':'#e8d5b0';ctx.lineWidth=0.8;ctx.beginPath();ctx.moveTo(cx-7,cy-3);ctx.quadraticCurveTo(cx-1,cy+1,cx-7,cy+4);ctx.stroke();
+  ctx.strokeStyle=lvl===3?'#88ffaa':upg?'#aaffcc':'#e8d5b0';ctx.lineWidth=0.8;ctx.beginPath();ctx.moveTo(cx-7,cy-3);ctx.quadraticCurveTo(cx-1,cy+1,cx-7,cy+4);ctx.stroke();
+  if(lvl===3){ctx.fillStyle='rgba(100,255,120,0.5)';ctx.beginPath();ctx.arc(cx,cy-5,6,0,Math.PI*2);ctx.fill();}
 }
-function drawTowerCannon(px,py,upg){
-  ctx.fillStyle=upg?'#5a3a1a':'#5a4a3a';ctx.fillRect(px+8,py+18,24,20);
-  ctx.fillStyle=upg?'#8a5a28':'#7a6a58';ctx.fillRect(px+6,py+10,28,12);
-  ctx.fillStyle=upg?'#6a3a10':'#6a5a48';ctx.fillRect(px+6,py+4,8,10);ctx.fillRect(px+18,py+4,8,10);
-  ctx.fillStyle=upg?'#4a2800':'#5a4a38';ctx.fillRect(px+8,py+4,4,7);ctx.fillRect(px+20,py+4,4,7);
-  ctx.fillStyle=upg?'#c87020':'#888';ctx.fillRect(px+16,py+14,8,5);
-  ctx.fillStyle=upg?'#e08030':'#aaa';ctx.fillRect(px+23,py+15,6,3);
+function drawTowerCannon(px,py,lvl){
+  const upg=lvl>1;
+  ctx.fillStyle=lvl===3?'#7a2800':upg?'#5a3a1a':'#5a4a3a';ctx.fillRect(px+8,py+18,24,20);
+  ctx.fillStyle=lvl===3?'#aa4a10':upg?'#8a5a28':'#7a6a58';ctx.fillRect(px+6,py+10,28,12);
+  ctx.fillStyle=lvl===3?'#8a2a00':upg?'#6a3a10':'#6a5a48';ctx.fillRect(px+6,py+4,8,10);ctx.fillRect(px+18,py+4,8,10);
+  ctx.fillStyle=lvl===3?'#6a1800':upg?'#4a2800':'#5a4a38';ctx.fillRect(px+8,py+4,4,7);ctx.fillRect(px+20,py+4,4,7);
+  ctx.fillStyle=lvl===3?'#ff8020':upg?'#c87020':'#888';ctx.fillRect(px+16,py+14,8,5);
+  ctx.fillStyle=lvl===3?'#ffaa40':upg?'#e08030':'#aaa';ctx.fillRect(px+23,py+15,6,3);
   ctx.fillStyle='#333';ctx.beginPath();ctx.arc(px+13,py+30,3,0,Math.PI*2);ctx.fill();
   ctx.beginPath();ctx.arc(px+19,py+30,3,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(px+16,py+26,3,0,Math.PI*2);ctx.fill();
-  if(upg){ctx.fillStyle='rgba(255,140,0,0.15)';ctx.fillRect(px+6,py+4,28,34);}
+  if(upg){ctx.fillStyle=lvl===3?'rgba(255,100,0,0.25)':'rgba(255,140,0,0.15)';ctx.fillRect(px+6,py+4,28,34);}
+  if(lvl===3){ctx.strokeStyle='rgba(255,120,0,0.6)';ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(px+20,py+22,14,0,Math.PI*2);ctx.stroke();}
 }
-function drawTowerMage(px,py,upg){
-  ctx.fillStyle=upg?'#3a1060':'#2a1a4a';ctx.fillRect(px+13,py+14,14,24);
-  ctx.fillStyle=upg?'#4a1a80':'#3a2a5a';ctx.fillRect(px+9,py+30,22,10);
-  ctx.fillStyle=upg?'#6a2aaa':'#4a3a7a';ctx.beginPath();ctx.moveTo(px+20,py+2);ctx.lineTo(px+28,py+14);ctx.lineTo(px+12,py+14);ctx.closePath();ctx.fill();
-  ctx.fillStyle=upg?'#ffddff':'#8888ff';ctx.beginPath();ctx.arc(px+20,py+20,3,0,Math.PI*2);ctx.fill();
-  ctx.fillStyle=upg?'#ffaaff':'#aaaaff';
-  const ns=upg?5:3;for(let i=0;i<ns;i++){const a=(i/ns)*Math.PI*2,r=upg?9:7;ctx.beginPath();ctx.arc(px+20+Math.cos(a)*r,py+22+Math.sin(a)*r,1.5,0,Math.PI*2);ctx.fill();}
-  if(upg){ctx.strokeStyle='rgba(200,100,255,0.4)';ctx.lineWidth=1;ctx.beginPath();ctx.arc(px+20,py+22,11,0,Math.PI*2);ctx.stroke();}
+function drawTowerMage(px,py,lvl){
+  const upg=lvl>1;
+  ctx.fillStyle=lvl===3?'#1a0040':upg?'#3a1060':'#2a1a4a';ctx.fillRect(px+13,py+14,14,24);
+  ctx.fillStyle=lvl===3?'#2a0060':upg?'#4a1a80':'#3a2a5a';ctx.fillRect(px+9,py+30,22,10);
+  ctx.fillStyle=lvl===3?'#8a00cc':upg?'#6a2aaa':'#4a3a7a';ctx.beginPath();ctx.moveTo(px+20,py+2);ctx.lineTo(px+28,py+14);ctx.lineTo(px+12,py+14);ctx.closePath();ctx.fill();
+  ctx.fillStyle=lvl===3?'#ffaaff':upg?'#ffddff':'#8888ff';ctx.beginPath();ctx.arc(px+20,py+20,3,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle=lvl===3?'#ff88ff':upg?'#ffaaff':'#aaaaff';
+  const ns=lvl===3?6:upg?5:3;
+  for(let i=0;i<ns;i++){const a=(i/ns)*Math.PI*2,r=lvl===3?10:upg?9:7;ctx.beginPath();ctx.arc(px+20+Math.cos(a)*r,py+22+Math.sin(a)*r,1.5,0,Math.PI*2);ctx.fill();}
+  if(upg){ctx.strokeStyle=lvl===3?'rgba(255,100,255,0.6)':'rgba(200,100,255,0.4)';ctx.lineWidth=lvl===3?2:1;ctx.beginPath();ctx.arc(px+20,py+22,lvl===3?13:11,0,Math.PI*2);ctx.stroke();}
 }
 function drawTower(tw){
   const px=tw.x*GS,py=tw.y*GS;
-  if(tw.type==='archer')drawTowerArcher(px,py,tw.upgraded);
-  else if(tw.type==='cannon')drawTowerCannon(px,py,tw.upgraded);
-  else drawTowerMage(px,py,tw.upgraded);
+  if(tw.type==='archer')drawTowerArcher(px,py,tw.level);
+  else if(tw.type==='cannon')drawTowerCannon(px,py,tw.level);
+  else drawTowerMage(px,py,tw.level);
   if(selectedTower&&selectedTower.x===tw.x&&selectedTower.y===tw.y){
     ctx.strokeStyle=TOWER_DEFS[tw.type].color;ctx.lineWidth=1.5;ctx.setLineDash([4,4]);
     ctx.beginPath();ctx.arc(px+GS/2,py+GS/2,tw.range,0,Math.PI*2);ctx.stroke();
