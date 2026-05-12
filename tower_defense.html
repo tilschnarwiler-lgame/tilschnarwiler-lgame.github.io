@@ -5,10 +5,12 @@
 <title>Tower Defense</title>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
-html, body { width: 780px; height: 620px; overflow: hidden; background: #111; }
-#wrapper { display: flex; width: 780px; height: 620px; }
+html, body { width: 960px; height: 620px; overflow: hidden; background: #111; }
+#wrapper { display: flex; width: 960px; height: 620px; }
 #sidebar { width: 180px; min-width: 180px; height: 620px; background: #1a1a1a; border-right: 2px solid #333; display: flex; flex-direction: column; padding: 10px 8px; gap: 7px; overflow-y: auto; font-family: 'Segoe UI', sans-serif; }
-canvas { display: block; width: 600px; height: 620px; min-width: 600px; max-width: 600px; flex-shrink: 0; }
+#gamearea { position: relative; width: 600px; height: 620px; flex-shrink: 0; }
+#gamearea canvas { display: block; width: 600px; height: 620px; }
+#rightpanel { width: 180px; min-width: 180px; height: 620px; background: #1a1a1a; border-left: 2px solid #333; display: flex; flex-direction: column; padding: 10px 8px; gap: 7px; font-family: 'Segoe UI', sans-serif; }
 .s-title { color: #aaa; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; padding: 2px 4px; border-bottom: 1px solid #333; margin-bottom: 1px; font-family: 'Segoe UI', sans-serif; }
 .stat-row { display: flex; justify-content: space-between; align-items: center; padding: 2px 4px; }
 .stat-label { color: #888; font-size: 11px; font-family: 'Segoe UI', sans-serif; }
@@ -34,7 +36,7 @@ canvas { display: block; width: 600px; height: 620px; min-width: 600px; max-widt
 .wave-btn:hover:not(:disabled) { background: #cc2222; }
 .wave-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 .divider { height: 1px; background: #2a2a2a; margin: 1px 0; }
-#upgPanel { display: none; background: #222; border: 1px solid #555; border-radius: 6px; padding: 8px; margin-top: 2px; }
+#upgPanel { display: none; background: #222; border: 1px solid #555; border-radius: 6px; padding: 8px; }
 #upgPanel .upg-title { color: #fff; font-size: 12px; font-weight: bold; margin-bottom: 4px; font-family: 'Segoe UI', sans-serif; }
 #upgPanel .upg-stat { color: #aaa; font-size: 11px; font-family: 'Segoe UI', sans-serif; }
 #upgPanel .upg-info { color: #f1c40f; font-size: 10px; margin-top: 4px; border-top: 1px solid #333; padding-top: 4px; font-family: 'Segoe UI', sans-serif; }
@@ -45,6 +47,7 @@ canvas { display: block; width: 600px; height: 620px; min-width: 600px; max-widt
 #upgPanel .sell-btn:hover { background: #882222; }
 #upgPanel .upg-done { color: #888; font-size: 10px; margin-top: 4px; border-top: 1px solid #333; padding-top: 4px; font-family: 'Segoe UI', sans-serif; }
 #upgPanel .close-btn { float: right; background: none; border: none; color: #888; cursor: pointer; font-size: 14px; line-height: 1; }
+.no-tower { color: #555; font-size: 11px; padding: 4px; font-family: 'Segoe UI', sans-serif; }
 </style>
 </head>
 <body>
@@ -88,19 +91,27 @@ canvas { display: block; width: 600px; height: 620px; min-width: 600px; max-widt
       <canvas id="previewMage" width="44" height="44"></canvas>
     </button>
     <div class="divider"></div>
+    <button class="wave-btn" id="waveBtn">Welle 1 starten</button>
+    <div class="divider"></div>
+    <div class="s-title" style="font-size:9px;line-height:1.5;">Klick auf Turm → Info rechts<br>Klick auf Baum/Busch → Entfernen</div>
+  </div>
+
+  <div id="gamearea">
+    <canvas id="game" width="600" height="620"></canvas>
+  </div>
+
+  <div id="rightpanel">
+    <div class="s-title">Turm Info</div>
     <div id="upgPanel">
       <button class="close-btn" id="upgClose">✕</button>
       <div class="upg-title" id="upgTitle">Turm</div>
       <div class="upg-stat" id="upgStats"></div>
       <div id="upgBottom"></div>
     </div>
-    <div class="divider"></div>
-    <button class="wave-btn" id="waveBtn">Welle 1 starten</button>
-    <div class="divider"></div>
-    <div class="s-title" style="font-size:9px;line-height:1.5;">Klick auf Turm → Upgrade/Verkauf<br>Klick auf Baum/Busch → Entfernen</div>
+    <div class="no-tower" id="noTowerMsg">Klicke einen Turm an um Details zu sehen.</div>
   </div>
-  <canvas id="game" width="600" height="620"></canvas>
 </div>
+
 <script>
 const canvas=document.getElementById('game');
 const ctx=canvas.getContext('2d');
@@ -115,20 +126,18 @@ const TOWER_DEFS={
   cannon:{cost:100,range:120,cooldown:96,dmg:5,color:'#a05a28',label:'Kanonenturm'},
   mage:{cost:120,range:100,cooldown:96,dmg:4,color:'#8a28c0',label:'Magierturm',splash:55}
 };
-
-// Each tower has upgrades per level: index 0 = lvl1->lvl2, index 1 = lvl2->lvl3
 const UPGRADE_DEFS={
   archer:[
-    {cost:50, newDmg:5, newRange:175, label:'Schaden: 3 → 5<br>Reichweite: 150 → 175'},
-    {cost:70, newDmg:7, newRange:200, label:'Schaden: 5 → 7<br>Reichweite: 175 → 200'}
+    {cost:50,newDmg:5,newRange:175,label:'Schaden: 3 → 5<br>Reichweite: 150 → 175'},
+    {cost:70,newDmg:7,newRange:200,label:'Schaden: 5 → 7<br>Reichweite: 175 → 200'}
   ],
   cannon:[
-    {cost:70, newDmg:7, newRange:150, label:'Schaden: 5 → 7<br>Reichweite: 120 → 150'},
-    {cost:100,newDmg:10,newRange:175, label:'Schaden: 7 → 10<br>Reichweite: 150 → 175'}
+    {cost:70,newDmg:7,newRange:150,label:'Schaden: 5 → 7<br>Reichweite: 120 → 150'},
+    {cost:100,newDmg:10,newRange:175,label:'Schaden: 7 → 10<br>Reichweite: 150 → 175'}
   ],
   mage:[
-    {cost:80, newDmg:6, newRange:130, label:'Schaden: 4 → 6<br>Reichweite: 100 → 130'},
-    {cost:120,newDmg:8, newRange:160, label:'Schaden: 6 → 8<br>Reichweite: 130 → 160'}
+    {cost:80,newDmg:6,newRange:130,label:'Schaden: 4 → 6<br>Reichweite: 100 → 130'},
+    {cost:120,newDmg:8,newRange:160,label:'Schaden: 6 → 8<br>Reichweite: 130 → 160'}
   ]
 };
 
@@ -142,10 +151,8 @@ const terrain=[];
 const grid=Array.from({length:ROWS},()=>Array(COLS).fill(null));
 
 function drawPreviewArcher(c){
-  const x=c.getContext('2d');
-  x.clearRect(0,0,44,44);
-  x.fillStyle='#6d4c41';x.fillRect(13,22,18,18);
-  x.fillStyle='#5d4037';x.fillRect(11,14,22,12);
+  const x=c.getContext('2d');x.clearRect(0,0,44,44);
+  x.fillStyle='#6d4c41';x.fillRect(13,22,18,18);x.fillStyle='#5d4037';x.fillRect(11,14,22,12);
   x.fillStyle='#4e342e';x.fillRect(11,9,6,9);x.fillRect(19,9,6,9);x.fillRect(27,9,6,9);
   x.fillStyle='#3e2723';x.fillRect(13,9,4,6);x.fillRect(21,9,4,6);x.fillRect(29,9,4,6);
   x.fillStyle='#795548';x.fillRect(11,37,22,4);
@@ -156,24 +163,17 @@ function drawPreviewArcher(c){
   x.strokeStyle='#e8d5b0';x.lineWidth=0.8;x.beginPath();x.moveTo(15,13);x.quadraticCurveTo(21,17,15,20);x.stroke();
 }
 function drawPreviewCannon(c){
-  const x=c.getContext('2d');
-  x.clearRect(0,0,44,44);
-  x.fillStyle='#5a4a3a';x.fillRect(10,20,24,18);
-  x.fillStyle='#7a6a58';x.fillRect(8,12,28,12);
+  const x=c.getContext('2d');x.clearRect(0,0,44,44);
+  x.fillStyle='#5a4a3a';x.fillRect(10,20,24,18);x.fillStyle='#7a6a58';x.fillRect(8,12,28,12);
   x.fillStyle='#6a5a48';x.fillRect(8,6,8,10);x.fillRect(20,6,8,10);
   x.fillStyle='#5a4a38';x.fillRect(10,6,4,7);x.fillRect(22,6,4,7);
-  x.fillStyle='#888';x.fillRect(18,16,8,5);
-  x.fillStyle='#aaa';x.fillRect(25,17,6,3);
-  x.fillStyle='#333';
-  x.beginPath();x.arc(15,32,3,0,Math.PI*2);x.fill();
-  x.beginPath();x.arc(21,32,3,0,Math.PI*2);x.fill();
-  x.beginPath();x.arc(18,28,3,0,Math.PI*2);x.fill();
+  x.fillStyle='#888';x.fillRect(18,16,8,5);x.fillStyle='#aaa';x.fillRect(25,17,6,3);
+  x.fillStyle='#333';x.beginPath();x.arc(15,32,3,0,Math.PI*2);x.fill();
+  x.beginPath();x.arc(21,32,3,0,Math.PI*2);x.fill();x.beginPath();x.arc(18,28,3,0,Math.PI*2);x.fill();
 }
 function drawPreviewMage(c){
-  const x=c.getContext('2d');
-  x.clearRect(0,0,44,44);
-  x.fillStyle='#2a1a4a';x.fillRect(15,16,14,22);
-  x.fillStyle='#3a2a5a';x.fillRect(11,32,22,10);
+  const x=c.getContext('2d');x.clearRect(0,0,44,44);
+  x.fillStyle='#2a1a4a';x.fillRect(15,16,14,22);x.fillStyle='#3a2a5a';x.fillRect(11,32,22,10);
   x.fillStyle='#4a3a7a';x.beginPath();x.moveTo(22,4);x.lineTo(30,16);x.lineTo(14,16);x.closePath();x.fill();
   x.fillStyle='#8888ff';x.beginPath();x.arc(22,22,3,0,Math.PI*2);x.fill();
   x.fillStyle='#aaaaff';
@@ -274,9 +274,14 @@ function showUpgPanel(tw){
   }
   document.getElementById('doSellBtn').onclick=()=>sellTower(tw);
   document.getElementById('upgPanel').style.display='block';
+  document.getElementById('noTowerMsg').style.display='none';
 }
 
-function hideUpgPanel(){selectedTower=null;document.getElementById('upgPanel').style.display='none';}
+function hideUpgPanel(){
+  selectedTower=null;
+  document.getElementById('upgPanel').style.display='none';
+  document.getElementById('noTowerMsg').style.display='block';
+}
 
 function doUpgrade(){
   if(!selectedTower)return;
@@ -482,11 +487,16 @@ function drawTowerMage(px,py,lvl){
 }
 function drawTower(tw){
   const px=tw.x*GS,py=tw.y*GS;
+  // Draw range circle for ALL towers — always visible, white, semi-transparent
+  ctx.strokeStyle='rgba(255,255,255,0.18)';ctx.lineWidth=1;ctx.setLineDash([]);
+  ctx.beginPath();ctx.arc(px+GS/2,py+GS/2,tw.range,0,Math.PI*2);ctx.stroke();
+  // Draw tower
   if(tw.type==='archer')drawTowerArcher(px,py,tw.level);
   else if(tw.type==='cannon')drawTowerCannon(px,py,tw.level);
   else drawTowerMage(px,py,tw.level);
+  // Selected tower: brighter range + white outline
   if(selectedTower&&selectedTower.x===tw.x&&selectedTower.y===tw.y){
-    ctx.strokeStyle=TOWER_DEFS[tw.type].color;ctx.lineWidth=1.5;ctx.setLineDash([4,4]);
+    ctx.strokeStyle='rgba(255,255,255,0.7)';ctx.lineWidth=1.5;ctx.setLineDash([4,4]);
     ctx.beginPath();ctx.arc(px+GS/2,py+GS/2,tw.range,0,Math.PI*2);ctx.stroke();
     ctx.setLineDash([]);ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.strokeRect(px+1,py+1,GS-2,GS-2);
   }
@@ -554,7 +564,8 @@ function draw(){
       }
     }
   }
-  drawCastle(CX*GS,CY*GS);towers.forEach(t=>drawTower(t));
+  drawCastle(CX*GS,CY*GS);
+  towers.forEach(t=>drawTower(t));
   explosions.forEach(ex=>{ctx.globalAlpha=ex.life/20*0.45;ctx.fillStyle=ex.type==='mage'?'#aa44ff':'#e67e22';ctx.beginPath();ctx.arc(ex.x,ex.y,ex.r,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;});
   enemies.forEach(en=>drawEnemy(en));arrows.forEach(a=>drawProjectile(a));
   particles.forEach(p=>{ctx.globalAlpha=Math.max(0,p.life/30);ctx.fillStyle=p.col;ctx.beginPath();ctx.arc(p.x,p.y,2,0,Math.PI*2);ctx.fill();});
