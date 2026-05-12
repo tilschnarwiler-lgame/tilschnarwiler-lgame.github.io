@@ -487,20 +487,16 @@ function drawTowerMage(px,py,lvl){
 }
 function drawTower(tw){
   const px=tw.x*GS,py=tw.y*GS;
-  // Draw range circle for ALL towers — always visible, white, semi-transparent
-  ctx.strokeStyle='rgba(255,255,255,0.18)';ctx.lineWidth=1;ctx.setLineDash([]);
-  ctx.beginPath();ctx.arc(px+GS/2,py+GS/2,tw.range,0,Math.PI*2);ctx.stroke();
-  // Draw tower
   if(tw.type==='archer')drawTowerArcher(px,py,tw.level);
   else if(tw.type==='cannon')drawTowerCannon(px,py,tw.level);
   else drawTowerMage(px,py,tw.level);
-  // Selected tower: brighter range + white outline
   if(selectedTower&&selectedTower.x===tw.x&&selectedTower.y===tw.y){
     ctx.strokeStyle='rgba(255,255,255,0.7)';ctx.lineWidth=1.5;ctx.setLineDash([4,4]);
     ctx.beginPath();ctx.arc(px+GS/2,py+GS/2,tw.range,0,Math.PI*2);ctx.stroke();
     ctx.setLineDash([]);ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.strokeRect(px+1,py+1,GS-2,GS-2);
   }
 }
+
 function drawEnemy(en){
   const px=en.x*GS+GS/2,py=en.y*GS+GS/2;
   const isHeavy=en.type==='heavy',S=isHeavy?0.75:0.52;
