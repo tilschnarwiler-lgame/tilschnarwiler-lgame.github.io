@@ -291,7 +291,7 @@ function lighten(hex, amt) {
 }
 
 /* ════════════════════════════════════════
-   SMOOTH SNAKE DRAW  (wall-wrap safe)
+   SMOOTH SNAKE DRAW  (wall-wrap safe, proper head)
 ════════════════════════════════════════ */
 function drawSnakeSmooth(ctx, segments, skin, B) {
   if (!segments || segments.length === 0) return;
@@ -303,15 +303,16 @@ function drawSnakeSmooth(ctx, segments, skin, B) {
   const chains = [];
   let cur = [pts[0]];
   for (let i = 1; i < pts.length; i++) {
-    const dx = Math.abs(pts[i].x - pts[i-1].x);
-    const dy = Math.abs(pts[i].y - pts[i-1].y);
-    if (dx > threshold || dy > threshold) { chains.push(cur); cur = [pts[i]]; }
+    const ddx = Math.abs(pts[i].x - pts[i-1].x);
+    const ddy = Math.abs(pts[i].y - pts[i-1].y);
+    if (ddx > threshold || ddy > threshold) { chains.push(cur); cur = [pts[i]]; }
     else cur.push(pts[i]);
   }
   chains.push(cur);
 
-  if (skin.glow) { ctx.shadowColor = skin.glow; ctx.shadowBlur = 14; }
+  if (skin.glow) { ctx.shadowColor = skin.glow; ctx.shadowBlur = 12; }
 
+  // Draw each chain as a body tube
   chains.forEach((chain, ci) => {
     if (chain.length === 1) {
       ctx.fillStyle = ci === 0 ? skin.head : (skin.bodyGrad || skin.body);
@@ -326,31 +327,62 @@ function drawSnakeSmooth(ctx, segments, skin, B) {
     ctx.beginPath(); ctx.moveTo(chain[0].x,chain[0].y);
     for(let i=1;i<chain.length;i++) ctx.lineTo(chain[i].x,chain[i].y);
     ctx.stroke();
-    // highlight
+    // subtle highlight stripe along top
     const g2 = ctx.createLinearGradient(chain[0].x,chain[0].y,chain[chain.length-1].x,chain[chain.length-1].y);
-    g2.addColorStop(0, lighten(startCol,.32)); g2.addColorStop(1, lighten(endCol,.16));
-    ctx.strokeStyle=g2; ctx.lineWidth=(R-1)*.5; ctx.globalAlpha=.36;
+    g2.addColorStop(0, lighten(startCol,.30)); g2.addColorStop(1, lighten(endCol,.14));
+    ctx.strokeStyle=g2; ctx.lineWidth=(R-1)*.45; ctx.globalAlpha=.32;
     ctx.beginPath(); ctx.moveTo(chain[0].x,chain[0].y);
     for(let i=1;i<chain.length;i++) ctx.lineTo(chain[i].x,chain[i].y);
     ctx.stroke(); ctx.globalAlpha=1;
   });
   ctx.shadowBlur=0;
 
-  // eyes
-  if (skin.eyes && pts.length >= 1) {
-    const h = pts[0];
-    let dx=0, dy=0;
-    if (pts.length>1) {
-      const ddx=pts[0].x-pts[1].x, ddy=pts[0].y-pts[1].y;
-      if (Math.abs(ddx)<=B*1.5 && Math.abs(ddy)<=B*1.5) { dx=ddx; dy=ddy; } else dx=1;
-    } else dx=1;
-    const len=Math.sqrt(dx*dx+dy*dy)||1; dx/=len; dy/=len;
-    const px=-dy, py=dx;
-    const eo=R*.42, ef=R*.22, er=R*.28;
-    [1,-1].forEach(s=>{
-      const ex=h.x+dx*ef+px*s*eo, ey=h.y+dy*ef+py*s*eo;
-      ctx.fillStyle="rgba(255,255,255,.92)"; ctx.beginPath(); ctx.arc(ex,ey,er,0,Math.PI*2); ctx.fill();
-      ctx.fillStyle="#080808";               ctx.beginPath(); ctx.arc(ex+dx*.5,ey+dy*.5,er*.5,0,Math.PI*2); ctx.fill();
+  // ── Proper head ──
+  // Determine direction from head movement
+  let fdx=1, fdy=0;
+  if (pts.length>1) {
+    const ddx=pts[0].x-pts[1].x, ddy=pts[0].y-pts[1].y;
+    if (Math.abs(ddx)<=threshold && Math.abs(ddy)<=threshold) { fdx=ddx; fdy=ddy; }
+  }
+  const flen=Math.sqrt(fdx*fdx+fdy*fdy)||1; fdx/=flen; fdy/=flen;
+  const fpx=-fdy, fpy=fdx; // perpendicular
+
+  const hx=pts[0].x, hy=pts[0].y;
+  const HR = R * 0.92; // head slightly smaller than tube radius for clean join
+
+  // Head — same colour as body tube, just a clean circle on top
+  if (skin.glow) { ctx.shadowColor=skin.glow; ctx.shadowBlur=10; }
+  ctx.fillStyle = skin.head;
+  ctx.beginPath();
+  ctx.arc(hx, hy, HR, 0, Math.PI*2);
+  ctx.fill();
+  ctx.shadowBlur=0;
+
+  // Subtle top-left highlight only
+  const hlGrad = ctx.createRadialGradient(
+    hx - fdx*HR*.15 - fdy*HR*.2, hy - fdy*HR*.15 + fdx*HR*.2, 0,
+    hx, hy, HR
+  );
+  hlGrad.addColorStop(0, 'rgba(255,255,255,0.20)');
+  hlGrad.addColorStop(0.5, 'rgba(255,255,255,0.05)');
+  hlGrad.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle=hlGrad;
+  ctx.beginPath(); ctx.arc(hx,hy,HR,0,Math.PI*2); ctx.fill();
+
+  // Eyes — neat, proportional, inside head
+  if (skin.eyes) {
+    const eo = HR * 0.40;  // lateral offset from centre
+    const ef = HR * 0.08;  // forward offset
+    const er = HR * 0.22;  // eye radius
+    [1, -1].forEach(side => {
+      const ex = hx + fdx*ef + fpx*side*eo;
+      const ey = hy + fdy*ef + fpy*side*eo;
+      // sclera
+      ctx.fillStyle = 'rgba(255,255,255,0.92)';
+      ctx.beginPath(); ctx.arc(ex, ey, er, 0, Math.PI*2); ctx.fill();
+      // pupil
+      ctx.fillStyle = '#0d0d0d';
+      ctx.beginPath(); ctx.arc(ex + fdx*er*0.32, ey + fdy*er*0.32, er*0.50, 0, Math.PI*2); ctx.fill();
     });
   }
 }
@@ -398,29 +430,52 @@ function _star(ctx,cx,cy,sp,oR,iR,col){ctx.fillStyle=col;ctx.beginPath();for(let
 function _heart(ctx,cx,cy,r,col){ctx.fillStyle=col;ctx.beginPath();ctx.moveTo(cx,cy+r*.6);ctx.bezierCurveTo(cx-r*1.2,cy-r*.2,cx-r*1.4,cy-r*1.2,cx,cy-r*.3);ctx.bezierCurveTo(cx+r*1.4,cy-r*1.2,cx+r*1.2,cy-r*.2,cx,cy+r*.6);ctx.closePath();ctx.fill();}
 
 /* ════════════════════════════════════════
-   HOME BG  — multiple snakes, full viewport
-   Each snake roams freely; drawn dim behind the card.
+   HOME BG  — all-skin snakes, roam freely
 ════════════════════════════════════════ */
 const homeBgCanvas = document.getElementById("homeBgCanvas");
 const homeBgCtx    = homeBgCanvas.getContext("2d");
 let bgAnimId = null;
 
-const BG_B     = 22;
-const BG_LEN   = 35;
-const BG_SPEED = 0.016;
-const NUM_BG_SNAKES = 3;
+const BG_B     = 22;   // grid cell size
+const BG_LEN   = 12;   // segments per snake
+const BG_SPEED = 0.032; // fraction of BG_B per frame
 
-let bgSnakes = [];  // [{pts, dirX, dirY, stepAcc, skinIdx}]
+let bgSnakes = [];
 
-// Faint dot-grid drawn once as a pattern
 let dotPatternCanvas = null;
 function makeDotPattern() {
   const pc = document.createElement("canvas");
   pc.width = 40; pc.height = 40;
   const pctx = pc.getContext("2d");
-  pctx.fillStyle = "rgba(255,255,255,0.045)";
+  pctx.fillStyle = "rgba(255,255,255,0.04)";
   pctx.beginPath(); pctx.arc(20,20,1.1,0,Math.PI*2); pctx.fill();
   dotPatternCanvas = pc;
+}
+
+// Always spawn fully off-screen, body behind edge, head pointing inward
+function spawnBgSnake(W, H, skinIdx) {
+  const edge = Math.floor(Math.random() * 4);
+  // edge: 0=left→right, 1=right→left, 2=top→down, 3=bottom→up
+  const dirMap = [{x:1,y:0},{x:-1,y:0},{x:0,y:1},{x:0,y:-1}];
+  const d = dirMap[edge];
+
+  let sx, sy;
+  const pad = BG_B;
+  if (edge===0)      { sx = -(BG_LEN)*BG_B;       sy = pad + Math.random()*(H-pad*2); }
+  else if (edge===1) { sx = W + (BG_LEN)*BG_B;     sy = pad + Math.random()*(H-pad*2); }
+  else if (edge===2) { sx = pad + Math.random()*(W-pad*2); sy = -(BG_LEN)*BG_B; }
+  else               { sx = pad + Math.random()*(W-pad*2); sy = H + (BG_LEN)*BG_B; }
+
+  // Snap to grid
+  sx = Math.round(sx / BG_B) * BG_B;
+  sy = Math.round(sy / BG_B) * BG_B;
+
+  // Build pts: head (sx,sy) is the front; body extends backward
+  const pts = [];
+  for (let j = 0; j < BG_LEN; j++) {
+    pts.push({ x: sx - d.x*j*BG_B, y: sy - d.y*j*BG_B });
+  }
+  return { pts, dirX: d.x, dirY: d.y, acc: 0, skinIdx };
 }
 
 function initBgSnakes() {
@@ -429,36 +484,28 @@ function initBgSnakes() {
   homeBgCanvas.height = H;
   makeDotPattern();
   bgSnakes = [];
-  const bgSkinIds = ["classic", "neon", "ice"];
-  const dirs = [{x:1,y:0},{x:-1,y:0},{x:0,y:1},{x:0,y:-1}];
-  const margin = BG_B * 4;
-
-  for (let i = 0; i < NUM_BG_SNAKES; i++) {
-    // random start position well inside the screen
-    const sx = margin + Math.random() * (W - margin*2);
-    const sy = margin + Math.random() * (H - margin*2);
-    // random start direction
-    const d = dirs[Math.floor(Math.random() * dirs.length)];
-    const pts = [];
-    for (let j = 0; j < BG_LEN; j++) {
-      pts.push({ x: sx - d.x*j*BG_B, y: sy - d.y*j*BG_B });
+  const allSkinIds = SKINS.map(s => s.id);
+  // Stagger spawns: space them out in time so not all arrive at once
+  for (let i = 0; i < allSkinIds.length; i++) {
+    const sn = spawnBgSnake(W, H, allSkinIds[i]);
+    // Pre-advance some snakes so they're at various stages of entry
+    const advance = Math.floor(i * 8); // stagger by skin index
+    for (let k = 0; k < advance; k++) {
+      const nh = { x: sn.pts[0].x + sn.dirX*BG_B, y: sn.pts[0].y + sn.dirY*BG_B };
+      sn.pts.unshift(nh);
+      while (sn.pts.length > BG_LEN) sn.pts.pop();
     }
-    bgSnakes.push({ pts, dirX: d.x, dirY: d.y, acc: 0, skinIdx: bgSkinIds[i] });
+    bgSnakes.push(sn);
   }
 }
 
-// returns all occupied grid cells for a snake (its body pts snapped to grid)
-function bgOccupied(snake) {
-  const set = new Set();
-  snake.pts.forEach(p => {
-    const gx = Math.round(p.x / BG_B);
-    const gy = Math.round(p.y / BG_B);
-    set.add(gx + ',' + gy);
-  });
-  return set;
-}
+let bgLastTime = null;
 
-function bgFrame() {
+function bgFrame(timestamp) {
+  if (!bgLastTime) bgLastTime = timestamp;
+  const dt = Math.min(timestamp - bgLastTime, 50); // cap at 50ms to avoid big jumps
+  bgLastTime = timestamp;
+
   const W = homeBgCanvas.width, H = homeBgCanvas.height;
   homeBgCtx.fillStyle = "#080808";
   homeBgCtx.fillRect(0,0,W,H);
@@ -469,92 +516,114 @@ function bgFrame() {
     homeBgCtx.fillRect(0,0,W,H);
   }
 
+  // Build per-snake occupied cell sets BEFORE moving (used for lookahead)
+  const occupied = bgSnakes.map(sn =>
+    new Set(sn.pts.map(p => Math.round(p.x/BG_B)+','+Math.round(p.y/BG_B)))
+  );
+
+  const TURN_CHANCE = 0.12;
+  const LOOKAHEAD   = 3; // check this many steps ahead for collisions
+
+  // pixels per ms at target speed
+  const pxPerMs = (BG_B * BG_SPEED) / (1000/60);
+
   bgSnakes.forEach((snake, si) => {
-    snake.acc += BG_B * BG_SPEED;
+    snake.acc += pxPerMs * dt;
 
     if (snake.acc >= BG_B) {
       snake.acc -= BG_B;
+
       const head = snake.pts[0];
-      const newHead = { x: head.x + snake.dirX * BG_B, y: head.y + snake.dirY * BG_B };
+      const newHead = { x: head.x + snake.dirX*BG_B, y: head.y + snake.dirY*BG_B };
       snake.pts.unshift(newHead);
       while (snake.pts.length > BG_LEN) snake.pts.pop();
 
-      // build set of all occupied cells by OTHER snakes
+      // If entire snake is off-screen, respawn from a fresh edge
+      const allOff = snake.pts.every(p =>
+        p.x < -BG_B*(BG_LEN+2) || p.x > W+BG_B*(BG_LEN+2) ||
+        p.y < -BG_B*(BG_LEN+2) || p.y > H+BG_B*(BG_LEN+2)
+      );
+      if (allOff) {
+        const fresh = spawnBgSnake(W, H, snake.skinIdx);
+        Object.assign(snake, fresh);
+        occupied[si] = new Set(snake.pts.map(p=>Math.round(p.x/BG_B)+','+Math.round(p.y/BG_B)));
+        return;
+      }
+
+      // Combined occupied set of all OTHER snakes + own body (skip tail which will move)
       const otherCells = new Set();
       bgSnakes.forEach((other, oi) => {
-        if (oi === si) return;
-        other.pts.forEach(p => {
-          const gx = Math.round(p.x / BG_B);
-          const gy = Math.round(p.y / BG_B);
-          otherCells.add(gx + ',' + gy);
-        });
+        if (oi === si) {
+          // include own body except the last segment (it moves away)
+          other.pts.slice(0, other.pts.length - 1).forEach(p =>
+            otherCells.add(Math.round(p.x/BG_B)+','+Math.round(p.y/BG_B))
+          );
+          return;
+        }
+        occupied[oi].forEach(k => otherCells.add(k));
       });
 
-      // choose next direction
-      const margin = BG_B * 3;
-      const nx = newHead.x, ny = newHead.y;
-      const nearEdge = nx < margin || nx > W-margin || ny < margin || ny > H-margin;
-
       const allDirs = [{x:1,y:0},{x:-1,y:0},{x:0,y:1},{x:0,y:-1}];
+      const MARGIN = BG_B * 2;
+      const onscreen = nx => nx >= -MARGIN && nx <= W+MARGIN;
+      const onscreenY = ny => ny >= -MARGIN && ny <= H+MARGIN;
 
-      // score each candidate direction: prefer current, avoid walls and other snakes
-      function isSafe(dx, dy) {
-        // no U-turn
-        if (dx === -snake.dirX && dy === -snake.dirY) return false;
-        const nx2 = newHead.x + dx * BG_B;
-        const ny2 = newHead.y + dy * BG_B;
-        // wall check
-        if (nx2 < BG_B || nx2 > W-BG_B || ny2 < BG_B || ny2 > H-BG_B) return false;
-        // other snake body check
-        const key = Math.round(nx2/BG_B) + ',' + Math.round(ny2/BG_B);
-        if (otherCells.has(key)) return false;
-        return true;
+      // Safety score: look LOOKAHEAD steps ahead, count clear cells
+      function safeScore(dx, dy) {
+        if (dx === -snake.dirX && dy === -snake.dirY) return -1; // no U-turn
+        let score = 0;
+        let cx = newHead.x, cy = newHead.y;
+        for (let step = 1; step <= LOOKAHEAD; step++) {
+          cx += dx * BG_B; cy += dy * BG_B;
+          const key = Math.round(cx/BG_B)+','+Math.round(cy/BG_B);
+          if (otherCells.has(key)) { score -= 10 * (LOOKAHEAD - step + 1); break; }
+          // prefer staying onscreen
+          if (!onscreen(cx) || !onscreenY(cy)) score -= 2;
+          else score += 1;
+        }
+        return score;
       }
 
-      if (nearEdge) {
-        // must turn away — pick safest turn that avoids walls and others
-        const safeTurns = allDirs.filter(d => isSafe(d.x, d.y));
-        if (safeTurns.length > 0) {
-          // prefer the turn that heads most toward center
-          const cx = W/2, cy = H/2;
-          safeTurns.sort((a,b) => {
-            const da = Math.abs((newHead.x+a.x*BG_B)-cx)+Math.abs((newHead.y+a.y*BG_B)-cy);
-            const db = Math.abs((newHead.x+b.x*BG_B)-cx)+Math.abs((newHead.y+b.y*BG_B)-cy);
-            return da - db;
-          });
-          snake.dirX = safeTurns[0].x; snake.dirY = safeTurns[0].y;
-        }
-      } else {
-        // random turn occasionally, but only to safe directions
-        if (Math.random() < 0.18) {
-          const safe = allDirs.filter(d => isSafe(d.x, d.y));
-          if (safe.length > 0) {
-            const t = safe[Math.floor(Math.random() * safe.length)];
-            snake.dirX = t.x; snake.dirY = t.y;
-          }
-        } else {
-          // even when going straight, check for upcoming other-snake collision
-          if (!isSafe(snake.dirX, snake.dirY)) {
-            const safe = allDirs.filter(d => isSafe(d.x, d.y));
-            if (safe.length > 0) {
-              const t = safe[Math.floor(Math.random() * safe.length)];
-              snake.dirX = t.x; snake.dirY = t.y;
-            }
-          }
-        }
+      const WALL = BG_B * 2;
+      const nx0 = newHead.x, ny0 = newHead.y;
+      const nearEdge = nx0 < WALL || nx0 > W-WALL || ny0 < WALL || ny0 > H-WALL;
+
+      // Score all non-U-turn dirs
+      const scored = allDirs
+        .filter(d => !(d.x === -snake.dirX && d.y === -snake.dirY))
+        .map(d => ({ d, s: safeScore(d.x, d.y) }))
+        .sort((a,b) => b.s - a.s);
+
+      const currentScore = safeScore(snake.dirX, snake.dirY);
+      const bestScore    = scored[0]?.s ?? -999;
+
+      // Force turn if current direction is unsafe, or near edge, or random turn
+      const mustTurn = currentScore < 0 || nearEdge;
+      const willTurn = mustTurn || (Math.random() < TURN_CHANCE && bestScore >= currentScore);
+
+      if (willTurn && scored.length > 0) {
+        // Among tied-for-best, pick randomly
+        const best = scored.filter(x => x.s === bestScore);
+        const pick = best[Math.floor(Math.random()*best.length)];
+        snake.dirX = pick.d.x;
+        snake.dirY = pick.d.y;
       }
+
+      // Update occupied after move
+      occupied[si] = new Set(snake.pts.map(p=>Math.round(p.x/BG_B)+','+Math.round(p.y/BG_B)));
     }
 
+    // Smooth interpolated draw
     const interp = snake.acc / BG_B;
-    const visualHead = {
-      x: snake.pts[0].x + snake.dirX * BG_B * interp,
-      y: snake.pts[0].y + snake.dirY * BG_B * interp
+    const visHead = {
+      x: snake.pts[0].x + snake.dirX*BG_B*interp,
+      y: snake.pts[0].y + snake.dirY*BG_B*interp
     };
-    const drawPts = [visualHead, ...snake.pts.slice(0, BG_LEN - 1)];
-    const drawSegs = drawPts.map(p=>({x: p.x - BG_B/2, y: p.y - BG_B/2}));
+    const drawPts = [visHead, ...snake.pts.slice(0, BG_LEN-1)];
+    const drawSegs = drawPts.map(p => ({ x: p.x - BG_B/2, y: p.y - BG_B/2 }));
 
-    const skin = SKINS.find(s=>s.id===snake.skinIdx) || SKINS[0];
-    homeBgCtx.globalAlpha = 0.28;
+    const skin = SKINS.find(s => s.id===snake.skinIdx) || SKINS[0];
+    homeBgCtx.globalAlpha = 0.32;
     drawSnakeSmooth(homeBgCtx, drawSegs, skin, BG_B);
     homeBgCtx.globalAlpha = 1;
   });
@@ -562,7 +631,7 @@ function bgFrame() {
   bgAnimId = requestAnimationFrame(bgFrame);
 }
 
-window._startHomeAnim = () => { initBgSnakes(); cancelAnimationFrame(bgAnimId); bgFrame(); };
+window._startHomeAnim = () => { initBgSnakes(); cancelAnimationFrame(bgAnimId); bgLastTime=null; bgAnimId=requestAnimationFrame(bgFrame); };
 window._stopHomeAnim  = () => cancelAnimationFrame(bgAnimId);
 window.addEventListener("resize", () => {
   if (document.getElementById("homeScreen").classList.contains("active")) initBgSnakes();
