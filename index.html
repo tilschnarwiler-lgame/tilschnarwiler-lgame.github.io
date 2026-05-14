@@ -517,6 +517,10 @@ iframe {
                 <span class="card-icon">⚪️</span>
                 <span class="card-title">Pong</span>
             </div>
+            <div class="game-card" onclick="showGame('harbour')">
+                <span class="card-icon">⚓️</span>
+                <span class="card-title">Harbour Master</span>
+            </div>
         </div>
     </div>
 </div>
@@ -641,6 +645,19 @@ iframe {
         <iframe src="pong.html" width="800" height="600" scrolling="no"></iframe>
     </div>
 </div>
+
+
+<!-- HARBOUR MASTER -->
+<div id="harbour" class="game">
+    <div class="game-header">
+        <button class="backBtn" onclick="showGame('menu')">⬅ Zurück</button>
+        <span class="game-title">⚓️ Harbour Master</span>
+    </div>
+    <div class="iframe-wrap" style="--iframe-h:600px;">
+        <iframe src="pong.html" width="800" height="600" scrolling="no"></iframe>
+    </div>
+</div>
+    
 ```
 
 </div>
