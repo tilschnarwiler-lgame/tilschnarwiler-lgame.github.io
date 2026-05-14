@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="de">
 <head>
 <meta charset="UTF-8">
@@ -17,9 +18,9 @@ body{background:#080810;display:flex;flex-direction:column;align-items:center;ju
 .hp-outer{width:100%;height:14px;background:#0a0a0a;border:1px solid #222;overflow:hidden;position:relative}
 .hp-inner{height:100%;transition:width 0.15s linear}
 #p1hp{background:linear-gradient(90deg,#00ffcc,#0088ff);box-shadow:0 0 8px #00ffcc60}
-.bot-hps{display:flex;flex-direction:column;gap:3px;align-items:flex-end}
-.bot-hp-bar{width:100%;height:10px;background:#0a0a0a;border:1px solid #222;overflow:hidden;margin-top:2px}
-.bot-hp-fill{height:100%}
+.bot-hps{display:flex;flex-direction:column;gap:4px;align-items:flex-end}
+.bot-hp-bar{width:100%;height:14px;background:#0a0a0a;border:1px solid #222;overflow:hidden;margin-top:1px;position:relative}
+.bot-hp-fill{height:100%;transition:width 0.15s linear}
 #center-hud{display:flex;flex-direction:column;align-items:center;gap:1px;min-width:100px}
 #round-label{font-family:'Black Ops One',cursive;font-size:0.72rem;color:#333;letter-spacing:3px}
 #timer-box{font-family:'Black Ops One',cursive;font-size:1.9rem;color:#ff3300;text-shadow:0 0 12px #ff3300;line-height:1}
@@ -36,6 +37,13 @@ canvas{position:absolute;top:0;left:0}
 .keys-row{display:flex;gap:18px;margin-top:4px;font-size:0.58rem;color:#333;letter-spacing:1px}
 .keys-row b{color:#00ffcc}
 #combo-display{position:absolute;bottom:5px;left:7px;font-family:'Black Ops One',cursive;font-size:0.65rem;z-index:5}
+#attack-hud{position:absolute;bottom:9px;right:10px;display:flex;gap:12px;z-index:5;align-items:flex-end}
+.atk-btn{display:flex;flex-direction:column;align-items:center;gap:3px}
+.atk-label{font-size:0.62rem;letter-spacing:1px;color:#666;font-family:'Share Tech Mono',monospace}
+.atk-outer{width:60px;height:9px;background:#111;border:1px solid #333;overflow:hidden;border-radius:2px}
+.atk-bar{height:100%;width:100%;transition:width 0.05s linear;border-radius:2px}
+#bar-punch{background:linear-gradient(90deg,#ffcc00,#ff8800);box-shadow:0 0 6px #ffcc0060}
+#bar-kick{background:linear-gradient(90deg,#ff4400,#ff0066);box-shadow:0 0 6px #ff440060}
 #lvl-dots{display:flex;gap:5px;margin-top:4px}
 .dot{width:8px;height:8px;border-radius:50%;border:1px solid #333;background:#111;transition:background 0.3s}
 .dot.done{background:#00ffcc}.dot.active{background:#ff3300;box-shadow:0 0 6px #ff3300}
@@ -55,7 +63,7 @@ canvas{position:absolute;top:0;left:0}
     <div id="level-label">ALLEY</div>
     <div id="lvl-dots"></div>
   </div>
-  <div class="health-wrap right">
+  <div class="health-wrap right" id="right-hud">
     <div class="fighter-label" id="bot-label">GEGNER</div>
     <div id="bot-hps"></div>
   </div>
@@ -73,7 +81,16 @@ canvas{position:absolute;top:0;left:0}
     </div>
   </div>
   <div id="combo-display"></div>
-</div>
+  <div id="attack-hud">
+    <div class="atk-btn">
+      <div class="atk-label">SCHLAG [A]</div>
+      <div class="atk-outer"><div class="atk-bar" id="bar-punch"></div></div>
+    </div>
+    <div class="atk-btn">
+      <div class="atk-label">KICK [S]</div>
+      <div class="atk-outer"><div class="atk-bar" id="bar-kick"></div></div>
+    </div>
+  </div>
 
 <script>
 const bgC=document.getElementById('bg'),bgX=bgC.getContext('2d');
@@ -315,6 +332,9 @@ class Fighter{
     this.aiTarget=null; // will be set to nearest enemy
     // combo (player only)
     this.combo=0;this.comboTimer=0;
+    // Cooldowns (in frames): punch=45, kick=60
+    this.punchCd=0;this.kickCd=0;
+    this.punchCdMax=80;this.kickCdMax=105;
   }
 
   jump(){
@@ -325,14 +345,18 @@ class Fighter{
 
   punch(others){
     if(['punch','kick','hurt','dead'].includes(this.state))return;
+    if(this.punchCd>0)return;
     this.state='punch';this.stateTimer=22;
+    this.punchCd=this.punchCdMax;
     const delay=this.isBot?this.attackDelay:90;
     setTimeout(()=>this.doHit(others,this.punchDmg,0),delay);
   }
 
   kick(others){
     if(['punch','kick','hurt','dead'].includes(this.state))return;
+    if(this.kickCd>0)return;
     this.state='kick';this.stateTimer=28;
+    this.kickCd=this.kickCdMax;
     const delay=this.isBot?this.attackDelay+20:110;
     setTimeout(()=>this.doHit(others,this.kickDmg,1),delay);
   }
@@ -384,6 +408,8 @@ class Fighter{
     if(this.stateTimer>0){this.stateTimer--;if(this.stateTimer===0&&['punch','kick','hurt'].includes(this.state))this.state='idle';}
     if(this.hurtTimer>0)this.hurtTimer--;
     if(this.comboTimer>0)this.comboTimer--;else this.combo=0;
+    if(this.punchCd>0)this.punchCd--;
+    if(this.kickCd>0)this.kickCd--;
     if(this.isBot)this.updateAI(others);
     else this.updatePlayer(keys,others);
     const nearest=Array.isArray(others)?others.filter(o=>o.state!=='dead').sort((a,b)=>Math.abs(a.x-this.x)-Math.abs(b.x-this.x))[0]:others;
@@ -610,13 +636,46 @@ function buildLvlDots(){
 
 function buildBotHpBars(bts){
   const container=document.getElementById('bot-hps');
+  const label=document.getElementById('bot-label');
   container.innerHTML='';
-  bts.forEach((b,i)=>{
-    const outer=document.createElement('div');outer.className='bot-hp-bar';
-    const inner=document.createElement('div');inner.className='bot-hp-fill';inner.id='b'+i+'hp';
-    inner.style.width='100%';inner.style.background=b.isBoss?'linear-gradient(90deg,#ff0000,#ff8800)':'linear-gradient(90deg,#ff3300,#ff8800)';
+
+  if(bts.length===1){
+    // Single enemy: one big bar mirroring the player bar
+    const b=bts[0];
+    label.textContent=b.isBoss?'BOSS':'GEGNER';
+    label.style.color=b.col;
+    label.style.textShadow='0 0 6px '+b.col;
+    const outer=document.createElement('div');
+    outer.className='hp-outer';outer.style.width='100%';
+    const inner=document.createElement('div');
+    inner.className='hp-inner';inner.id='b0hp';
+    inner.style.width='100%';
+    inner.style.background=b.isBoss
+      ?'linear-gradient(90deg,#ff8800,#ff0000)'
+      :`linear-gradient(270deg,${b.col},${b.col}99)`;
+    inner.style.boxShadow='0 0 8px '+b.col+'60';
     outer.appendChild(inner);container.appendChild(outer);
-  });
+  } else {
+    // Multiple enemies: stacked smaller bars
+    label.textContent='GEGNER ('+bts.length+')';
+    label.style.color='#888';label.style.textShadow='none';
+    bts.forEach((b,i)=>{
+      const wrap=document.createElement('div');
+      wrap.style.cssText='display:flex;flex-direction:column;gap:2px;align-items:flex-end;width:100%';
+      const lbl=document.createElement('div');
+      lbl.style.cssText='font-size:0.55rem;letter-spacing:2px;color:'+b.col+';text-shadow:0 0 5px '+b.col;
+      lbl.textContent=b.isBoss?'BOSS':'BOT '+(i+1);
+      const outer=document.createElement('div');outer.className='bot-hp-bar';outer.style.width='100%';
+      const inner=document.createElement('div');inner.className='bot-hp-fill';inner.id='b'+i+'hp';
+      inner.style.width='100%';
+      inner.style.background=b.isBoss
+        ?'linear-gradient(270deg,#ff8800,#ff0000)'
+        :`linear-gradient(270deg,${b.col},${b.col}99)`;
+      inner.style.boxShadow='0 0 5px '+b.col+'50';
+      outer.appendChild(inner);wrap.appendChild(lbl);wrap.appendChild(outer);
+      container.appendChild(wrap);
+    });
+  }
 }
 
 function updateHUD(){
@@ -631,6 +690,13 @@ function updateHUD(){
   const cd=document.getElementById('combo-display');
   if(player.combo>=2){cd.textContent='COMBO ×'+player.combo;cd.style.color=player.combo>=5?'#ff3300':'#ffcc00';}
   else cd.textContent='';
+  // Cooldown bars: full = ready (100%), emptying = on cooldown
+  const pReady=1-(player.punchCd/player.punchCdMax);
+  const kReady=1-(player.kickCd/player.kickCdMax);
+  document.getElementById('bar-punch').style.width=(pReady*100)+'%';
+  document.getElementById('bar-kick').style.width=(kReady*100)+'%';
+  document.getElementById('bar-punch').style.opacity=pReady>=1?'1':'0.5';
+  document.getElementById('bar-kick').style.opacity=kReady>=1?'1':'0.5';
 }
 
 function showOverlay(html){
@@ -673,7 +739,6 @@ function startLevel(lvl){
   bots.forEach((b,i)=>b.aiTimer=10+i*15);
 
   buildBotHpBars(bots);
-  document.getElementById('bot-label').textContent=botCount>1?`GEGNER (${botCount})`:'GEGNER';
   particles=[];hitTexts=[];
   timerSecs=99;clearInterval(timerInterval);
   timerInterval=setInterval(()=>{
@@ -734,5 +799,6 @@ function gameLoop(){
 LEVELS[0].draw(bgX);
 buildLvlDots();
 </script>
+
 </body>
 </html>
