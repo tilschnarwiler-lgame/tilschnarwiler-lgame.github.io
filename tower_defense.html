@@ -10,7 +10,7 @@ html, body { width: 960px; height: 620px; overflow: hidden; background: #111; }
 #sidebar { width: 180px; min-width: 180px; height: 620px; background: #1a1a1a; border-right: 2px solid #333; display: flex; flex-direction: column; padding: 10px 8px; gap: 7px; overflow-y: auto; font-family: 'Segoe UI', sans-serif; }
 #gamearea { position: relative; width: 600px; height: 620px; flex-shrink: 0; }
 #gamearea canvas { display: block; width: 600px; height: 620px; }
-#rightpanel { width: 180px; min-width: 180px; height: 620px; background: #1a1a1a; border-left: 2px solid #333; display: flex; flex-direction: column; padding: 10px 8px; gap: 7px; font-family: 'Segoe UI', sans-serif; }
+#rightpanel { width: 180px; min-width: 180px; height: 620px; background: #1a1a1a; border-left: 2px solid #333; display: flex; flex-direction: column; padding: 10px 8px; gap: 7px; font-family: 'Segoe UI', sans-serif; overflow-y: auto; }
 .s-title { color: #aaa; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; padding: 2px 4px; border-bottom: 1px solid #333; margin-bottom: 1px; font-family: 'Segoe UI', sans-serif; }
 .stat-row { display: flex; justify-content: space-between; align-items: center; padding: 2px 4px; }
 .stat-label { color: #888; font-size: 11px; font-family: 'Segoe UI', sans-serif; }
@@ -38,8 +38,8 @@ html, body { width: 960px; height: 620px; overflow: hidden; background: #111; }
 .divider { height: 1px; background: #2a2a2a; margin: 1px 0; }
 #upgPanel { display: none; background: #222; border: 1px solid #555; border-radius: 6px; padding: 8px; }
 #upgPanel .upg-title { color: #fff; font-size: 12px; font-weight: bold; margin-bottom: 4px; font-family: 'Segoe UI', sans-serif; }
-#upgPanel .upg-stat { color: #aaa; font-size: 11px; font-family: 'Segoe UI', sans-serif; }
-#upgPanel .upg-info { color: #f1c40f; font-size: 10px; margin-top: 4px; border-top: 1px solid #333; padding-top: 4px; font-family: 'Segoe UI', sans-serif; }
+#upgPanel .upg-stat { color: #aaa; font-size: 11px; line-height: 1.6; font-family: 'Segoe UI', sans-serif; }
+#upgPanel .upg-info { color: #f1c40f; font-size: 10px; margin-top: 4px; border-top: 1px solid #333; padding-top: 4px; font-family: 'Segoe UI', sans-serif; line-height: 1.6; }
 #upgPanel .upg-btn { margin-top: 5px; width: 100%; padding: 5px; background: #3a3a00; color: #f1c40f; border: 1px solid #888800; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: bold; font-family: 'Segoe UI', sans-serif; }
 #upgPanel .upg-btn:hover:not(:disabled) { background: #555500; }
 #upgPanel .upg-btn:disabled { opacity: 0.4; cursor: not-allowed; }
@@ -63,33 +63,37 @@ html, body { width: 960px; height: 620px; overflow: hidden; background: #111; }
     <div class="stat-row"><span class="stat-label">Welle</span><span class="stat-val" id="waveText">—</span></div>
     <div class="divider"></div>
     <div class="s-title">Türme bauen</div>
-    <button class="tbtn archer" id="btnArcher">
-      <div class="tbtn-text">
-        <span class="btn-name">Bogenschützenturm</span>
-        <span class="btn-cost">60 💰</span>
-        <span class="btn-desc">Schaden: 3</span>
-        <span class="btn-desc">Reichweite: 150</span>
-      </div>
-      <canvas id="previewArcher" width="44" height="44"></canvas>
-    </button>
-    <button class="tbtn cannon" id="btnCannon">
-      <div class="tbtn-text">
-        <span class="btn-name">Kanonenturm</span>
-        <span class="btn-cost">100 💰</span>
-        <span class="btn-desc">Schaden: 5</span>
-        <span class="btn-desc">Reichweite: 120</span>
-      </div>
-      <canvas id="previewCannon" width="44" height="44"></canvas>
-    </button>
-    <button class="tbtn mage" id="btnMage">
-      <div class="tbtn-text">
-        <span class="btn-name">Magierturm</span>
-        <span class="btn-cost">120 💰</span>
-        <span class="btn-desc">Schaden: 4 (Fläche)</span>
-        <span class="btn-desc">Reichweite: 100</span>
-      </div>
-      <canvas id="previewMage" width="44" height="44"></canvas>
-    </button>
+<button class="tbtn archer" id="btnArcher">
+  <div class="tbtn-text">
+    <span class="btn-name">Bogenschützenturm</span>
+    <span class="btn-cost">60 💰</span>
+    <span class="btn-desc">Schaden: 3</span>
+    <span class="btn-desc">Reichweite: 150</span>
+    <span class="btn-desc">Tempo: 1.25/s</span>
+  </div>
+  <canvas id="previewArcher" width="44" height="44"></canvas>
+</button>
+<button class="tbtn cannon" id="btnCannon">
+  <div class="tbtn-text">
+    <span class="btn-name">Kanonenturm</span>
+    <span class="btn-cost">100 💰</span>
+    <span class="btn-desc">Schaden: 5</span>
+    <span class="btn-desc">Reichweite: 120</span>
+    <span class="btn-desc">Tempo: 0.6/s</span>
+  </div>
+  <canvas id="previewCannon" width="44" height="44"></canvas>
+</button>
+<button class="tbtn mage" id="btnMage">
+  <div class="tbtn-text">
+    <span class="btn-name">Magierturm</span>
+    <span class="btn-cost">120 💰</span>
+    <span class="btn-desc">Schaden: 4 (Fläche)</span>
+    <span class="btn-desc">Reichweite: 100</span>
+    <span class="btn-desc">Tempo: 0.6/s</span>
+  </div>
+  <canvas id="previewMage" width="44" height="44"></canvas>
+</button>
+
     <div class="divider"></div>
     <button class="wave-btn" id="waveBtn">Welle 1 starten</button>
     <div class="divider"></div>
@@ -126,20 +130,24 @@ const TOWER_DEFS={
   cannon:{cost:100,range:120,cooldown:96,dmg:5,color:'#a05a28',label:'Kanonenturm'},
   mage:{cost:120,range:100,cooldown:96,dmg:4,color:'#8a28c0',label:'Magierturm',splash:55}
 };
+
+// newCd = new cooldown (frames at 60fps)
 const UPGRADE_DEFS={
   archer:[
-    {cost:50,newDmg:5,newRange:175,label:'Schaden: 3 → 5<br>Reichweite: 150 → 175'},
-    {cost:70,newDmg:7,newRange:200,label:'Schaden: 5 → 7<br>Reichweite: 175 → 200'}
+    {cost:50, newDmg:5, newRange:175, newCd:40, label:'Schaden: 3 → 5<br>Reichweite: 150 → 175<br>Tempo: 1.25 → 1.5/s'},
+    {cost:70, newDmg:7, newRange:200, newCd:30, label:'Schaden: 5 → 7<br>Reichweite: 175 → 200<br>Tempo: 1.5 → 2.0/s'}
   ],
   cannon:[
-    {cost:70,newDmg:7,newRange:150,label:'Schaden: 5 → 7<br>Reichweite: 120 → 150'},
-    {cost:100,newDmg:10,newRange:175,label:'Schaden: 7 → 10<br>Reichweite: 150 → 175'}
+    {cost:70, newDmg:7, newRange:150, newCd:80, label:'Schaden: 5 → 7<br>Reichweite: 120 → 150<br>Tempo: 0.6 → 0.75/s'},
+    {cost:100,newDmg:10,newRange:175, newCd:60, label:'Schaden: 7 → 10<br>Reichweite: 150 → 175<br>Tempo: 0.75 → 1.0/s'}
   ],
   mage:[
-    {cost:80,newDmg:6,newRange:130,label:'Schaden: 4 → 6<br>Reichweite: 100 → 130'},
-    {cost:120,newDmg:8,newRange:160,label:'Schaden: 6 → 8<br>Reichweite: 130 → 160'}
+    {cost:80, newDmg:6, newRange:130, newCd:80, label:'Schaden: 4 → 6<br>Reichweite: 100 → 130<br>Tempo: 0.6 → 0.75/s'},
+    {cost:120,newDmg:8, newRange:160, newCd:60, label:'Schaden: 6 → 8<br>Reichweite: 130 → 160<br>Tempo: 0.75 → 1.0/s'}
   ]
 };
+
+function cdToRate(cd){return Math.round((60/cd)*100)/100;}
 
 const terrain=[];
 (function(){
@@ -258,7 +266,10 @@ function showUpgPanel(tw){
   const def=TOWER_DEFS[tw.type];
   const upgrades=UPGRADE_DEFS[tw.type];
   document.getElementById('upgTitle').textContent=def.label+' (Level '+tw.level+')';
-  document.getElementById('upgStats').innerHTML='Schaden: '+tw.dmg+'<br>Reichweite: '+Math.round(tw.range);
+  document.getElementById('upgStats').innerHTML=
+    'Schaden: '+tw.dmg+'<br>'+
+    'Reichweite: '+Math.round(tw.range)+'<br>'+
+    'Tempo: '+cdToRate(tw.cd)+'/s';
   const bot=document.getElementById('upgBottom');
   const sellPrice=getSellPrice(tw);
   const sellBtn='<button class="sell-btn" id="doSellBtn">Verkaufen (+'+sellPrice+' 💰)</button>';
@@ -292,6 +303,7 @@ function doUpgrade(){
   money-=upd.cost;
   tw.dmg=upd.newDmg;
   tw.range=upd.newRange;
+  tw.cd=upd.newCd;
   tw.level++;
   showMsg('Turm auf Level '+tw.level+' aufgewertet!');
   showUpgPanel(tw);
@@ -496,7 +508,6 @@ function drawTower(tw){
     ctx.setLineDash([]);ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.strokeRect(px+1,py+1,GS-2,GS-2);
   }
 }
-
 function drawEnemy(en){
   const px=en.x*GS+GS/2,py=en.y*GS+GS/2;
   const isHeavy=en.type==='heavy',S=isHeavy?0.75:0.52;
