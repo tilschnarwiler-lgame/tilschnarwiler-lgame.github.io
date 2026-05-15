@@ -7,33 +7,39 @@
 <title>Canal Master</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
-body{background:#1a2e1a;display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;overflow:hidden;font-family:Arial,sans-serif;}
-#ui-bar{width:660px;display:flex;justify-content:space-between;align-items:center;padding:7px 20px;background:linear-gradient(180deg,#2a4a8a,#1e3670);border:2px solid #4a7acc;border-bottom:none;border-radius:10px 10px 0 0;}
-.ui-sec{display:flex;flex-direction:column;align-items:center;}
-.ui-lbl{color:#8ab4e8;font-size:11px;font-weight:bold;letter-spacing:1px;text-transform:uppercase;}
-.ui-val{color:#fff;font-size:26px;font-weight:900;line-height:1;}
-#titletxt{color:#c8deff;font-size:17px;font-weight:900;letter-spacing:3px;}
+body{background:#1a2e1a;display:flex;flex-direction:column;align-items:center;
+     justify-content:center;height:100vh;overflow:hidden;font-family:Arial,sans-serif;}
+#ui{width:660px;display:flex;justify-content:space-between;align-items:center;
+    padding:7px 20px;background:linear-gradient(180deg,#2a4a8a,#1e3670);
+    border:2px solid #4a7acc;border-bottom:none;border-radius:10px 10px 0 0;}
+.us{display:flex;flex-direction:column;align-items:center;}
+.ul{color:#8ab4e8;font-size:11px;font-weight:bold;letter-spacing:1px;text-transform:uppercase;}
+.uv{color:#fff;font-size:26px;font-weight:900;line-height:1;}
+#tt{color:#c8deff;font-size:17px;font-weight:900;letter-spacing:3px;}
 canvas{display:block;border-radius:0 0 10px 10px;border:2px solid #4a7acc;border-top:none;cursor:crosshair;}
-#overlay{position:absolute;display:flex;align-items:center;justify-content:center;pointer-events:none;}
-#overlay.active{pointer-events:all;}
-.obox{background:rgba(8,20,45,.95);border:3px solid #5599ff;border-radius:16px;padding:36px 56px;text-align:center;box-shadow:0 0 60px rgba(85,153,255,.3);}
-.obox h1{color:#6bf;font-size:28px;font-weight:900;letter-spacing:4px;margin-bottom:12px;}
-.obox h2{color:#f55;font-size:22px;font-weight:900;margin-bottom:8px;}
-.obox p{color:#9bc;font-size:13px;line-height:2;margin-bottom:18px;}
-.obox .fin{color:#ffd844;font-size:44px;font-weight:900;margin:10px 0 20px;}
-.btn{background:linear-gradient(180deg,#4a9eff,#2266cc);color:#fff;border:2px solid #6ab4ff;padding:12px 44px;font-size:15px;font-weight:900;letter-spacing:2px;border-radius:8px;cursor:pointer;transition:all .15s;text-transform:uppercase;}
+#ov{position:absolute;display:flex;align-items:center;justify-content:center;pointer-events:none;}
+#ov.on{pointer-events:all;}
+.ob{background:rgba(8,20,45,.96);border:3px solid #5599ff;border-radius:16px;
+    padding:36px 56px;text-align:center;box-shadow:0 0 60px rgba(85,153,255,.3);}
+.ob h1{color:#6bf;font-size:28px;font-weight:900;letter-spacing:4px;margin-bottom:12px;}
+.ob h2{color:#f55;font-size:22px;font-weight:900;margin-bottom:8px;}
+.ob p{color:#9bc;font-size:13px;line-height:2;margin-bottom:18px;}
+.ob .fin{color:#ffd844;font-size:44px;font-weight:900;margin:10px 0 20px;}
+.btn{background:linear-gradient(180deg,#4a9eff,#2266cc);color:#fff;border:2px solid #6ab4ff;
+     padding:12px 44px;font-size:15px;font-weight:900;letter-spacing:2px;border-radius:8px;
+     cursor:pointer;transition:all .15s;text-transform:uppercase;}
 .btn:hover{background:linear-gradient(180deg,#6ab4ff,#3377dd);transform:scale(1.05);}
 </style>
 </head>
 <body>
-<div id="ui-bar">
-  <div class="ui-sec"><div class="ui-lbl">Cargo</div><div class="ui-val" id="sv">0</div></div>
-  <div id="titletxt">CANAL MASTER</div>
-  <div class="ui-sec"><div class="ui-lbl">Level</div><div class="ui-val" id="lv">1</div></div>
+<div id="ui">
+  <div class="us"><div class="ul">Cargo</div><div class="uv" id="sv">0</div></div>
+  <div id="tt">CANAL MASTER</div>
+  <div class="us"><div class="ul">Level</div><div class="uv" id="lv">1</div></div>
 </div>
 <canvas id="gc" width="660" height="540"></canvas>
-<div id="overlay" class="active">
-  <div class="obox">
+<div id="ov" class="on">
+  <div class="ob">
     <h1>CANAL MASTER</h1>
     <p>Ziehe vom Schiff eine Linie<br>zum gleichfarbigen Hafen.<br><br>
     <span style="color:#cc44ff">■</span> Violett &nbsp;·&nbsp;
@@ -44,168 +50,254 @@ canvas{display:block;border-radius:0 0 10px 10px;border:2px solid #4a7acc;border
 </div>
 <script>
 'use strict';
-const canvas = document.getElementById('gc');
-const ctx    = canvas.getContext('2d');
-const W = canvas.width, H = canvas.height;
+const canvas=document.getElementById('gc');
+const ctx=canvas.getContext('2d');
+const W=canvas.width, H=canvas.height;
 
-// ── Cargo colours ──────────────────────────────────────
-const CARGO_COLORS = [‘violet’,‘yellow’];
-const CHEX  = { violet:’#cc44ff’, yellow:’#ffdd00’ };
-const CHEXD = { violet:’#660099’, yellow:’#887700’ };
+// ═══════════ CONSTANTS ═══════════════════════════════════════════════
+const COLORS=[‘violet’,‘yellow’];
+const HEX={violet:’#cc44ff’,yellow:’#ffdd00’};
+const HEXD={violet:’#550088’,yellow:’#776600’};
 
-// ── Map ────────────────────────────────────────────────
-// Left land: x=0..140 full height
-// Top-right nub: x=510..660, y=0..115
+// Map: left land x=0..140, top-right nub x=510..660 y=0..115
 const LL=140, TRX=510, TRY=115;
 
-// Dock bays cut into left land — each harbour has 2 bays side by side
-// Bay: ships drive INTO the indentation from the right (water side)
-// violet: top area, yellow: bottom area
-// Each bay: { cx, cy } = centre of the bay opening (water entry point)
-// The bay is a rectangular notch cut into the land at x=LL, width=40 into land
-
-// HARBOURS: each has 2 bays
-const HARBOURS = [
-{
-id:‘violet’, color:‘violet’,
-bays: [
-{ ex:140, ey:105, bx:60, by:80,  bw:85, bh:52 },  // top bay
-{ ex:140, ey:168, bx:60, by:143, bw:85, bh:52 },  // bottom bay
-]
-},
-{
-id:‘yellow’, color:‘yellow’,
-bays: [
-{ ex:140, ey:350, bx:60, by:325, bw:85, bh:52 },
-{ ex:140, ey:413, bx:60, by:388, bw:85, bh:52 },
-]
-},
+// Each harbour: 2 bays cut into left land.
+// bx,by,bw,bh = bounding box of bay (navigable water area)
+// dock_x = x-coordinate of fixed docking position (deep inside bay)
+// dock_y = centre y of bay
+const HARBOURS=[
+{ color:‘violet’, bays:[
+{ bx:55, by:78,  bw:90, bh:54 },
+{ bx:55, by:140, bw:90, bh:54 },
+]},
+{ color:‘yellow’, bays:[
+{ bx:55, by:322, bw:90, bh:54 },
+{ bx:55, by:384, bw:90, bh:54 },
+]},
 ];
+// Pre-compute dock centre for each bay
+HARBOURS.forEach(h=>h.bays.forEach(b=>{
+b.dockX = b.bx + b.bw*0.5;   // centred inside bay
+b.dockY = b.by + b.bh*0.5;   // vertical centre
+b.entX  = b.bx + b.bw;       // entrance x (at land edge)
+b.entY  = b.dockY;
+}));
 
-// Flat list of all bay entries for hit detection
-function allBays() {
-const result = [];
-HARBOURS.forEach(h => h.bays.forEach(b => result.push({…b, color:h.color, id:h.id})));
-return result;
-}
-
-// ── Spawn zones ────────────────────────────────────────
-const SPAWNS = [
+const SPAWNS=[
 {x:240,y:-30,dx:0, dy:1 },
 {x:360,y:-30,dx:0, dy:1 },
-{x:470,y:-30,dx:0, dy:1 },
-{x:690,y:190,dx:-1,dy:0 },
-{x:690,y:330,dx:-1,dy:0 },
+{x:460,y:-30,dx:0, dy:1 },
+{x:690,y:185,dx:-1,dy:0 },
+{x:690,y:320,dx:-1,dy:0 },
 {x:270,y:570,dx:0, dy:-1},
 {x:430,y:570,dx:0, dy:-1},
 ];
 
-// ── State ──────────────────────────────────────────────
-let ships=[], score=0, level=1, gameRunning=false;
-let spawnInterval=320, nextSpawnIn=100, pendingZone=0;
-let dragShip=null, dragPath=[];
-let particles=[], wakes=[];
-let flashT=0;
-
-// ── Water test ─────────────────────────────────────────
-// Returns true if (x,y) is navigable water (includes dock bays)
+// ═══════════ WATER TEST ══════════════════════════════════════════════
 function inWater(x,y){
-// Basic bounds
-if(x>W||y<0||y>H) return false;
-// Top-right land nub
-if(x>TRX&&y<TRY) return false;
-// Left land — but bays are cut into it
+if(x<0||x>W||y<0||y>H) return false;
+if(x>TRX&&y<TRY) return false;  // top-right land
 if(x<LL){
-// Check if inside a dock bay
-for(const h of HARBOURS){
-for(const bay of h.bays){
-if(x>=bay.bx&&x<=bay.bx+bay.bw&&y>=bay.by&&y<=bay.by+bay.bh) return true;
-}
-}
+// check dock bays
+for(const h of HARBOURS)
+for(const b of h.bays)
+if(x>=b.bx&&x<=b.bx+b.bw&&y>=b.by&&y<=b.by+b.bh) return true;
 return false;
 }
 return true;
 }
+function offScreen(x,y){return x<-25||x>W+25||y<-25||y>H+25;}
 
-// ══════════════════════════════════════════════════════
-// SHIP
-// ══════════════════════════════════════════════════════
-class Ship {
+// Returns a matching bay if ship has crossed its entrance threshold
+function checkBayEntry(ship){
+if(ship.cargo<=0) return null;
+for(const h of HARBOURS){
+if(h.color!==ship.color) continue;
+for(const b of h.bays){
+// Ship is within the bay’s y range and has passed the entrance x
+if(ship.y>=b.by&&ship.y<=b.by+b.bh&&ship.x<=b.entX+4&&ship.x>=b.bx){
+return b;
+}
+}
+}
+return null;
+}
+
+// ═══════════ GAME STATE ══════════════════════════════════════════════
+let ships=[],score=0,level=1,running=false;
+let spawnT=100,spawnI=300,pendZ=0;
+let dragShip=null,dragPts=[],dragOk=true;
+let parts=[],wakes=[];
+let flashT=0;
+
+// ═══════════ COLLISION WARNING ═══════════════════════════════════════
+// Ships within this distance start flashing red
+const WARN_DIST=120;
+const COLL_DIST_FACTOR=0.27;
+
+function nearestApproach(a,b){
+// Simple: just current distance
+return Math.hypot(a.x-b.x,a.y-b.y);
+}
+
+function updateCollisionWarnings(){
+// Reset all
+ships.forEach(s=>s.collWarn=false);
+for(let i=0;i<ships.length;i++){
+for(let j=i+1;j<ships.length;j++){
+const a=ships[i],b=ships[j];
+if(a.state===‘done’||b.state===‘done’) continue;
+if(a.state===‘docked’||b.state===‘docked’) continue;
+if(a.state===‘unloading’||b.state===‘unloading’) continue;
+const d=Math.hypot(a.x-b.x,a.y-b.y);
+if(d<WARN_DIST){a.collWarn=true;b.collWarn=true;}
+if(d<(a.HL+b.HL)*COLL_DIST_FACTOR){
+spawnPart((a.x+b.x)/2,(a.y+b.y)/2,’#ff3322’,28);
+flashT=30;
+triggerGameOver();
+return;
+}
+}
+}
+}
+
+// ═══════════ SHIP CLASS ══════════════════════════════════════════════
+class Ship{
 constructor(si){
 const sp=SPAWNS[si];
 this.x=sp.x; this.y=sp.y;
 this.angle=Math.atan2(sp.dy,sp.dx);
 this.vx=sp.dx; this.vy=sp.dy;
-this.colorName=CARGO_COLORS[Math.floor(Math.random()*CARGO_COLORS.length)];
-let maxC=1;
-if(level>=2)maxC=2; if(level>=4)maxC=3; if(level>=6)maxC=4; if(level>=9)maxC=5;
-this.containers=Math.floor(Math.random()*maxC)+1;
-this.maxC=this.containers;
-this.spd=0.9-(this.maxC-1)*0.1; // 1c→0.9, 5c→0.5
-this.state=‘auto’;
+this.color=COLORS[Math.floor(Math.random()*COLORS.length)];
+let mx=1;
+if(level>=2)mx=2; if(level>=4)mx=3; if(level>=6)mx=4; if(level>=9)mx=5;
+this.cargo=Math.floor(Math.random()*mx)+1;
+this.maxCargo=this.cargo;
+this.spd=0.85-(this.maxCargo-1)*0.1;
+this.state=‘auto’; // auto|path|docking|unloading|docked|done
 this.path=[]; this.pi=0;
-this.harbour=null; this.dockBay=null; this.dockT=0;
+this.dockTarget=null;
+this.unloadT=0;
 this.pulseT=Math.random()*Math.PI*2;
-this.wakeT=0; this.id=Math.random();
-this.HL=30+this.maxC*9;
-this.HW=14+this.maxC*2;
+this.wakeT=0;
+this.HL=30+this.maxCargo*9;
+this.HW=14+this.maxCargo*2;
+this.collWarn=false;
+this.warnBlink=0;
 }
 
-// Check if ship is currently inside any matching bay
-getMatchingBay(){
+// Returns matching bay if ship centre is inside it
+insideBay(){
 for(const h of HARBOURS){
-if(h.color!==this.colorName) continue;
-for(const bay of h.bays){
-if(this.x>=bay.bx&&this.x<=bay.bx+bay.bw&&this.y>=bay.by&&this.y<=bay.by+bay.bh)
-return bay;
-}
+if(h.color!==this.color) continue;
+for(const b of h.bays)
+if(this.x>=b.bx&&this.x<=b.bx+b.bw&&this.y>=b.by&&this.y<=b.by+b.bh)
+return b;
 }
 return null;
 }
 
 update(){
 this.pulseT+=0.04;
-const sp=this.spd;
+this.warnBlink=(this.warnBlink+1)%30;
 
 ```
-// ── DOCKED: stationary, wait for player to draw exit path ──
-if(this.state==='docked') return; // do nothing, ship sits still
+if(this.state==='done') return;
+if(this.state==='docked') return;
 
-// ── AUTO: wander ──────────────────────────────────
-if(this.state==='auto'){
-  if(Math.random()<0.018){
-    this.angle+=(Math.random()-.5)*0.7;
-    this.vx=Math.cos(this.angle); this.vy=Math.sin(this.angle);
+if(this.state==='unloading'){
+  this.unloadT++;
+  if(this.unloadT>=60){
+    this.unloadT=0; this.cargo--; score++; updUI();
+    spawnPart(this.x,this.y,HEX[this.color],10);
+    if(this.cargo<=0) this.state='docked';
   }
-  const nx=this.x+this.vx*sp, ny=this.y+this.vy*sp;
-  if(inWater(nx,ny)){ this.x=nx; this.y=ny; }
-  else {
-    if(!inWater(nx,this.y)) this.vx*=-1;
-    if(!inWater(this.x,ny)) this.vy*=-1;
-    this.angle=Math.atan2(this.vy,this.vx);
-  }
-  // Lookahead
-  if(!inWater(this.x+this.vx*14,this.y+this.vy*14)){
-    this.angle+=(Math.random()<.5?1:-1)*(0.4+Math.random()*.5);
-    this.vx=Math.cos(this.angle); this.vy=Math.sin(this.angle);
-  }
-  // Boundary
-  if(this.containers===0){
-    if(this.x<-40||this.x>W+40||this.y<-40||this.y>H+40) this.state='done';
-  } else {
-    if(this.x<LL+3) {this.x=LL+3;this.vx=Math.abs(this.vx)+.1;this.angle=Math.atan2(this.vy,this.vx);}
-    if(this.x>W-3)  {this.x=W-3; this.vx=-Math.abs(this.vx)-.1;this.angle=Math.atan2(this.vy,this.vx);}
-    if(this.y<3)    {this.y=3;   this.vy=Math.abs(this.vy)+.1; this.angle=Math.atan2(this.vy,this.vx);}
-    if(this.y>H-3)  {this.y=H-3; this.vy=-Math.abs(this.vy)-.1;this.angle=Math.atan2(this.vy,this.vx);}
-  }
+  return;
 }
 
-// ── PATH: follow drawn route ──────────────────────
+// docking: glide to fixed dock centre
+if(this.state==='docking'){
+  const dt=this.dockTarget;
+  const dx=dt.dockX-this.x, dy=dt.dockY-this.y;
+  const d=Math.hypot(dx,dy);
+  if(d<2){
+    this.x=dt.dockX; this.y=dt.dockY;
+    this.state='unloading'; this.unloadT=0;
+  } else {
+    const s=Math.min(this.spd,d);
+    this.x+=dx/d*s; this.y+=dy/d*s;
+    this.angle=Math.atan2(dy,dx);
+  }
+  return;
+}
+
+const sp=this.spd;
+
+if(this.state==='auto'){
+  // Straight movement — no random turns. Only bounce off walls.
+  const nx=this.x+this.vx*sp, ny=this.y+this.vy*sp;
+  if(inWater(nx,ny)){
+    this.x=nx; this.y=ny;
+  } else {
+    // Axis-separated bounce
+    const canX=inWater(nx,this.y), canY=inWater(this.x,ny);
+    if(!canX) this.vx*=-1;
+    if(!canY) this.vy*=-1;
+    if(canX&&canY){ this.vx*=-1; this.vy*=-1; } // corner
+    this.angle=Math.atan2(this.vy,this.vx);
+    // Try to move after bounce
+    const nx2=this.x+this.vx*sp, ny2=this.y+this.vy*sp;
+    if(inWater(nx2,ny2)){this.x=nx2;this.y=ny2;}
+  }
+  // Cargo ships never leave canvas
+ // Nur Schiffe MIT Containern prallen ab
+if(this.cargo>0){
+
+    if(this.x<LL+2){
+        this.x=LL+2;
+        this.vx=Math.abs(this.vx)||0.3;
+    }
+
+    if(this.x>W-2){
+        this.x=W-2;
+        this.vx=-(Math.abs(this.vx)||0.3);
+    }
+
+    if(this.y<2){
+        this.y=2;
+        this.vy=Math.abs(this.vy)||0.3;
+    }
+
+    if(this.y>H-2){
+        this.y=H-2;
+        this.vy=-(Math.abs(this.vy)||0.3);
+    }
+
+    this.angle=Math.atan2(this.vy,this.vx);
+
+} else {
+
+    // Leere Schiffe dürfen rausfahren
+    if(offScreen(this.x,this.y)){
+        this.state='done';
+    }
+}
+    // Check bay entry even in auto mode
+    const ab=checkBayEntry(this);
+    if(ab){this.dockTarget=ab;this.state='docking';return;}
+  } else {
+    if(offScreen(this.x,this.y)) this.state='done';
+  }
+  return;
+}
+
 if(this.state==='path'){
   if(this.pi>=this.path.length){
-    const bay=this.getMatchingBay();
-    if(bay&&this.containers>0){
-      this.state='unloading'; this.dockT=0;
+    // path ended
+    const bay=this.insideBay();
+    if(bay&&this.cargo>0){
+      this.dockTarget=bay; this.state='docking';
     } else {
       this.state='auto';
     }
@@ -213,50 +305,72 @@ if(this.state==='path'){
   }
   const tgt=this.path[this.pi];
   const dx=tgt.x-this.x, dy=tgt.y-this.y, d=Math.hypot(dx,dy);
-  if(d<5){ this.pi++; return; }
-  const nx=this.x+(dx/d)*sp, ny=this.y+(dy/d)*sp;
-  if(this.containers>0){
-    // With cargo: move in water or bounce off land
-    if(inWater(nx,ny)){this.x=nx;this.y=ny;}
-    else if(inWater(nx,this.y)){this.x=nx; this.vy*=-1;}
-    else if(inWater(this.x,ny)){this.y=ny; this.vx*=-1;}
-    else { this.vx*=-1; this.vy*=-1; this.state='auto'; this.path=[]; this.pi=0; return; }
-    // Check if ship touched any matching bay -> auto-navigate to bay centre
-    const bay=this.getMatchingBay();
-    if(bay){
-      const bcx=bay.bx+bay.bw*0.5, bcy=bay.by+bay.bh*0.5;
-      if(Math.hypot(this.x-bcx,this.y-bcy)>4){
-        this.path=[{x:bcx,y:bcy}]; this.pi=0;
-      } else {
-        this.state='unloading'; this.dockT=0; this.path=[]; this.pi=0;
-      }
-      return;
+  if(d<4){this.pi++;return;}
+  const s=Math.min(sp,d);
+  const nx=this.x+dx/d*s, ny=this.y+dy/d*s;
+
+  if(this.cargo>0){
+    // Check if ANY matching bay entrance is being crossed → snap to dock
+    const enteredBay=checkBayEntry(this);
+    if(enteredBay){
+      this.dockTarget=enteredBay; this.state='docking';
+      this.path=[]; this.pi=0; return;
+    }
+    // Cargo ships: stay in water, bounce off land
+    if(inWater(nx,ny)){
+      this.x=nx; this.y=ny;
+    } else if(inWater(nx,this.y)){
+      this.x=nx; this.vy*=-1;
+    } else if(inWater(this.x,ny)){
+      this.y=ny; this.vx*=-1;
+    } else {
+      this.vx*=-1; this.vy*=-1;
+      this.state='auto'; this.path=[]; this.pi=0; return;
+    }
+    // Hard canvas clamp for cargo
+   // Nur Cargo-Schiffe begrenzen
+if(this.cargo>0){
+
+    if(this.x<LL+2){
+        this.x=LL+2;
+        this.vx=Math.abs(this.vx)||0.3;
+    }
+
+    if(this.x>W-2){
+        this.x=W-2;
+        this.vx=-(Math.abs(this.vx)||0.3);
+    }
+
+    if(this.y<2){
+        this.y=2;
+        this.vy=Math.abs(this.vy)||0.3;
+    }
+
+    if(this.y>H-2){
+        this.y=H-2;
+        this.vy=-(Math.abs(this.vy)||0.3);
+    }
+}
+    // Also check after move
+    const bay2=checkBayEntry(this);
+    if(bay2){
+      this.dockTarget=bay2; this.state='docking';
+      this.path=[]; this.pi=0; return;
     }
   } else {
-    // Empty: can exit off-screen
+    // Empty ship on path: move freely, allow going off screen to exit
     this.x=nx; this.y=ny;
-    if(this.x<-40||this.x>W+40||this.y<-40||this.y>H+40){this.state='done';return;}
+    if(offScreen(this.x,this.y)){this.state='done';return;}
+    // If somehow hit land while still on screen, bounce back to auto
+    if(!inWater(this.x,this.y)&&!offScreen(this.x,this.y)){
+      this.x-=dx/d*s; this.y-=dy/d*s;
+      this.vx*=-1; this.vy*=-1;
+      this.state='auto'; this.path=[]; this.pi=0; return;
+    }
   }
   this.angle=Math.atan2(dy,dx);
   this.vx=Math.cos(this.angle); this.vy=Math.sin(this.angle);
 }
-
-// ── UNLOADING: ship is still, unloads one container per second ──
-if(this.state==='unloading'){
-  this.dockT++;
-  if(this.dockT>=60){
-    this.dockT=0; this.containers--; score++; updateUI();
-    spawnParticle(this.x,this.y,CHEX[this.colorName],10);
-    if(this.containers<=0){
-      // Done unloading — stay put (docked) until player draws exit route
-      this.state='docked';
-    }
-  }
-}
-
-// Wake
-this.wakeT++;
-if(this.wakeT>=5){this.wakeT=0;wakes.push({x:this.x,y:this.y,life:1,r:2+Math.random()*2});}
 ```
 
 }
@@ -265,11 +379,14 @@ draw(){
 ctx.save();
 ctx.translate(this.x,this.y);
 ctx.rotate(this.angle);
-const L=this.HL,B=this.HW,n=this.maxC;
-const cc=CHEX[this.colorName], cd=CHEXD[this.colorName];
+const L=this.HL, B=this.HW, n=this.maxCargo;
+const cc=HEX[this.color], cd=HEXD[this.color];
 
 ```
-// Hull (grey)
+// Collision warning: red blink overlay
+const warn=this.collWarn&&this.warnBlink<15;
+
+// Hull shape
 ctx.beginPath();
 ctx.moveTo(L/2,0);
 ctx.bezierCurveTo(L/2,-B/2,L/4,-B/2,0,-B/2);
@@ -279,27 +396,31 @@ ctx.quadraticCurveTo(-L/2,B/2,-L/2+8,B/2);
 ctx.lineTo(0,B/2);
 ctx.bezierCurveTo(L/4,B/2,L/2,B/2,L/2,0);
 ctx.closePath();
-const hg=ctx.createLinearGradient(0,-B/2,0,B/2);
-hg.addColorStop(0,'#d8dfe8'); hg.addColorStop(.45,'#b8c2cc'); hg.addColorStop(1,'#8898a8');
-ctx.fillStyle=hg; ctx.fill();
-ctx.strokeStyle='#607080'; ctx.lineWidth=1.2; ctx.stroke();
+if(warn){
+  ctx.fillStyle='#ff2222';
+} else {
+  const hg=ctx.createLinearGradient(0,-B/2,0,B/2);
+  hg.addColorStop(0,'#d8dfe8'); hg.addColorStop(.45,'#b8c2cc'); hg.addColorStop(1,'#8898a8');
+  ctx.fillStyle=hg;
+}
+ctx.fill();
+ctx.strokeStyle=warn?'#ff0000':'#607080'; ctx.lineWidth=1.2; ctx.stroke();
 
 // Waterline
 ctx.fillStyle='#506070'; ctx.fillRect(-L/2+8,B/2-4,L-14,3);
 
-// Containers (coloured)
+// Containers
 const cW=Math.max(8,Math.min(13,(L-22)/n)), cH=B*.55;
-const totW=n*cW+(n-1)*2;
-let cx=-totW/2;
+const totW=n*cW+(n-1)*2; let cx=-totW/2;
 for(let i=0;i<n;i++){
-  const filled=i<this.containers;
+  const filled=i<this.cargo;
   rrect(ctx,cx,-cH/2,cW,cH,2);
-  ctx.fillStyle=filled?cc:'rgba(150,160,175,0.3)';
+  ctx.fillStyle=filled?cc:'rgba(150,160,175,0.28)';
   ctx.fill();
-  ctx.strokeStyle=filled?cd:'rgba(80,100,120,0.35)';
+  ctx.strokeStyle=filled?cd:'rgba(80,100,120,0.3)';
   ctx.lineWidth=0.8; ctx.stroke();
   if(filled&&cW>9){
-    ctx.strokeStyle='rgba(0,0,0,0.2)'; ctx.lineWidth=.5;
+    ctx.strokeStyle='rgba(0,0,0,0.18)'; ctx.lineWidth=.5;
     ctx.beginPath();ctx.moveTo(cx+cW*.35,-cH/2);ctx.lineTo(cx+cW*.35,cH/2);ctx.stroke();
     ctx.beginPath();ctx.moveTo(cx+cW*.65,-cH/2);ctx.lineTo(cx+cW*.65,cH/2);ctx.stroke();
   }
@@ -310,27 +431,25 @@ for(let i=0;i<n;i++){
 rrect(ctx,-L/2+2,-B*.27,L*.19,B*.54,2);
 ctx.fillStyle='#c8d4de'; ctx.fill(); ctx.strokeStyle='#7888a0'; ctx.lineWidth=.8; ctx.stroke();
 
-// Bow dot
+// Bow circle
 ctx.beginPath(); ctx.arc(L/2-4,0,2.5,0,Math.PI*2); ctx.fillStyle='#a0b0c0'; ctx.fill();
 
-// Pulse ring in auto or docked
-if(this.state==='auto'){
+// State rings
+if(this.state==='auto'||this.state==='path'){
   const p=.5+.5*Math.sin(this.pulseT*2);
   ctx.beginPath(); ctx.ellipse(0,0,L/2+5+p*4,B/2+4+p*2,0,0,Math.PI*2);
-  ctx.strokeStyle=cc+Math.floor(p*130).toString(16).padStart(2,'0');
+  ctx.strokeStyle=cc+Math.floor(p*120).toString(16).padStart(2,'0');
   ctx.lineWidth=1.5; ctx.stroke();
 }
 if(this.state==='docked'){
-  // Steady green glow = ready to be picked up
   const p=.5+.5*Math.sin(this.pulseT*1.5);
   ctx.beginPath(); ctx.ellipse(0,0,L/2+6+p*3,B/2+5+p*2,0,0,Math.PI*2);
-  ctx.strokeStyle=`rgba(80,255,120,${.4+p*.5})`;
-  ctx.lineWidth=2; ctx.stroke();
+  ctx.strokeStyle=`rgba(80,255,120,${.4+p*.5})`; ctx.lineWidth=2; ctx.stroke();
 }
 
-// Unload bar
-if(this.state==='unloading'){
-  const pr=this.dockT/60;
+// Unload progress bar
+if(this.state==='unloading'||this.state==='docking'){
+  const pr=this.state==='unloading'?this.unloadT/60:0;
   ctx.fillStyle='rgba(0,0,0,.4)'; ctx.fillRect(-L/2,B/2+3,L,6);
   ctx.fillStyle=cc; ctx.fillRect(-L/2,B/2+3,L*pr,6);
   ctx.strokeStyle='rgba(255,255,255,.2)'; ctx.lineWidth=.5; ctx.strokeRect(-L/2,B/2+3,L,6);
@@ -342,7 +461,7 @@ ctx.restore();
 }
 }
 
-// Manual rounded rect (no API dependency)
+// ═══════════ UTILS ═══════════════════════════════════════════════════
 function rrect(c,x,y,w,h,r){
 c.beginPath();
 c.moveTo(x+r,y); c.lineTo(x+w-r,y); c.arcTo(x+w,y,x+w,y+r,r);
@@ -351,82 +470,93 @@ c.lineTo(x+r,y+h); c.arcTo(x,y+h,x,y+h-r,r);
 c.lineTo(x,y+r); c.arcTo(x,y,x+r,y,r);
 c.closePath();
 }
-
-// ── Particles ──────────────────────────────────────────
-function spawnParticle(x,y,col,n){
-for(let i=0;i<n;i++){const a=Math.random()*Math.PI*2,s=1+Math.random()*3;particles.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,col,life:1});}
+function spawnPart(x,y,col,n){
+for(let i=0;i<n;i++){const a=Math.random()*Math.PI*2,s=1+Math.random()*3;
+parts.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,col,life:1});}
 }
-function tickParticles(){
-particles=particles.filter(p=>{p.x+=p.vx;p.y+=p.vy;p.vx*=.9;p.vy*=.9;p.life-=.025;return p.life>0;});
+function tickParts(){
+parts=parts.filter(p=>{p.x+=p.vx;p.y+=p.vy;p.vx*=.9;p.vy*=.9;p.life-=.025;return p.life>0;});
 wakes=wakes.filter(p=>{p.life-=.04;p.r*=.97;return p.life>0;});
 }
-function drawParticles(){
+function drawParts(){
 wakes.forEach(p=>{ctx.globalAlpha=p.life*.18;ctx.fillStyle=’#cde’;ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fill();});
-particles.forEach(p=>{ctx.globalAlpha=p.life;ctx.fillStyle=p.col;ctx.beginPath();ctx.arc(p.x,p.y,3*p.life,0,Math.PI*2);ctx.fill();});
+parts.forEach(p=>{ctx.globalAlpha=p.life;ctx.fillStyle=p.col;ctx.beginPath();ctx.arc(p.x,p.y,3*p.life,0,Math.PI*2);ctx.fill();});
 ctx.globalAlpha=1;
 }
 
-// ══════════════════════════════════════════════════════
-// BACKGROUND (pre-rendered)
-// ══════════════════════════════════════════════════════
-let bgCanvas=null;
-
+// ═══════════ BACKGROUND ══════════════════════════════════════════════
+let bg=null;
 function buildBg(){
-bgCanvas=document.createElement(‘canvas’);
-bgCanvas.width=W; bgCanvas.height=H;
-const b=bgCanvas.getContext(‘2d’);
+bg=document.createElement(‘canvas’); bg.width=W; bg.height=H;
+const b=bg.getContext(‘2d’);
 
-// ── Water fill ─────────────────────────────────────
+// Water
 const wg=b.createLinearGradient(LL,0,W,H);
 wg.addColorStop(0,’#3a8ec8’); wg.addColorStop(.5,’#2878b5’); wg.addColorStop(1,’#1c62a0’);
 b.fillStyle=wg; b.fillRect(0,0,W,H);
 
-// ── Left land (full strip, bays will punch holes) ──
+// Left land
 paintLand(b,0,0,LL,H,‘right’);
-
-// ── Top-right land nub ─────────────────────────────
+// Top-right land
 paintLand(b,TRX,0,W-TRX,TRY,‘left’);
 
-// ── Punch bay holes into left land (fill with water colour) ──
+// Punch bay holes + draw dock interiors
 HARBOURS.forEach(h=>{
 h.bays.forEach(bay=>{
-// Fill bay with water
+// Water inside bay
 const bg2=b.createLinearGradient(bay.bx,0,bay.bx+bay.bw,0);
-bg2.addColorStop(0,’#2878b5’); bg2.addColorStop(1,’#3a8ec8’);
-b.fillStyle=bg2;
-b.fillRect(bay.bx,bay.by,bay.bw,bay.bh);
-// Bay floor/pier concrete sides
-b.fillStyle=’#506878’;
-b.fillRect(bay.bx,bay.by,4,bay.bh);          // left wall
-b.fillRect(bay.bx,bay.by,bay.bw,4);           // top wall
-b.fillRect(bay.bx,bay.by+bay.bh-4,bay.bw,4); // bottom wall
-// Colour stripe on back wall
-b.fillStyle=CHEX[h.color];
-b.fillRect(bay.bx+4,bay.by+10,8,bay.bh-20);
+bg2.addColorStop(0,’#1e6aaa’); bg2.addColorStop(1,’#2e7aba’);
+b.fillStyle=bg2; b.fillRect(bay.bx,bay.by,bay.bw,bay.bh);
+
+```
+  // Dock walls (concrete)
+  b.fillStyle='#4a6070';
+  b.fillRect(bay.bx,bay.by,bay.bw,4);            // top
+  b.fillRect(bay.bx,bay.by+bay.bh-4,bay.bw,4);   // bottom
+  b.fillRect(bay.bx,bay.by,4,bay.bh);             // back
+
+  // Dock platform (where ship parks)
+  b.fillStyle='#7a8ea0'; b.fillRect(bay.bx+4,bay.by+4,38,bay.bh-8);
+  b.fillStyle='#8da0b4'; b.fillRect(bay.bx+6,bay.by+6,34,bay.bh-12);
+
+  // Colour stripe on back wall
+  b.fillStyle=HEX[h.color];
+  b.fillRect(bay.bx+4,bay.by+6,10,bay.bh-12);
+
+  // Colour dots
+  b.fillStyle=HEX[h.color]+'99';
+  for(let d=0;d<2;d++){
+    b.beginPath(); b.arc(bay.bx+22+d*14,bay.dockY,4,0,Math.PI*2); b.fill();
+  }
+
+  // Bollards at entrance
+  [[bay.entX,bay.by+8],[bay.entX,bay.by+bay.bh-8]].forEach(([px,py])=>{
+    b.beginPath(); b.arc(px,py,4,0,Math.PI*2); b.fillStyle='#3a5060'; b.fill();
+    b.beginPath(); b.arc(px,py,2.5,0,Math.PI*2); b.fillStyle='#7090a0'; b.fill();
+  });
+
+  // Entrance dash line
+  b.strokeStyle=HEX[h.color]+'cc'; b.lineWidth=2; b.setLineDash([4,3]);
+  b.beginPath(); b.moveTo(bay.entX+2,bay.by+6); b.lineTo(bay.entX+2,bay.by+bay.bh-6);
+  b.stroke(); b.setLineDash([]);
 });
+```
+
 });
 
-// ── Shorelines ─────────────────────────────────────
+// Shorelines (skip over bay openings on left coast)
 b.strokeStyle=’#c8b468’; b.lineWidth=3;
-// Left coast line — skip over bay openings
-function strokeLeftCoast(){
-// Collect all bay y-ranges
 const bays=[];
 HARBOURS.forEach(h=>h.bays.forEach(bay=>bays.push({y1:bay.by,y2:bay.by+bay.bh})));
 bays.sort((a,z)=>a.y1-z.y1);
-let y=0;
+let cy=0;
 bays.forEach(({y1,y2})=>{
-if(y<y1){b.beginPath();b.moveTo(LL,y);b.lineTo(LL,y1);b.stroke();}
-y=y2;
+if(cy<y1){b.beginPath();b.moveTo(LL,cy);b.lineTo(LL,y1);b.stroke();}
+cy=y2;
 });
-if(y<H){b.beginPath();b.moveTo(LL,y);b.lineTo(LL,H);b.stroke();}
-}
-strokeLeftCoast();
-b.beginPath(); b.moveTo(TRX,0);  b.lineTo(TRX,TRY); b.stroke();
-b.beginPath(); b.moveTo(TRX,TRY);b.lineTo(W,TRY);   b.stroke();
-
-// ── Draw dock structures ────────────────────────────
-HARBOURS.forEach(h=>paintHarbour(b,h));
+if(cy<H){b.beginPath();b.moveTo(LL,cy);b.lineTo(LL,H);b.stroke();}
+b.beginPath();b.moveTo(TRX,0);b.lineTo(TRX,TRY);b.stroke();
+b.beginPath();b.moveTo(TRX,TRY);b.lineTo(W,TRY);b.stroke();
 }
 
 function paintLand(b,x,y,w,h,bs){
@@ -439,65 +569,21 @@ g.addColorStop(0,’#ccb260’);g.addColorStop(.14,’#c0a855’);
 g.addColorStop(.32,’#3a7830’);g.addColorStop(1,’#285020’);
 }
 b.fillStyle=g; b.fillRect(x,y,w,h);
-// Grass dots
 b.fillStyle=‘rgba(18,72,18,0.22)’;
-for(let gy=y+5;gy<y+h-5;gy+=16)for(let gx=x+5;gx<x+w-5;gx+=16){
-b.beginPath();b.arc(gx+Math.sin(gx*.31+gy*.73)*3.5,gy+Math.cos(gx*.51+gy*.22)*3.5,2.2+Math.abs(Math.sin(gx*gy))*.9,0,Math.PI*2);b.fill();
+for(let gy=y+5;gy<y+h-5;gy+=16)
+for(let gx=x+5;gx<x+w-5;gx+=16){
+b.beginPath();
+b.arc(gx+Math.sin(gx*.31+gy*.73)*3.5,gy+Math.cos(gx*.51+gy*.22)*3.5,
+2.2+Math.abs(Math.sin(gx*gy))*.9,0,Math.PI*2);
+b.fill();
 }
 b.fillStyle=‘rgba(10,55,10,0.26)’;
-for(let gy=y+12;gy<y+h-12;gy+=28)for(let gx=x+12;gx<x+w-12;gx+=28)
+for(let gy=y+12;gy<y+h-12;gy+=28)
+for(let gx=x+12;gx<x+w-12;gx+=28)
 if(Math.sin(gx*1.4+gy*2.2)>.28){b.beginPath();b.arc(gx,gy,4.5,0,Math.PI*2);b.fill();}
 }
 
-function paintHarbour(b, h){
-const col=CHEX[h.color];
-h.bays.forEach((bay,i)=>{
-// Concrete dock platform inside bay
-b.fillStyle=’#7a8ea0’;
-b.fillRect(bay.bx+4,bay.by+4,bay.bw-4,bay.bh-8);
-
-```
-// Platform surface
-b.fillStyle='#8da0b4';
-b.fillRect(bay.bx+8,bay.by+8,bay.bw-12,bay.bh-16);
-
-// Colour back-wall stripe
-b.fillStyle=col;
-b.fillRect(bay.bx+8,bay.by+8,10,bay.bh-16);
-
-// Colour dots on platform
-b.fillStyle=col+'99';
-for(let d=0;d<3;d++){
-  b.beginPath();
-  b.arc(bay.bx+28+d*16,bay.by+bay.bh/2,4,0,Math.PI*2);
-  b.fill();
-}
-
-// Pier bollards at entrance
-b.fillStyle='#9ab0c0';
-[[bay.bx+bay.bw, bay.by+10],[bay.bx+bay.bw, bay.by+bay.bh-10]].forEach(([px,py])=>{
-  b.beginPath(); b.arc(px,py,4,0,Math.PI*2); b.fillStyle='#506878'; b.fill();
-  b.beginPath(); b.arc(px,py,2.5,0,Math.PI*2); b.fillStyle='#8098a8'; b.fill();
-});
-
-// Entrance marker line in water
-b.strokeStyle=col+'cc'; b.lineWidth=2.5; b.setLineDash([4,3]);
-b.beginPath();
-b.moveTo(bay.bx+bay.bw+2, bay.by+4);
-b.lineTo(bay.bx+bay.bw+2, bay.by+bay.bh-4);
-b.stroke(); b.setLineDash([]);
-
-// Glow at entrance in bg
-const eg=b.createLinearGradient(bay.ex,0,bay.ex+20,0);
-eg.addColorStop(0,col+'55'); eg.addColorStop(1,'transparent');
-b.fillStyle=eg;
-b.fillRect(bay.ex,bay.by,20,bay.bh);
-```
-
-});
-}
-
-// ── Animated water ─────────────────────────────────────
+// ═══════════ ANIMATED OVERLAYS ═══════════════════════════════════════
 function drawWaves(){
 const t=Date.now()*.0008;
 ctx.save();
@@ -516,132 +602,74 @@ ctx.stroke();
 ctx.restore();
 }
 
-// ── Harbour glows (animated) ───────────────────────────
 function drawHarbourGlows(){
 const t=Date.now()*.002;
 HARBOURS.forEach((h,hi)=>{
 h.bays.forEach((bay,bi)=>{
 const p=.55+.45*Math.sin(t+hi*1.4+bi*.7);
 const a16=Math.floor(p*160).toString(16).padStart(2,‘0’);
-const g=ctx.createRadialGradient(bay.ex,bay.ey,2,bay.ex,bay.ey,34);
-g.addColorStop(0,CHEX[h.color]+a16);
-g.addColorStop(1,‘rgba(0,0,0,0)’);
-ctx.fillStyle=g; ctx.beginPath(); ctx.arc(bay.ex,bay.ey,34,0,Math.PI*2); ctx.fill();
+const g=ctx.createRadialGradient(bay.entX,bay.entY,2,bay.entX,bay.entY,32);
+g.addColorStop(0,HEX[h.color]+a16); g.addColorStop(1,‘rgba(0,0,0,0)’);
+ctx.fillStyle=g; ctx.beginPath(); ctx.arc(bay.entX,bay.entY,32,0,Math.PI*2); ctx.fill();
 });
 });
 }
 
-// ── Spawn arrow ────────────────────────────────────────
 function drawSpawnArrow(){
-if(!gameRunning) return;
-const thr=Math.min(spawnInterval*.55,300);
-if(nextSpawnIn>thr) return;
-const sp=SPAWNS[pendingZone];
-const frac=nextSpawnIn/thr;
-const alpha=(1-frac)*.95;
+if(!running) return;
+const thr=Math.min(spawnI*.55,280);
+if(spawnT>thr) return;
+const sp=SPAWNS[pendZ];
+const frac=spawnT/thr, alpha=(1-frac)*.9;
 const bounce=Math.sin(Date.now()*.005)*5*(1-frac);
-let ax=Math.max(20,Math.min(W-20,sp.x));
-let ay=Math.max(20,Math.min(H-20,sp.y));
-ctx.save();
-ctx.globalAlpha=alpha;
-ctx.translate(ax,ay); ctx.rotate(Math.atan2(sp.dy,sp.dx)); ctx.translate(bounce,0);
+ctx.save(); ctx.globalAlpha=alpha;
+ctx.translate(Math.max(20,Math.min(W-20,sp.x)),Math.max(20,Math.min(H-20,sp.y)));
+ctx.rotate(Math.atan2(sp.dy,sp.dx)); ctx.translate(bounce,0);
 ctx.fillStyle=’#ffdd22’; ctx.strokeStyle=‘rgba(0,0,0,.5)’; ctx.lineWidth=1.5;
 ctx.beginPath();
 ctx.moveTo(18,0);ctx.lineTo(2,-11);ctx.lineTo(2,-5);
 ctx.lineTo(-14,-5);ctx.lineTo(-14,5);ctx.lineTo(2,5);ctx.lineTo(2,11);
 ctx.closePath(); ctx.fill(); ctx.stroke();
-ctx.beginPath(); ctx.arc(0,0,22,-Math.PI/2,-Math.PI/2+Math.PI*2*(1-frac));
+ctx.beginPath();
+ctx.arc(0,0,22,-Math.PI/2,-Math.PI/2+Math.PI*2*(1-frac));
 ctx.strokeStyle=‘rgba(255,220,0,.6)’; ctx.lineWidth=3; ctx.stroke();
 ctx.restore();
 }
 
-// ── Collision ──────────────────────────────────────────
-function checkCollisions(){
-for(let i=0;i<ships.length;i++) for(let j=i+1;j<ships.length;j++){
-const a=ships[i],b=ships[j];
-if(a.state===‘done’||b.state===‘done’) continue;
-if(a.state===‘unloading’||b.state===‘unloading’) continue;
-if(Math.hypot(a.x-b.x,a.y-b.y)<(a.HL+b.HL)*.27){
-spawnParticle((a.x+b.x)/2,(a.y+b.y)/2,’#ff3322’,28);
-flashT=28; triggerGameOver(); return;
+// ═══════════ DRAG PATH VALIDATION ════════════════════════════════════
+function validateDragPath(ship){
+const empty=(ship.cargo===0||ship.state===‘docked’);
+// Find if ship starts inside a bay (for exit path leniency)
+let startBay=null;
+if(empty){
+for(const h of HARBOURS)
+for(const b of h.bays)
+if(ship.x>=b.bx&&ship.x<=b.bx+b.bw&&ship.y>=b.by&&ship.y<=b.by+b.bh)
+startBay=b;
+}
+for(let i=1;i<dragPts.length;i++){
+const a=dragPts[i-1], bpt=dragPts[i];
+const steps=Math.ceil(Math.hypot(bpt.x-a.x,bpt.y-a.y)/8);
+for(let s=1;s<=steps;s++){
+const t=s/steps;
+const x=a.x+(bpt.x-a.x)*t, y=a.y+(bpt.y-a.y)*t;
+// Off-screen is ok for empty-ship exit paths
+if(x<-5||x>W+5||y<-5||y>H+5){ if(!empty) return false; continue; }
+// If ship started in a bay, the exit corridor (x <= entX+10) is always valid
+if(startBay&&x<=startBay.entX+10) continue;
+if(!inWater(x,y)) return false;
 }
 }
-}
-
-// Find bay at position (for route end detection)
-function getBayAt(x,y){
-for(const h of HARBOURS){
-for(const bay of h.bays){
-// Hit zone: near the entrance x
-if(Math.abs(x-bay.ex)<50 && y>=bay.by && y<=bay.by+bay.bh){
-return {bay, color:h.color, id:h.id};
-}
-}
-}
-return null;
-}
-
-// ── Game loop ──────────────────────────────────────────
-function gameLoop(){
-if(!gameRunning) return;
-nextSpawnIn–;
-if(nextSpawnIn<=0){
-spawnShip();
-spawnInterval=Math.max(140,320-level*14);
-nextSpawnIn=spawnInterval;
-pendingZone=Math.floor(Math.random()*SPAWNS.length);
-}
-const nl=Math.floor(score/15)+1;
-if(nl!==level){level=nl;updateUI();}
-
-ships.forEach(s=>s.update());
-ships=ships.filter(s=>s.state!==‘done’);
-checkCollisions();
-tickParticles();
-
-ctx.drawImage(bgCanvas,0,0);
-drawWaves();
-drawHarbourGlows();
-
-// Ship path previews
-ships.forEach(s=>{
-if(s.state===‘path’&&s.path.length>1&&s.pi<s.path.length){
-ctx.save();
-ctx.setLineDash([5,4]); ctx.lineDashOffset=-(Date.now()*.05%9);
-ctx.strokeStyle=CHEX[s.colorName]+‘88’; ctx.lineWidth=2;
-ctx.beginPath(); ctx.moveTo(s.x,s.y);
-for(let i=s.pi;i<s.path.length;i++) ctx.lineTo(s.path[i].x,s.path[i].y);
-ctx.stroke(); ctx.setLineDash([]); ctx.restore();
-}
-});
-
-// Live drag line
-if(dragShip&&dragPath.length>1){
-ctx.save();
-ctx.setLineDash([5,4]); ctx.lineDashOffset=-(Date.now()*.06%9);
-ctx.strokeStyle=CHEX[dragShip.colorName]; ctx.lineWidth=2.5; ctx.globalAlpha=.88;
-ctx.beginPath(); dragPath.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));
-ctx.stroke(); ctx.setLineDash([]); ctx.restore();
+return true;
 }
 
-drawParticles();
-ships.forEach(s=>s.draw());
-drawSpawnArrow();
-
-if(flashT>0){ctx.fillStyle=`rgba(255,30,30,${flashT/28*.44})`;ctx.fillRect(0,0,W,H);flashT–;}
-requestAnimationFrame(gameLoop);
-}
-
-// ══════════════════════════════════════════════════════
-// INPUT — ships NEVER freeze; path is committed on mouseup/touchend
-// ══════════════════════════════════════════════════════
-function getPos(e, te){
+// ═══════════ INPUT ════════════════════════════════════════════════════
+function getPos(e,te){
 const r=canvas.getBoundingClientRect();
 const sx=W/r.width, sy=H/r.height;
-const src=te ? e.changedTouches[0] : (e.touches ? e.touches[0] : e);
-return {x:(src.clientX-r.left)*sx, y:(src.clientY-r.top)*sy};
+const src=te?e.changedTouches[0]:(e.touches?e.touches[0]:e);
+return{x:(src.clientX-r.left)*sx, y:(src.clientY-r.top)*sy};
 }
-
 canvas.addEventListener(‘mousedown’, e=>{e.preventDefault();onDn(getPos(e,false));});
 canvas.addEventListener(‘mousemove’, e=>{e.preventDefault();onMv(getPos(e,false));});
 canvas.addEventListener(‘mouseup’,   e=>{e.preventDefault();onUp(getPos(e,false));});
@@ -650,82 +678,143 @@ canvas.addEventListener(‘touchmove’, e=>{e.preventDefault();onMv(getPos(e,fa
 canvas.addEventListener(‘touchend’,  e=>{e.preventDefault();onUp(getPos(e,true)); },{passive:false});
 
 function onDn(pos){
-if(!gameRunning) return;
-dragShip=null; dragPath=[];
-for(let i=ships.length-1;i>=0;i–){
+if(!running) return;
+dragShip=null; dragPts=[]; dragOk=true;
+for(let i=ships.length-1;i>=0;i--){
 const s=ships[i];
-if(s.state===‘done’||s.state===‘unloading’) continue;
-// Allow picking up docked ships too
-if(Math.hypot(pos.x-s.x,pos.y-s.y)<s.HL/2+14){
-dragShip=s;
-dragPath=[{x:s.x,y:s.y}];
-break;
+// Only skip ships that can’t be redirected
+if(s.state===‘done’||s.state===‘docking’) continue;
+if(Math.hypot(pos.x-s.x,pos.y-s.y)<s.HL/2+18){
+dragShip=s; dragPts=[{x:s.x,y:s.y}]; break;
 }
 }
 }
-
 function onMv(pos){
 if(!dragShip) return;
-// Only update start point if ship is moving (not docked)
-if(dragShip.state!==‘docked’) dragPath[0]={x:dragShip.x, y:dragShip.y};
-const last=dragPath[dragPath.length-1];
-if(Math.hypot(pos.x-last.x,pos.y-last.y)>6)
-dragPath.push({x:pos.x,y:pos.y});
+// Stationary ships (docked/unloading): keep start point fixed at ship pos
+// Moving ships: update start to live position
+const stationary=dragShip.state===‘docked’||dragShip.state===‘unloading’;
+if(!stationary) dragPts[0]={x:dragShip.x,y:dragShip.y};
+const last=dragPts[dragPts.length-1];
+if(Math.hypot(pos.x-last.x,pos.y-last.y)>6) dragPts.push({x:pos.x,y:pos.y});
+dragOk=validateDragPath(dragShip);
 }
-
 function onUp(pos){
 if(!dragShip) return;
 const ship=dragShip; dragShip=null;
-if(dragPath.length<3){dragPath=[];return;}
-
-// Update start point one last time to ship’s actual position
-const path=[{x:ship.x,y:ship.y},…dragPath.slice(1)];
-
-const lastPt=path[path.length-1];
-const hit=getBayAt(lastPt.x,lastPt.y);
-
-if(ship.state===‘docked’){
-// Docked ship: give it an exit path — it can leave now (containers=0)
-ship.path=path; ship.pi=0; ship.dockBay=null; ship.state=‘path’;
-} else if(hit&&hit.color===ship.colorName&&ship.containers>0){
-// Navigate into bay
-const dest={x:hit.bay.bx+hit.bay.bw*0.5, y:hit.bay.by+hit.bay.bh/2};
-ship.path=[…path,{x:hit.bay.ex,y:hit.bay.ey},{x:dest.x,y:dest.y}];
-ship.pi=0; ship.dockBay=hit.bay; ship.state=‘path’;
-} else {
-ship.path=path; ship.pi=0; ship.dockBay=null; ship.state=‘path’;
-}
-dragPath=[];
+const minPts=(ship.state===‘docked’||ship.state===‘unloading’)?2:3;
+if(dragPts.length<minPts||!dragOk){dragPts=[];dragOk=true;return;}
+// Always start from ship’s actual current position
+const path=[{x:ship.x,y:ship.y}, ...dragPts.slice(1)];
+// If currently unloading, interrupt and start moving
+if(ship.state===‘unloading’) ship.unloadT=0;
+ship.path=path; ship.pi=0; ship.state=‘path’;
+dragPts=[]; dragOk=true;
 }
 
-// ── Spawn / UI ─────────────────────────────────────────
-function spawnShip(){
+// ═══════════ GAME LOOP ════════════════════════════════════════════════
+function gameLoop(){
+if(!running) return;
+
+spawnT–;
+if(spawnT<=0){
+doSpawn();
+spawnI=Math.max(140,300-level*13);
+spawnT=spawnI;
+// Pick a different spawn zone than last time
+let nz=Math.floor(Math.random()*SPAWNS.length);
+if(SPAWNS.length>1){while(nz===lastSpawnZ)nz=Math.floor(Math.random()*SPAWNS.length);}
+pendZ=nz;
+}
+
+const nl=Math.floor(score/15)+1;
+if(nl!==level){level=nl;updUI();}
+
+ships.forEach(s=>s.update());
+ships=ships.filter(s=>s.state!==‘done’);
+
+// Wake trails for moving ships
+ships.forEach(s=>{
+if(s.state===‘auto’||s.state===‘path’||s.state===‘docking’){
+s.wakeT++;
+if(s.wakeT>=5){s.wakeT=0;wakes.push({x:s.x,y:s.y,life:1,r:2+Math.random()*2});}
+}
+});
+
+updateCollisionWarnings();
+tickParts();
+
+// ── DRAW ──────────────────────────────────────────────
+ctx.drawImage(bg,0,0);
+drawWaves();
+drawHarbourGlows();
+
+// Ship path lines
+ships.forEach(s=>{
+if(s.state===‘path’&&s.path.length>1&&s.pi<s.path.length){
+ctx.save();
+ctx.setLineDash([5,4]); ctx.lineDashOffset=-(Date.now()*.05%9);
+ctx.strokeStyle=HEX[s.color]+‘77’; ctx.lineWidth=2;
+ctx.beginPath(); ctx.moveTo(s.x,s.y);
+for(let i=s.pi;i<s.path.length;i++) ctx.lineTo(s.path[i].x,s.path[i].y);
+ctx.stroke(); ctx.setLineDash([]); ctx.restore();
+}
+});
+
+// Live drag line
+if(dragShip&&dragPts.length>1){
+ctx.save();
+ctx.setLineDash([5,4]); ctx.lineDashOffset=-(Date.now()*.06%9);
+ctx.strokeStyle=dragOk?HEX[dragShip.color]:’#ff3333’;
+ctx.lineWidth=2.5; ctx.globalAlpha=.88;
+ctx.beginPath(); dragPts.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));
+ctx.stroke(); ctx.setLineDash([]); ctx.restore();
+}
+
+drawParts();
+ships.forEach(s=>s.draw());
+drawSpawnArrow();
+
+if(flashT>0){
+ctx.fillStyle=`rgba(255,30,30,${flashT/30*.45})`;
+ctx.fillRect(0,0,W,H); flashT–;
+}
+requestAnimationFrame(gameLoop);
+}
+
+// ═══════════ SPAWN / UI ═══════════════════════════════════════════════
+let lastSpawnZ=-1;
+function doSpawn(){
 if(ships.filter(s=>s.state!==‘done’).length>=5+level) return;
-ships.push(new Ship(pendingZone));
+ships.push(new Ship(pendZ));
+lastSpawnZ=pendZ;
 }
-function updateUI(){document.getElementById(‘sv’).textContent=score;document.getElementById(‘lv’).textContent=level;}
+function updUI(){
+document.getElementById(‘sv’).textContent=score;
+document.getElementById(‘lv’).textContent=level;
+}
 function triggerGameOver(){
-gameRunning=false;
+running=false;
 setTimeout(()=>{
-const ov=document.getElementById(‘overlay’);
-ov.innerHTML=`<div class="obox"><h2>KOLLISION!</h2><p>Level ${level} erreicht.</p><div class="fin">${score} Cargo</div><button class="btn" onclick="startGame()">Nochmal</button></div>`;
-ov.classList.add(‘active’);
+const ov=document.getElementById(‘ov’);
+ov.innerHTML=`<div class="ob"><h2>KOLLISION!</h2><p>Level ${level} erreicht.</p>`+
+`<div class="fin">${score} Cargo</div><button class="btn" onclick="startGame()">Nochmal</button></div>`;
+ov.classList.add(‘on’);
 },700);
 }
 function startGame(){
-ships=[];particles=[];wakes=[];
-score=0;level=1;flashT=0;dragShip=null;dragPath=[];
-spawnInterval=320;nextSpawnIn=100;
-pendingZone=Math.floor(Math.random()*SPAWNS.length);
-updateUI();
-const ov=document.getElementById(‘overlay’);ov.innerHTML=’’;ov.classList.remove(‘active’);
-gameRunning=true; spawnShip();
+ships=[];parts=[];wakes=[];
+score=0;level=1;flashT=0;dragShip=null;dragPts=[];dragOk=true;
+spawnI=300;spawnT=80;lastSpawnZ=-1;pendZ=Math.floor(Math.random()*SPAWNS.length);
+updUI();
+const ov=document.getElementById(‘ov’);ov.innerHTML=’’;ov.classList.remove(‘on’);
+running=true; doSpawn();
 requestAnimationFrame(gameLoop);
 }
 
 // Init
 buildBg();
-ctx.drawImage(bgCanvas,0,0);
+ctx.drawImage(bg,0,0);
 </script>
 
 </body>
