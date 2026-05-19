@@ -52,6 +52,7 @@ html, body { width: 960px; height: 620px; overflow: hidden; background: #111; }
 </head>
 <body>
 <div id="wrapper">
+
   <div id="sidebar">
     <div class="s-title">Status</div>
     <div class="hp-bar-wrap">
@@ -63,41 +64,36 @@ html, body { width: 960px; height: 620px; overflow: hidden; background: #111; }
     <div class="stat-row"><span class="stat-label">Welle</span><span class="stat-val" id="waveText">—</span></div>
     <div class="divider"></div>
     <div class="s-title">Türme bauen</div>
-<button class="tbtn archer" id="btnArcher">
-  <div class="tbtn-text">
-    <span class="btn-name">Bogenschützenturm</span>
-    <span class="btn-cost">60 💰</span>
-    <span class="btn-desc">Schaden: 3</span>
-    <span class="btn-desc">Reichweite: 150</span>
-    <span class="btn-desc">Tempo: 1.25/s</span>
-  </div>
-  <canvas id="previewArcher" width="44" height="44"></canvas>
-</button>
-<button class="tbtn cannon" id="btnCannon">
-  <div class="tbtn-text">
-    <span class="btn-name">Kanonenturm</span>
-    <span class="btn-cost">100 💰</span>
-    <span class="btn-desc">Schaden: 5</span>
-    <span class="btn-desc">Reichweite: 120</span>
-    <span class="btn-desc">Tempo: 0.6/s</span>
-  </div>
-  <canvas id="previewCannon" width="44" height="44"></canvas>
-</button>
-<button class="tbtn mage" id="btnMage">
-  <div class="tbtn-text">
-    <span class="btn-name">Magierturm</span>
-    <span class="btn-cost">120 💰</span>
-    <span class="btn-desc">Schaden: 4 (Fläche)</span>
-    <span class="btn-desc">Reichweite: 100</span>
-    <span class="btn-desc">Tempo: 0.6/s</span>
-  </div>
-  <canvas id="previewMage" width="44" height="44"></canvas>
-</button>
-
-    <div class="divider"></div>
-    <button class="wave-btn" id="waveBtn">Welle 1 starten</button>
-    <div class="divider"></div>
-    <div class="s-title" style="font-size:9px;line-height:1.5;">Klick auf Turm → Info rechts<br>Klick auf Baum/Busch → Entfernen</div>
+    <button class="tbtn archer" id="btnArcher">
+      <div class="tbtn-text">
+        <span class="btn-name">Bogenschützenturm</span>
+        <span class="btn-cost">60 💰</span>
+        <span class="btn-desc">Schaden: 3</span>
+        <span class="btn-desc">Reichweite: 150</span>
+        <span class="btn-desc">Tempo: 1.25/s</span>
+      </div>
+      <canvas id="previewArcher" width="44" height="44"></canvas>
+    </button>
+    <button class="tbtn cannon" id="btnCannon">
+      <div class="tbtn-text">
+        <span class="btn-name">Kanonenturm</span>
+        <span class="btn-cost">100 💰</span>
+        <span class="btn-desc">Schaden: 5</span>
+        <span class="btn-desc">Reichweite: 120</span>
+        <span class="btn-desc">Tempo: 0.6/s</span>
+      </div>
+      <canvas id="previewCannon" width="44" height="44"></canvas>
+    </button>
+    <button class="tbtn mage" id="btnMage">
+      <div class="tbtn-text">
+        <span class="btn-name">Magierturm</span>
+        <span class="btn-cost">120 💰</span>
+        <span class="btn-desc">Schaden: 4 (Fläche)</span>
+        <span class="btn-desc">Reichweite: 100</span>
+        <span class="btn-desc">Tempo: 0.6/s</span>
+      </div>
+      <canvas id="previewMage" width="44" height="44"></canvas>
+    </button>
   </div>
 
   <div id="gamearea">
@@ -105,6 +101,8 @@ html, body { width: 960px; height: 620px; overflow: hidden; background: #111; }
   </div>
 
   <div id="rightpanel">
+    <button class="wave-btn" id="waveBtn">Welle 1 starten</button>
+    <div class="divider"></div>
     <div class="s-title">Turm Info</div>
     <div id="upgPanel">
       <button class="close-btn" id="upgClose">✕</button>
@@ -114,8 +112,8 @@ html, body { width: 960px; height: 620px; overflow: hidden; background: #111; }
     </div>
     <div class="no-tower" id="noTowerMsg">Klicke einen Turm an um Details zu sehen.</div>
   </div>
-</div>
 
+</div>
 <script>
 const canvas=document.getElementById('game');
 const ctx=canvas.getContext('2d');
@@ -130,20 +128,18 @@ const TOWER_DEFS={
   cannon:{cost:100,range:120,cooldown:96,dmg:5,color:'#a05a28',label:'Kanonenturm'},
   mage:{cost:120,range:100,cooldown:96,dmg:4,color:'#8a28c0',label:'Magierturm',splash:55}
 };
-
-// newCd = new cooldown (frames at 60fps)
 const UPGRADE_DEFS={
   archer:[
-    {cost:50, newDmg:5, newRange:175, newCd:40, label:'Schaden: 3 → 5<br>Reichweite: 150 → 175<br>Tempo: 1.25 → 1.5/s'},
-    {cost:70, newDmg:7, newRange:200, newCd:30, label:'Schaden: 5 → 7<br>Reichweite: 175 → 200<br>Tempo: 1.5 → 2.0/s'}
+    {cost:50,newDmg:5,newRange:175,newCd:40,label:'Schaden: 3 → 5<br>Reichweite: 150 → 175<br>Tempo: 1.25 → 1.5/s'},
+    {cost:70,newDmg:7,newRange:200,newCd:30,label:'Schaden: 5 → 7<br>Reichweite: 175 → 200<br>Tempo: 1.5 → 2.0/s'}
   ],
   cannon:[
-    {cost:70, newDmg:7, newRange:150, newCd:80, label:'Schaden: 5 → 7<br>Reichweite: 120 → 150<br>Tempo: 0.6 → 0.75/s'},
-    {cost:100,newDmg:10,newRange:175, newCd:60, label:'Schaden: 7 → 10<br>Reichweite: 150 → 175<br>Tempo: 0.75 → 1.0/s'}
+    {cost:70,newDmg:7,newRange:150,newCd:80,label:'Schaden: 5 → 7<br>Reichweite: 120 → 150<br>Tempo: 0.6 → 0.75/s'},
+    {cost:100,newDmg:10,newRange:175,newCd:60,label:'Schaden: 7 → 10<br>Reichweite: 150 → 175<br>Tempo: 0.75 → 1.0/s'}
   ],
   mage:[
-    {cost:80, newDmg:6, newRange:130, newCd:80, label:'Schaden: 4 → 6<br>Reichweite: 100 → 130<br>Tempo: 0.6 → 0.75/s'},
-    {cost:120,newDmg:8, newRange:160, newCd:60, label:'Schaden: 6 → 8<br>Reichweite: 130 → 160<br>Tempo: 0.75 → 1.0/s'}
+    {cost:80,newDmg:6,newRange:130,newCd:80,label:'Schaden: 4 → 6<br>Reichweite: 100 → 130<br>Tempo: 0.6 → 0.75/s'},
+    {cost:120,newDmg:8,newRange:160,newCd:60,label:'Schaden: 6 → 8<br>Reichweite: 130 → 160<br>Tempo: 0.75 → 1.0/s'}
   ]
 };
 
@@ -456,46 +452,105 @@ function drawCastle(px,py){
   ctx.fillStyle='#922b21';ctx.beginPath();ctx.moveTo(px+18,py+6);ctx.lineTo(px+21,py+10);ctx.lineTo(px+15,py+10);ctx.closePath();ctx.fill();
 }
 function drawTowerArcher(px,py,lvl){
-  const upg=lvl>1;
-  ctx.fillStyle=lvl===3?'#1a4a2a':upg?'#2a6a4a':'#6d4c41';ctx.fillRect(px+11,py+20,18,18);
-  ctx.fillStyle=lvl===3?'#0e3a1e':upg?'#1a5a3a':'#5d4037';ctx.fillRect(px+9,py+12,22,12);
-  ctx.fillStyle=lvl===3?'#0a2a14':upg?'#1a4a2a':'#4e342e';
+  const baseCol=lvl===3?'#5a5a5a':lvl===2?'#7a7a7a':'#6d4c41';
+  const wallCol=lvl===3?'#4a4a4a':lvl===2?'#6a6a6a':'#5d4037';
+  const merlCol=lvl===3?'#3a3a3a':lvl===2?'#585858':'#4e342e';
+  const merlDark=lvl===3?'#2a2a2a':lvl===2?'#484848':'#3e2723';
+  const baseBot=lvl===3?'#4a4a4a':lvl===2?'#666666':'#795548';
+  ctx.fillStyle=baseCol;ctx.fillRect(px+11,py+20,18,18);
+  ctx.fillStyle=wallCol;ctx.fillRect(px+9,py+12,22,12);
+  ctx.fillStyle=merlCol;
   ctx.fillRect(px+9,py+7,6,9);ctx.fillRect(px+17,py+7,6,9);ctx.fillRect(px+25,py+7,6,9);
-  ctx.fillStyle=lvl===3?'#061a0a':upg?'#0e3a1e':'#3e2723';
+  ctx.fillStyle=merlDark;
   ctx.fillRect(px+11,py+7,4,6);ctx.fillRect(px+19,py+7,4,6);ctx.fillRect(px+27,py+7,4,6);
-  ctx.fillStyle=lvl===3?'#1a6a2a':upg?'#2a8a4a':'#795548';ctx.fillRect(px+9,py+35,22,4);
-  if(upg){ctx.fillStyle=lvl===3?'rgba(50,255,80,0.25)':'rgba(50,255,100,0.15)';ctx.fillRect(px+9,py+7,22,32);}
+  ctx.fillStyle=baseBot;ctx.fillRect(px+9,py+35,22,4);
+  if(lvl>=2){
+    ctx.strokeStyle='rgba(0,0,0,0.25)';ctx.lineWidth=0.5;
+    ctx.beginPath();ctx.moveTo(px+9,py+24);ctx.lineTo(px+29,py+24);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(px+9,py+30);ctx.lineTo(px+29,py+30);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(px+16,py+20);ctx.lineTo(px+16,py+38);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(px+23,py+20);ctx.lineTo(px+23,py+38);ctx.stroke();
+  }
+  if(lvl===3){
+    ctx.fillStyle='rgba(60,120,60,0.4)';
+    ctx.fillRect(px+9,py+7,6,3);ctx.fillRect(px+17,py+7,4,2);ctx.fillRect(px+25,py+7,6,3);
+    ctx.fillRect(px+9,py+12,4,3);ctx.fillRect(px+24,py+12,4,3);
+  }
   const cx=px+20,cy=py+11;
   ctx.fillStyle='#d4a96e';ctx.beginPath();ctx.arc(cx,cy-5,3.5,0,Math.PI*2);ctx.fill();
-  ctx.fillStyle=lvl===3?'#0a4a1e':upg?'#1a6a3a':'#4a4a4a';ctx.beginPath();ctx.arc(cx,cy-8,4,Math.PI,0);ctx.fill();
-  ctx.fillStyle=lvl===3?'#1a6a3a':upg?'#2a8a5a':'#546e7a';ctx.fillRect(cx-3.5,cy-2,7,6);
+  ctx.fillStyle=lvl===3?'#2a2a2a':lvl===2?'#484848':'#4a4a4a';ctx.beginPath();ctx.arc(cx,cy-8,4,Math.PI,0);ctx.fill();
+  ctx.fillStyle=lvl===3?'#555':lvl===2?'#666':'#546e7a';ctx.fillRect(cx-3.5,cy-2,7,6);
   ctx.strokeStyle='#5d4037';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(cx-7,cy-3);ctx.lineTo(cx-7,cy+4);ctx.stroke();
-  ctx.strokeStyle=lvl===3?'#88ffaa':upg?'#aaffcc':'#e8d5b0';ctx.lineWidth=0.8;ctx.beginPath();ctx.moveTo(cx-7,cy-3);ctx.quadraticCurveTo(cx-1,cy+1,cx-7,cy+4);ctx.stroke();
-  if(lvl===3){ctx.fillStyle='rgba(100,255,120,0.5)';ctx.beginPath();ctx.arc(cx,cy-5,6,0,Math.PI*2);ctx.fill();}
+  ctx.strokeStyle=lvl===3?'#ddd':lvl===2?'#ccc':'#e8d5b0';ctx.lineWidth=0.8;
+  ctx.beginPath();ctx.moveTo(cx-7,cy-3);ctx.quadraticCurveTo(cx-1,cy+1,cx-7,cy+4);ctx.stroke();
 }
 function drawTowerCannon(px,py,lvl){
-  const upg=lvl>1;
-  ctx.fillStyle=lvl===3?'#7a2800':upg?'#5a3a1a':'#5a4a3a';ctx.fillRect(px+8,py+18,24,20);
-  ctx.fillStyle=lvl===3?'#aa4a10':upg?'#8a5a28':'#7a6a58';ctx.fillRect(px+6,py+10,28,12);
-  ctx.fillStyle=lvl===3?'#8a2a00':upg?'#6a3a10':'#6a5a48';ctx.fillRect(px+6,py+4,8,10);ctx.fillRect(px+18,py+4,8,10);
-  ctx.fillStyle=lvl===3?'#6a1800':upg?'#4a2800':'#5a4a38';ctx.fillRect(px+8,py+4,4,7);ctx.fillRect(px+20,py+4,4,7);
-  ctx.fillStyle=lvl===3?'#ff8020':upg?'#c87020':'#888';ctx.fillRect(px+16,py+14,8,5);
-  ctx.fillStyle=lvl===3?'#ffaa40':upg?'#e08030':'#aaa';ctx.fillRect(px+23,py+15,6,3);
-  ctx.fillStyle='#333';ctx.beginPath();ctx.arc(px+13,py+30,3,0,Math.PI*2);ctx.fill();
-  ctx.beginPath();ctx.arc(px+19,py+30,3,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(px+16,py+26,3,0,Math.PI*2);ctx.fill();
-  if(upg){ctx.fillStyle=lvl===3?'rgba(255,100,0,0.25)':'rgba(255,140,0,0.15)';ctx.fillRect(px+6,py+4,28,34);}
-  if(lvl===3){ctx.strokeStyle='rgba(255,120,0,0.6)';ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(px+20,py+22,14,0,Math.PI*2);ctx.stroke();}
+  const bodyCol=lvl===3?'#2a2a2a':lvl===2?'#3a3a3a':'#5a4a3a';
+  const wallCol=lvl===3?'#1a1a1a':lvl===2?'#2a2a2a':'#7a6a58';
+  const merlCol=lvl===3?'#222222':lvl===2?'#333333':'#6a5a48';
+  const merlDrk=lvl===3?'#111111':lvl===2?'#222222':'#5a4a38';
+  const barrelC=lvl===3?'#c8a020':lvl===2?'#888888':'#888888';
+  const barrelT=lvl===3?'#e0c040':lvl===2?'#aaaaaa':'#aaaaaa';
+  ctx.fillStyle=bodyCol;ctx.fillRect(px+8,py+18,24,20);
+  ctx.fillStyle=wallCol;ctx.fillRect(px+6,py+10,28,12);
+  ctx.fillStyle=merlCol;ctx.fillRect(px+6,py+4,8,10);ctx.fillRect(px+18,py+4,8,10);
+  ctx.fillStyle=merlDrk;ctx.fillRect(px+8,py+4,4,7);ctx.fillRect(px+20,py+4,4,7);
+  ctx.fillStyle=barrelC;ctx.fillRect(px+16,py+14,8,5);
+  ctx.fillStyle=barrelT;ctx.fillRect(px+23,py+15,6,3);
+  ctx.fillStyle=lvl===3?'#c8a020':lvl===2?'#555':'#333';
+  ctx.beginPath();ctx.arc(px+13,py+30,3,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.arc(px+19,py+30,3,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.arc(px+16,py+26,3,0,Math.PI*2);ctx.fill();
+  if(lvl>=2){
+    ctx.fillStyle=lvl===3?'#c8a020':'#aaa';
+    [[px+8,py+11],[px+27,py+11],[px+8,py+20],[px+27,py+20],[px+8,py+30],[px+27,py+30]].forEach(([rx,ry])=>{
+      ctx.beginPath();ctx.arc(rx,ry,1.5,0,Math.PI*2);ctx.fill();
+    });
+  }
+  if(lvl===3){
+    ctx.strokeStyle='#c8a020';ctx.lineWidth=1.5;
+    ctx.strokeRect(px+8,py+18,24,20);
+    ctx.strokeRect(px+6,py+10,28,12);
+    ctx.beginPath();ctx.moveTo(px+6,py+22);ctx.lineTo(px+32,py+22);ctx.stroke();
+  }
 }
 function drawTowerMage(px,py,lvl){
-  const upg=lvl>1;
-  ctx.fillStyle=lvl===3?'#1a0040':upg?'#3a1060':'#2a1a4a';ctx.fillRect(px+13,py+14,14,24);
-  ctx.fillStyle=lvl===3?'#2a0060':upg?'#4a1a80':'#3a2a5a';ctx.fillRect(px+9,py+30,22,10);
-  ctx.fillStyle=lvl===3?'#8a00cc':upg?'#6a2aaa':'#4a3a7a';ctx.beginPath();ctx.moveTo(px+20,py+2);ctx.lineTo(px+28,py+14);ctx.lineTo(px+12,py+14);ctx.closePath();ctx.fill();
-  ctx.fillStyle=lvl===3?'#ffaaff':upg?'#ffddff':'#8888ff';ctx.beginPath();ctx.arc(px+20,py+20,3,0,Math.PI*2);ctx.fill();
-  ctx.fillStyle=lvl===3?'#ff88ff':upg?'#ffaaff':'#aaaaff';
-  const ns=lvl===3?6:upg?5:3;
-  for(let i=0;i<ns;i++){const a=(i/ns)*Math.PI*2,r=lvl===3?10:upg?9:7;ctx.beginPath();ctx.arc(px+20+Math.cos(a)*r,py+22+Math.sin(a)*r,1.5,0,Math.PI*2);ctx.fill();}
-  if(upg){ctx.strokeStyle=lvl===3?'rgba(255,100,255,0.6)':'rgba(200,100,255,0.4)';ctx.lineWidth=lvl===3?2:1;ctx.beginPath();ctx.arc(px+20,py+22,lvl===3?13:11,0,Math.PI*2);ctx.stroke();}
+  const towerCol=lvl===3?'#0a0015':lvl===2?'#2a0a4a':'#2a1a4a';
+  const baseCol=lvl===3?'#150025':lvl===2?'#3a1060':'#3a2a5a';
+  const roofCol=lvl===3?'#4a0080':lvl===2?'#6a2aaa':'#4a3a7a';
+  const orbCol=lvl===3?'#ff44ff':lvl===2?'#ffddff':'#8888ff';
+  const starCol=lvl===3?'#ff88ff':lvl===2?'#cc88ff':'#aaaaff';
+  ctx.fillStyle=towerCol;ctx.fillRect(px+13,py+14,14,24);
+  ctx.fillStyle=baseCol;ctx.fillRect(px+9,py+30,22,10);
+  ctx.fillStyle=roofCol;ctx.beginPath();ctx.moveTo(px+20,py+2);ctx.lineTo(px+28,py+14);ctx.lineTo(px+12,py+14);ctx.closePath();ctx.fill();
+  if(lvl>=2){
+    ctx.fillStyle=lvl===3?'#ff44ff':'#cc88ff';
+    ctx.fillRect(px+16,py+17,4,5);ctx.fillRect(px+16,py+26,4,5);
+    ctx.fillStyle='rgba(255,255,255,0.15)';
+    ctx.fillRect(px+16,py+17,2,2);ctx.fillRect(px+16,py+26,2,2);
+  }
+  ctx.fillStyle=orbCol;ctx.beginPath();ctx.arc(px+20,py+20,lvl===3?4:3,0,Math.PI*2);ctx.fill();
+  if(lvl===3){ctx.fillStyle='rgba(255,100,255,0.4)';ctx.beginPath();ctx.arc(px+20,py+20,7,0,Math.PI*2);ctx.fill();}
+  ctx.fillStyle=starCol;
+  const ns=lvl===3?8:lvl===2?5:3;
+  const sr=lvl===3?11:lvl===2?9:7;
+  for(let i=0;i<ns;i++){
+    const a=(i/ns)*Math.PI*2;
+    ctx.beginPath();ctx.arc(px+20+Math.cos(a)*sr,py+22+Math.sin(a)*sr,lvl===3?2:1.5,0,Math.PI*2);ctx.fill();
+  }
+  if(lvl>=2){
+    ctx.strokeStyle=lvl===3?'rgba(255,80,255,0.8)':'rgba(180,80,255,0.5)';
+    ctx.lineWidth=lvl===3?2:1;
+    ctx.beginPath();ctx.arc(px+20,py+22,lvl===3?14:11,0,Math.PI*2);ctx.stroke();
+  }
+  if(lvl===3){
+    ctx.strokeStyle='rgba(255,150,255,0.3)';ctx.lineWidth=1;
+    ctx.beginPath();ctx.arc(px+20,py+22,18,0,Math.PI*2);ctx.stroke();
+    ctx.strokeStyle='rgba(255,80,255,0.3)';ctx.lineWidth=0.5;
+    ctx.beginPath();ctx.moveTo(px+13,py+16);ctx.lineTo(px+27,py+16);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(px+13,py+22);ctx.lineTo(px+27,py+22);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(px+13,py+28);ctx.lineTo(px+27,py+28);ctx.stroke();
+  }
 }
 function drawTower(tw){
   const px=tw.x*GS,py=tw.y*GS;
