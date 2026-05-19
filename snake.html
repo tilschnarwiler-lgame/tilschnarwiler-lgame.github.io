@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="de">
 <head>
 <meta charset="UTF-8">
@@ -33,170 +32,173 @@ body{
 .screen.active{display:flex;}
 
 /* ══════════════════════════════════════
-HOME SCREEN
+   HOME SCREEN
 ══════════════════════════════════════ */
 #homeBgCanvas {
-position:absolute; inset:0;
-width:100%; height:100%;
-pointer-events:none;
+  position:absolute; inset:0;
+  width:100%; height:100%;
+  pointer-events:none;
 }
 
 /* centre glow blob */
 #homeScreen::before {
-content:’’;
-position:absolute;
-width:480px; height:480px;
-border-radius:50%;
-background: radial-gradient(circle, rgba(74,222,128,0.09) 0%, transparent 68%);
-pointer-events:none;
-z-index:0;
+  content:'';
+  position:absolute;
+  width:480px; height:480px;
+  border-radius:50%;
+  background: radial-gradient(circle, rgba(74,222,128,0.09) 0%, transparent 68%);
+  pointer-events:none;
+  z-index:0;
 }
 
 .home-ui {
-position:relative; z-index:1;
-display:flex; flex-direction:column;
-align-items:center; gap:28px;
-animation: fadeUp .5s ease both;
+  position:relative; z-index:1;
+  display:flex; flex-direction:column;
+  align-items:center; gap:28px;
+  animation: fadeUp .5s ease both;
 }
 
 @keyframes fadeUp {
-from { opacity:0; transform:translateY(14px); }
-to   { opacity:1; transform:translateY(0); }
+  from { opacity:0; transform:translateY(14px); }
+  to   { opacity:1; transform:translateY(0); }
 }
 
 /* glass card */
 .home-card {
-background: rgba(16,16,16,0.72);
-border: 1px solid rgba(255,255,255,0.09);
-border-radius: 22px;
-padding: 36px 36px 32px;
-width: 260px;
-display: flex;
-flex-direction: column;
-align-items: center;
-gap: 24px;
-backdrop-filter: blur(18px);
--webkit-backdrop-filter: blur(18px);
-box-shadow:
-0 0 0 1px rgba(255,255,255,0.04) inset,
-0 20px 50px rgba(0,0,0,0.55),
-0 0 60px rgba(74,222,128,0.05);
+  background: rgba(16,16,16,0.72);
+  border: 1px solid rgba(255,255,255,0.09);
+  border-radius: 22px;
+  padding: 36px 36px 32px;
+  width: 260px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,0.04) inset,
+    0 20px 50px rgba(0,0,0,0.55),
+    0 0 60px rgba(74,222,128,0.05);
 }
 
 .home-hs-row {
-display:flex; align-items:center; justify-content:space-between;
-width:100%; padding:0 2px;
+  display:flex; align-items:center; justify-content:space-between;
+  width:100%; padding:0 2px;
 }
 .home-hs-label {
-font-size:11px; font-weight:500;
-letter-spacing:.1em; text-transform:uppercase;
-color:var(–text-muted);
+  font-size:11px; font-weight:500;
+  letter-spacing:.1em; text-transform:uppercase;
+  color:var(--text-muted);
 }
 .home-hs-val {
-font-family:‘DM Mono’,monospace;
-font-size:16px; font-weight:500;
-color:var(–accent);
-text-shadow: 0 0 12px rgba(74,222,128,0.4);
+  font-family:'DM Mono',monospace;
+  font-size:16px; font-weight:500;
+  color:var(--accent);
+  text-shadow: 0 0 12px rgba(74,222,128,0.4);
 }
 
 .home-buttons {
-display:flex; flex-direction:column;
-gap:9px; width:100%;
+  display:flex; flex-direction:column;
+  gap:9px; width:100%;
 }
 
 /* ─── BUTTONS — both solid green ─── */
 .btn-main {
-width:100%; padding:13px;
-background:#4ade80; color:#080808;
-border:none; border-radius:11px;
-font-family:‘DM Sans’,sans-serif;
-font-size:15px; font-weight:600;
-cursor:pointer; letter-spacing:0.01em;
-transition:opacity .15s, transform .12s, box-shadow .15s;
-box-shadow: 0 4px 18px rgba(74,222,128,0.30);
+  width:100%; padding:13px;
+  background:#4ade80; color:#080808;
+  border:none; border-radius:11px;
+  font-family:'DM Sans',sans-serif;
+  font-size:15px; font-weight:600;
+  cursor:pointer; letter-spacing:0.01em;
+  transition:opacity .15s, transform .12s, box-shadow .15s;
+  box-shadow: 0 4px 18px rgba(74,222,128,0.30);
 }
 .btn-main:hover{opacity:.88;transform:translateY(-1px);box-shadow:0 6px 26px rgba(74,222,128,0.45);}
 .btn-main:active{transform:scale(.97);opacity:.8;}
 
 .btn-outline {
-width:100%; padding:12px;
-background:#4ade80; color:#080808;
-border:none; border-radius:11px;
-font-family:‘DM Sans’,sans-serif;
-font-size:15px; font-weight:600;
-cursor:pointer; letter-spacing:0.01em;
-opacity:0.72;
-transition:opacity .15s, transform .12s, box-shadow .15s;
-box-shadow: 0 4px 18px rgba(74,222,128,0.18);
+  width:100%; padding:12px;
+  background:#4ade80; color:#080808;
+  border:none; border-radius:11px;
+  font-family:'DM Sans',sans-serif;
+  font-size:15px; font-weight:600;
+  cursor:pointer; letter-spacing:0.01em;
+  opacity:0.72;
+  transition:opacity .15s, transform .12s, box-shadow .15s;
+  box-shadow: 0 4px 18px rgba(74,222,128,0.18);
 }
 .btn-outline:hover{opacity:.88;transform:translateY(-1px);box-shadow:0 6px 26px rgba(74,222,128,0.38);}
 .btn-outline:active{transform:scale(.97);opacity:.8;}
 
 /* ══════════════════════════════════════
-SKIN SCREEN
+   SKIN SCREEN
 ══════════════════════════════════════ */
 #skinScreen{gap:22px;}
-.section-label{font-size:11px;font-weight:500;letter-spacing:.14em;color:var(–text-muted);text-transform:uppercase;}
+.section-label{font-size:11px;font-weight:500;letter-spacing:.14em;color:var(--text-muted);text-transform:uppercase;}
 .skin-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;max-width:570px;}
 .skin-card{
-background:var(–surface);border:1px solid var(–border);border-radius:12px;
-padding:11px 8px 9px;cursor:pointer;text-align:center;
-transition:background .15s,border-color .15s,transform .15s;position:relative;
+  background:var(--surface);border:1px solid var(--border);border-radius:12px;
+  padding:11px 8px 9px;cursor:pointer;text-align:center;
+  transition:background .15s,border-color .15s,transform .15s;position:relative;
 }
-.skin-card:hover{background:var(–surface2);border-color:rgba(255,255,255,.16);transform:translateY(-2px);}
-.skin-card.selected{border-color:var(–accent);background:var(–accent-dim);}
-.skin-card.selected::after{content:’’;position:absolute;top:7px;right:7px;width:6px;height:6px;border-radius:50%;background:var(–accent);}
+.skin-card:hover{background:var(--surface2);border-color:rgba(255,255,255,.16);transform:translateY(-2px);}
+.skin-card.selected{
+  border:2px solid #4ade80;
+  background:rgba(74,222,128,0.08);
+  box-shadow:0 0 0 1px rgba(74,222,128,0.15), 0 0 12px rgba(74,222,128,0.12);
+}
+.skin-card.selected::after{display:none;}
 .skin-preview{width:80px;height:54px;margin:0 auto 8px;border-radius:7px;overflow:hidden;background:#0a0a0a;}
 .skin-preview canvas{display:block;}
-.skin-name{font-size:10px;font-weight:500;color:var(–text-muted);letter-spacing:.06em;text-transform:uppercase;}
-.skin-card.selected .skin-name{color:var(–text);}
+.skin-name{font-size:10px;font-weight:500;color:var(--text-muted);letter-spacing:.06em;text-transform:uppercase;}
+.skin-card.selected .skin-name{color:var(--text);}
 .skin-actions{display:flex;gap:10px;width:200px;}
 
 /* ══════════════════════════════════════
-GAME SCREEN
+   GAME SCREEN
 ══════════════════════════════════════ */
 #gameScreen{flex-direction:column;gap:0;}
 #topBar{width:600px;display:flex;justify-content:space-between;align-items:center;padding:10px 0;gap:12px;}
-.score-pill{display:flex;align-items:baseline;gap:8px;background:var(–surface);border:1px solid var(–border);border-radius:8px;padding:6px 14px;min-width:100px;}
-.pill-label{font-size:10px;font-weight:500;letter-spacing:.1em;color:var(–text-muted);text-transform:uppercase;}
-.pill-val{font-family:‘DM Mono’,monospace;font-size:17px;font-weight:500;color:var(–accent);line-height:1;}
+.score-pill{display:flex;align-items:baseline;gap:8px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:6px 14px;min-width:100px;}
+.pill-label{font-size:10px;font-weight:500;letter-spacing:.1em;color:var(--text-muted);text-transform:uppercase;}
+.pill-val{font-family:'DM Mono',monospace;font-size:17px;font-weight:500;color:var(--accent);line-height:1;}
 #highscorePill{justify-content:flex-end;}
 #highscorePill .pill-val{color:rgba(255,255,255,.42);}
 #pauseBtn{
-background:var(–surface);border:1px solid var(–border);color:var(–text-muted);
-width:36px;height:36px;border-radius:8px;cursor:pointer;font-size:13px;
-display:flex;align-items:center;justify-content:center;
-transition:background .15s,color .15s;flex-shrink:0;
+  background:#4ade80;color:#080808;border:none;
+  width:36px;height:36px;border-radius:8px;cursor:pointer;font-size:13px;
+  display:flex;align-items:center;justify-content:center;
+  transition:opacity .15s,transform .12s;flex-shrink:0;
+  box-shadow:0 3px 12px rgba(74,222,128,0.25);
 }
-#pauseBtn:hover{background:var(–surface2);color:var(–text);}
+#pauseBtn:hover{opacity:.88;transform:scale(1.06);}
 .canvas-wrap{position:relative;}
-canvas#game{display:block;border-radius:6px;border:1px solid var(–border);background:#0a0a0a;touch-action:none;}
+canvas#game{display:block;border-radius:6px;border:1px solid var(--border);background:#0a0a0a;touch-action:none;}
 
 /* ─── OVERLAYS ─── */
 .overlay{
-position:absolute;inset:0;display:none;flex-direction:column;
-justify-content:center;align-items:center;gap:16px;
-background:rgba(8,8,8,.86);backdrop-filter:blur(12px);border-radius:6px;
+  position:absolute;inset:0;display:none;flex-direction:column;
+  justify-content:center;align-items:center;gap:16px;
+  background:rgba(8,8,8,.86);backdrop-filter:blur(12px);border-radius:6px;
 }
 .overlay.show{display:flex;}
 .overlay-title{font-size:21px;font-weight:600;letter-spacing:.03em;}
-.overlay-title.red{color:var(–red);}
-.overlay-sub{font-family:‘DM Mono’,monospace;font-size:12px;color:var(–text-muted);letter-spacing:.08em;}
-.overlay-sub strong{color:var(–text);font-weight:500;}
+.overlay-title.red{color:var(--red);}
+.overlay-sub{font-family:'DM Mono',monospace;font-size:12px;color:var(--text-muted);letter-spacing:.08em;}
+.overlay-sub strong{color:var(--text);font-weight:500;}
 .overlay-btns{display:flex;gap:10px;margin-top:4px;}
-.btn-s{padding:10px 20px;border-radius:8px;font-family:‘DM Sans’,sans-serif;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:opacity .15s,transform .12s;}
+.btn-s{padding:10px 20px;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:opacity .15s,transform .12s;}
 .btn-s.green{background:#4ade80;color:#080808;box-shadow:0 3px 14px rgba(74,222,128,0.28);}
 .btn-s.green:hover{opacity:.88;transform:translateY(-1px);}
 .btn-s.ghost{background:#4ade80;color:#080808;font-weight:600;box-shadow:0 3px 14px rgba(74,222,128,0.28);}
 .btn-s.ghost:hover{opacity:.88;transform:translateY(-1px);}
 .btn-s:active{transform:scale(.97)!important;}
 </style>
-
 </head>
 <body>
 
 <!-- HOME -->
-
 <div id="homeScreen" class="screen active">
   <canvas id="homeBgCanvas"></canvas>
   <div class="home-ui">
@@ -214,7 +216,6 @@ background:rgba(8,8,8,.86);backdrop-filter:blur(12px);border-radius:6px;
 </div>
 
 <!-- SKINS -->
-
 <div id="skinScreen" class="screen">
   <span class="section-label">Skin auswählen</span>
   <div class="skin-grid" id="skinGrid"></div>
@@ -225,7 +226,6 @@ background:rgba(8,8,8,.86);backdrop-filter:blur(12px);border-radius:6px;
 </div>
 
 <!-- GAME -->
-
 <div id="gameScreen" class="screen">
   <div id="topBar">
     <div class="score-pill">
@@ -516,16 +516,21 @@ function bgFrame(timestamp) {
     homeBgCtx.fillRect(0,0,W,H);
   }
 
-  // Build per-snake occupied cell sets BEFORE moving (used for lookahead)
-  const occupied = bgSnakes.map(sn =>
-    new Set(sn.pts.map(p => Math.round(p.x/BG_B)+','+Math.round(p.y/BG_B)))
-  );
-
   const TURN_CHANCE = 0.12;
-  const LOOKAHEAD   = 3; // check this many steps ahead for collisions
-
-  // pixels per ms at target speed
+  const LOOKAHEAD   = 5;  // deeper lookahead = better collision avoidance
   const pxPerMs = (BG_B * BG_SPEED) / (1000/60);
+  const WALL = BG_B * 2;
+  const allDirs = [{x:1,y:0},{x:-1,y:0},{x:0,y:1},{x:0,y:-1}];
+
+  // Build ONE shared grid of ALL occupied cells (all snakes combined)
+  // Value = count of snakes occupying that cell
+  const globalGrid = new Map();
+  bgSnakes.forEach(sn => {
+    sn.pts.forEach(p => {
+      const k = Math.round(p.x/BG_B)+','+Math.round(p.y/BG_B);
+      globalGrid.set(k, (globalGrid.get(k)||0)+1);
+    });
+  });
 
   bgSnakes.forEach((snake, si) => {
     snake.acc += pxPerMs * dt;
@@ -535,8 +540,18 @@ function bgFrame(timestamp) {
 
       const head = snake.pts[0];
       const newHead = { x: head.x + snake.dirX*BG_B, y: head.y + snake.dirY*BG_B };
+
+      // Remove tail from global grid (it leaves)
+      const tailKey = Math.round(snake.pts[snake.pts.length-1].x/BG_B)+','+Math.round(snake.pts[snake.pts.length-1].y/BG_B);
+      const tc = globalGrid.get(tailKey)||0;
+      if (tc <= 1) globalGrid.delete(tailKey); else globalGrid.set(tailKey, tc-1);
+
       snake.pts.unshift(newHead);
       while (snake.pts.length > BG_LEN) snake.pts.pop();
+
+      // Add new head to global grid
+      const headKey = Math.round(newHead.x/BG_B)+','+Math.round(newHead.y/BG_B);
+      globalGrid.set(headKey, (globalGrid.get(headKey)||0)+1);
 
       // If entire snake is off-screen, respawn from a fresh edge
       const allOff = snake.pts.every(p =>
@@ -544,73 +559,79 @@ function bgFrame(timestamp) {
         p.y < -BG_B*(BG_LEN+2) || p.y > H+BG_B*(BG_LEN+2)
       );
       if (allOff) {
+        // Remove old pts from grid
+        snake.pts.forEach(p => {
+          const k = Math.round(p.x/BG_B)+','+Math.round(p.y/BG_B);
+          const c = globalGrid.get(k)||0;
+          if (c <= 1) globalGrid.delete(k); else globalGrid.set(k, c-1);
+        });
         const fresh = spawnBgSnake(W, H, snake.skinIdx);
         Object.assign(snake, fresh);
-        occupied[si] = new Set(snake.pts.map(p=>Math.round(p.x/BG_B)+','+Math.round(p.y/BG_B)));
+        // Add fresh pts to grid
+        snake.pts.forEach(p => {
+          const k = Math.round(p.x/BG_B)+','+Math.round(p.y/BG_B);
+          globalGrid.set(k, (globalGrid.get(k)||0)+1);
+        });
         return;
       }
 
-      // Combined occupied set of all OTHER snakes + own body (skip tail which will move)
-      const otherCells = new Set();
-      bgSnakes.forEach((other, oi) => {
-        if (oi === si) {
-          // include own body except the last segment (it moves away)
-          other.pts.slice(0, other.pts.length - 1).forEach(p =>
-            otherCells.add(Math.round(p.x/BG_B)+','+Math.round(p.y/BG_B))
-          );
-          return;
-        }
-        occupied[oi].forEach(k => otherCells.add(k));
-      });
+      // Grid excluding THIS snake's own current cells (so we don't collide with ourselves from the grid)
+      // We check by asking: does the target cell have occupants OTHER than this snake?
+      // Build own cell set for this snake
+      const ownCells = new Set(snake.pts.map(p => Math.round(p.x/BG_B)+','+Math.round(p.y/BG_B)));
 
-      const allDirs = [{x:1,y:0},{x:-1,y:0},{x:0,y:1},{x:0,y:-1}];
-      const MARGIN = BG_B * 2;
-      const onscreen = nx => nx >= -MARGIN && nx <= W+MARGIN;
-      const onscreenY = ny => ny >= -MARGIN && ny <= H+MARGIN;
+      // Safety: check if a future position would hit any occupied cell not from this snake's body
+      // Also checks own body EXCEPT the last 2 cells (they'll be gone after our tail moves)
+      const ownPtsExclTail = new Set(snake.pts.slice(0, snake.pts.length-2).map(p => Math.round(p.x/BG_B)+','+Math.round(p.y/BG_B)));
 
-      // Safety score: look LOOKAHEAD steps ahead, count clear cells
+      function cellBlocked(key) {
+        const globalCount = globalGrid.get(key) || 0;
+        if (globalCount === 0) return false;
+        // If entirely from own snake, only block if it's not the soon-to-leave tail
+        const ownCount = ownCells.has(key) ? 1 : 0;
+        const foreignCount = globalCount - ownCount;
+        if (foreignCount > 0) return true;  // another snake is here
+        // From own snake — block if not in the tail-2 section
+        return ownPtsExclTail.has(key);
+      }
+
+      // Safety score with deep lookahead
       function safeScore(dx, dy) {
-        if (dx === -snake.dirX && dy === -snake.dirY) return -1; // no U-turn
+        if (dx === -snake.dirX && dy === -snake.dirY) return -999; // no U-turn ever
         let score = 0;
         let cx = newHead.x, cy = newHead.y;
         for (let step = 1; step <= LOOKAHEAD; step++) {
           cx += dx * BG_B; cy += dy * BG_B;
           const key = Math.round(cx/BG_B)+','+Math.round(cy/BG_B);
-          if (otherCells.has(key)) { score -= 10 * (LOOKAHEAD - step + 1); break; }
-          // prefer staying onscreen
-          if (!onscreen(cx) || !onscreenY(cy)) score -= 2;
-          else score += 1;
+          const blocked = cellBlocked(key);
+          if (blocked) { score -= 20 * (LOOKAHEAD - step + 2); break; }
+          const outX = cx < -WALL || cx > W+WALL;
+          const outY = cy < -WALL || cy > H+WALL;
+          if (outX || outY) score -= 3;
+          else score += 2;
         }
         return score;
       }
 
-      const WALL = BG_B * 2;
       const nx0 = newHead.x, ny0 = newHead.y;
       const nearEdge = nx0 < WALL || nx0 > W-WALL || ny0 < WALL || ny0 > H-WALL;
+      const currentScore = safeScore(snake.dirX, snake.dirY);
 
-      // Score all non-U-turn dirs
       const scored = allDirs
-        .filter(d => !(d.x === -snake.dirX && d.y === -snake.dirY))
         .map(d => ({ d, s: safeScore(d.x, d.y) }))
+        .filter(x => x.s > -999)
         .sort((a,b) => b.s - a.s);
 
-      const currentScore = safeScore(snake.dirX, snake.dirY);
-      const bestScore    = scored[0]?.s ?? -999;
-
-      // Force turn if current direction is unsafe, or near edge, or random turn
-      const mustTurn = currentScore < 0 || nearEdge;
-      const willTurn = mustTurn || (Math.random() < TURN_CHANCE && bestScore >= currentScore);
+      const bestScore = scored[0]?.s ?? -999;
+      const mustTurn  = currentScore <= -10 || nearEdge;
+      const willTurn  = mustTurn || (Math.random() < TURN_CHANCE && bestScore > currentScore);
 
       if (willTurn && scored.length > 0) {
-        // Among tied-for-best, pick randomly
-        const best = scored.filter(x => x.s === bestScore);
-        const pick = best[Math.floor(Math.random()*best.length)];
+        const tied = scored.filter(x => x.s === bestScore);
+        const pick = tied[Math.floor(Math.random()*tied.length)];
         snake.dirX = pick.d.x;
         snake.dirY = pick.d.y;
       }
-
-      // Update occupied after move
-      occupied[si] = new Set(snake.pts.map(p=>Math.round(p.x/BG_B)+','+Math.round(p.y/BG_B)));
     }
 
     // Smooth interpolated draw
@@ -773,6 +794,5 @@ function playDeathSound(){pt(120,.3,"sawtooth",.1);setTimeout(()=>pt(80,.4,"sawt
 /* ── INIT ── */
 window._startHomeAnim();
 </script>
-
 </body>
 </html>
