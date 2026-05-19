@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="de">
 <head>
 <meta charset="UTF-8">
@@ -7,221 +6,220 @@
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Rajdhani:wght@400;600&display=swap');
 
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-body {
-font-family: ‘Rajdhani’, sans-serif;
-background: #0a0a0f;
-color: white;
-min-height: 100vh;
-display: flex;
-flex-direction: column;
-align-items: center;
-justify-content: flex-start;
-padding: 20px 10px;
-overflow-x: hidden;
-touch-action: none;
-}
+  body {
+    font-family: 'Rajdhani', sans-serif;
+    background: #0a0a0f;
+    color: white;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 20px 10px;
+    overflow-x: hidden;
+    touch-action: none;
+  }
 
-body::before {
-content: ‘’;
-position: fixed;
-inset: 0;
-background:
-radial-gradient(ellipse 60% 40% at 20% 20%, rgba(0,200,255,0.06) 0%, transparent 70%),
-radial-gradient(ellipse 50% 60% at 80% 80%, rgba(120,0,255,0.06) 0%, transparent 70%);
-pointer-events: none;
-z-index: 0;
-}
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 60% 40% at 20% 20%, rgba(0,200,255,0.06) 0%, transparent 70%),
+      radial-gradient(ellipse 50% 60% at 80% 80%, rgba(120,0,255,0.06) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
 
-h1 {
-font-family: ‘Orbitron’, sans-serif;
-font-size: 2.2rem;
-font-weight: 900;
-letter-spacing: 0.15em;
-background: linear-gradient(90deg, #00c8ff, #7b2fff, #00c8ff);
-background-size: 200%;
--webkit-background-clip: text;
--webkit-text-fill-color: transparent;
-background-clip: text;
-animation: shimmer 3s linear infinite;
-margin-bottom: 16px;
-position: relative;
-z-index: 1;
-}
+  h1 {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 2.2rem;
+    font-weight: 900;
+    letter-spacing: 0.15em;
+    background: linear-gradient(90deg, #00c8ff, #7b2fff, #00c8ff);
+    background-size: 200%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: shimmer 3s linear infinite;
+    margin-bottom: 16px;
+    position: relative;
+    z-index: 1;
+  }
 
-@keyframes shimmer {
-0% { background-position: 0% }
-100% { background-position: 200% }
-}
+  @keyframes shimmer {
+    0% { background-position: 0% }
+    100% { background-position: 200% }
+  }
 
-/* SCORE ROW */
-#scores {
-display: flex;
-gap: 24px;
-margin-bottom: 14px;
-position: relative;
-z-index: 1;
-}
+  /* SCORE ROW */
+  #scores {
+    display: flex;
+    gap: 24px;
+    margin-bottom: 14px;
+    position: relative;
+    z-index: 1;
+  }
 
-.score-box {
-background: rgba(255,255,255,0.04);
-border: 1px solid rgba(0,200,255,0.2);
-border-radius: 10px;
-padding: 8px 24px;
-text-align: center;
-min-width: 110px;
-}
+  .score-box {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(0,200,255,0.2);
+    border-radius: 10px;
+    padding: 8px 24px;
+    text-align: center;
+    min-width: 110px;
+  }
 
-.score-label {
-font-size: 0.7rem;
-letter-spacing: 0.12em;
-color: rgba(0,200,255,0.7);
-text-transform: uppercase;
-margin-bottom: 2px;
-}
+  .score-label {
+    font-size: 0.7rem;
+    letter-spacing: 0.12em;
+    color: rgba(0,200,255,0.7);
+    text-transform: uppercase;
+    margin-bottom: 2px;
+  }
 
-.score-value {
-font-family: ‘Orbitron’, sans-serif;
-font-size: 1.5rem;
-font-weight: 700;
-color: #fff;
-}
+  .score-value {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #fff;
+  }
 
-#highscore-box .score-value { color: #ffd700; }
+  #highscore-box .score-value { color: #ffd700; }
 
-/* BOARD */
-canvas#board {
-border: 1px solid rgba(0,200,255,0.25);
-border-radius: 8px;
-box-shadow: 0 0 40px rgba(0,200,255,0.1), inset 0 0 20px rgba(0,0,0,0.5);
-position: relative;
-z-index: 1;
-display: block;
-}
+  /* BOARD */
+  canvas#board {
+    border: 1px solid rgba(0,200,255,0.25);
+    border-radius: 8px;
+    box-shadow: 0 0 40px rgba(0,200,255,0.1), inset 0 0 20px rgba(0,0,0,0.5);
+    position: relative;
+    z-index: 1;
+    display: block;
+  }
 
-/* PIECES */
-#pieces {
-display: flex;
-justify-content: center;
-align-items: center;
-gap: 20px;
-margin-top: 20px;
-min-height: 130px;
-position: relative;
-z-index: 1;
-}
+  /* PIECES */
+  #pieces {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+    margin-top: 20px;
+    min-height: 130px;
+    position: relative;
+    z-index: 1;
+  }
 
-.piece-wrap {
-background: rgba(255,255,255,0.03);
-border: 1px solid rgba(255,255,255,0.08);
-border-radius: 10px;
-padding: 10px;
-display: flex;
-align-items: center;
-justify-content: center;
-width: 110px;
-height: 110px;
-transition: transform 0.15s, border-color 0.15s;
-cursor: grab;
-touch-action: none;
-user-select: none;
-}
+  .piece-wrap {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 10px;
+    padding: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 110px;
+    height: 110px;
+    transition: transform 0.15s, border-color 0.15s;
+    cursor: grab;
+    touch-action: none;
+    user-select: none;
+  }
 
-.piece-wrap:active { cursor: grabbing; transform: scale(0.95); }
-.piece-wrap:hover { border-color: rgba(0,200,255,0.4); }
+  .piece-wrap:active { cursor: grabbing; transform: scale(0.95); }
+  .piece-wrap:hover { border-color: rgba(0,200,255,0.4); }
 
-/* GHOST */
-.ghost {
-position: fixed;
-pointer-events: none;
-opacity: 0.75;
-z-index: 9999;
-filter: drop-shadow(0 0 8px rgba(0,200,255,0.6));
-}
+  /* GHOST */
+  .ghost {
+    position: fixed;
+    pointer-events: none;
+    opacity: 0.75;
+    z-index: 9999;
+    filter: drop-shadow(0 0 8px rgba(0,200,255,0.6));
+  }
 
-/* BOARD HIGHLIGHT */
-canvas#board.drag-active {
-border-color: rgba(0,200,255,0.6);
-box-shadow: 0 0 60px rgba(0,200,255,0.2);
-}
+  /* BOARD HIGHLIGHT */
+  canvas#board.drag-active {
+    border-color: rgba(0,200,255,0.6);
+    box-shadow: 0 0 60px rgba(0,200,255,0.2);
+  }
 
-/* SCORE POP */
-.score-pop {
-position: fixed;
-font-family: ‘Orbitron’, sans-serif;
-font-size: 1.4rem;
-font-weight: 700;
-color: #00ffaa;
-pointer-events: none;
-z-index: 9999;
-animation: popUp 0.9s ease-out forwards;
-}
+  /* SCORE POP */
+  .score-pop {
+    position: fixed;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #00ffaa;
+    pointer-events: none;
+    z-index: 9999;
+    animation: popUp 0.9s ease-out forwards;
+  }
 
-@keyframes popUp {
-0%   { opacity: 1; transform: translateY(0) scale(1); }
-100% { opacity: 0; transform: translateY(-70px) scale(1.3); }
-}
+  @keyframes popUp {
+    0%   { opacity: 1; transform: translateY(0) scale(1); }
+    100% { opacity: 0; transform: translateY(-70px) scale(1.3); }
+  }
 
-/* GAME OVER */
-#gameover {
-position: fixed;
-inset: 0;
-display: none;
-flex-direction: column;
-align-items: center;
-justify-content: center;
-background: rgba(0,0,0,0.88);
-z-index: 10000;
-backdrop-filter: blur(6px);
-}
+  /* GAME OVER */
+  #gameover {
+    position: fixed;
+    inset: 0;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,0.88);
+    z-index: 10000;
+    backdrop-filter: blur(6px);
+  }
 
-#gameover h2 {
-font-family: ‘Orbitron’, sans-serif;
-font-size: 3rem;
-font-weight: 900;
-letter-spacing: 0.1em;
-color: #ff3a5c;
-text-shadow: 0 0 30px rgba(255,58,92,0.7);
-margin-bottom: 12px;
-}
+  #gameover h2 {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 3rem;
+    font-weight: 900;
+    letter-spacing: 0.1em;
+    color: #ff3a5c;
+    text-shadow: 0 0 30px rgba(255,58,92,0.7);
+    margin-bottom: 12px;
+  }
 
-#gameover .go-score {
-font-family: ‘Orbitron’, sans-serif;
-font-size: 1.2rem;
-color: rgba(255,255,255,0.6);
-margin-bottom: 6px;
-}
+  #gameover .go-score {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.2rem;
+    color: rgba(255,255,255,0.6);
+    margin-bottom: 6px;
+  }
 
-#gameover .go-score span { color: #fff; }
+  #gameover .go-score span { color: #fff; }
 
-#gameover .go-high {
-font-family: ‘Orbitron’, sans-serif;
-font-size: 1rem;
-color: #ffd700;
-margin-bottom: 32px;
-}
+  #gameover .go-high {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1rem;
+    color: #ffd700;
+    margin-bottom: 32px;
+  }
 
-#restart-btn {
-font-family: ‘Orbitron’, sans-serif;
-font-size: 1rem;
-letter-spacing: 0.1em;
-padding: 14px 40px;
-background: linear-gradient(135deg, #00c8ff, #7b2fff);
-border: none;
-border-radius: 8px;
-color: white;
-cursor: pointer;
-transition: transform 0.15s, box-shadow 0.15s;
-box-shadow: 0 4px 20px rgba(0,200,255,0.3);
-}
+  #restart-btn {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1rem;
+    letter-spacing: 0.1em;
+    padding: 14px 40px;
+    background: linear-gradient(135deg, #00c8ff, #7b2fff);
+    border: none;
+    border-radius: 8px;
+    color: white;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+    box-shadow: 0 4px 20px rgba(0,200,255,0.3);
+  }
 
-#restart-btn:hover {
-transform: scale(1.05);
-box-shadow: 0 6px 28px rgba(0,200,255,0.5);
-}
+  #restart-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 28px rgba(0,200,255,0.5);
+  }
 </style>
-
 </head>
 
 <body>
@@ -239,7 +237,6 @@ box-shadow: 0 6px 28px rgba(0,200,255,0.5);
 </div>
 
 <canvas id="board" width="320" height="320"></canvas>
-
 <div id="pieces"></div>
 
 <div id="gameover">
@@ -375,24 +372,23 @@ function drawShape(c, shape, color, cellSize){
   }));
 }
 
-/* ── CREATE 3 PIECES ──────────────────────────────────── */
+/* ── CREATE 3 PIECES (guaranteed placeable) ───────────── */
 function createPieces(){
   piecesEl.innerHTML="";
   pieces=[];
 
-  for(let i=0;i<3;i++){
-    const shape = shapes[Math.floor(Math.random()*shapes.length)];
-    const color = COLORS[Math.floor(Math.random()*COLORS.length)];
-    const cols  = shape[0].length;
-    const rows  = shape.length;
-    const cs    = 20;
+  const chosen = pickGuaranteedSet(board);
+
+  for(const {shape, color} of chosen){
+    const cols = shape[0].length;
+    const rows = shape.length;
 
     const wrap = document.createElement("div");
     wrap.className = "piece-wrap";
 
     const canvas = document.createElement("canvas");
-    canvas.width  = cols*cs;
-    canvas.height = rows*cs;
+    canvas.width  = cols*20;
+    canvas.height = rows*20;
 
     drawShape(canvas.getContext("2d"), shape, color, 20);
 
@@ -403,7 +399,108 @@ function createPieces(){
     wrap.onpointerdown = e => startDrag(e, piece);
     piecesEl.appendChild(wrap);
   }
-  // Don't call checkGameOver here — pieces were just created
+}
+
+/* ── BOARD UTILITIES (pure, no side-effects) ──────────── */
+function copyBoard(b){
+  return b.map(row => row.slice());
+}
+
+// board values may be color strings or 0 — treat anything truthy as filled
+function isFilled(b, x, y){
+  return x < 0 || y < 0 || x >= SIZE || y >= SIZE || !!b[y][x];
+}
+
+function canPlaceOn(b, shape, bx, by){
+  for(let y = 0; y < shape.length; y++)
+    for(let x = 0; x < shape[y].length; x++)
+      if(shape[y][x] && isFilled(b, bx+x, by+y)) return false;
+  return true;
+}
+
+function placeOn(b, shape, bx, by){
+  for(let y = 0; y < shape.length; y++)
+    for(let x = 0; x < shape[y].length; x++)
+      if(shape[y][x]) b[by+y][bx+x] = 1;
+}
+
+function clearLinesOn(b){
+  for(let y = 0; y < SIZE; y++)
+    if(b[y].every(v => v)) b[y].fill(0);
+  for(let x = 0; x < SIZE; x++)
+    if(b.every(row => row[x]))
+      for(let y = 0; y < SIZE; y++) b[y][x] = 0;
+}
+
+// Returns all valid (bx, by) positions for shape on board b
+function validPositions(b, shape){
+  const positions = [];
+  for(let y = 0; y < SIZE; y++)
+    for(let x = 0; x < SIZE; x++)
+      if(canPlaceOn(b, shape, x, y)) positions.push([x, y]);
+  return positions;
+}
+
+function shuffle(arr){
+  for(let i = arr.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i+1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+/* Core: given a board and a list of shapes to place, try every ordering
+   and every position (with early-exit). Returns true if all can be placed. */
+function canPlaceAll(b, shapeList){
+  if(shapeList.length === 0) return true;
+  for(let i = 0; i < shapeList.length; i++){
+    const shape = shapeList[i];
+    const rest  = shapeList.filter((_, j) => j !== i);
+    const positions = validPositions(b, shape);
+    // Shuffle positions so different placements are tried, limit for speed
+    const sample = shuffle(positions).slice(0, 12);
+    for(const [px, py] of sample){
+      const nb = copyBoard(b);
+      placeOn(nb, shape, px, py);
+      clearLinesOn(nb);
+      if(canPlaceAll(nb, rest)) return true;
+    }
+  }
+  return false;
+}
+
+/* Pick 3 guaranteed-placeable pieces.
+   Strategy: pick shapes one at a time, each guaranteed to still allow
+   the remaining ones to also be placed. This is O(shapes^3 * positions)
+   worst case but exits as soon as a valid combo is found. */
+function pickGuaranteedSet(currentBoard){
+  const MAX_ATTEMPTS = 500;
+
+  for(let attempt = 0; attempt < MAX_ATTEMPTS; attempt++){
+    // Pick 3 random shapes
+    const shapeSet = [];
+    for(let i = 0; i < 3; i++)
+      shapeSet.push(shapes[Math.floor(Math.random() * shapes.length)]);
+
+    // Fast pre-check: does every shape individually fit anywhere?
+    const allFit = shapeSet.every(s => validPositions(currentBoard, s).length > 0);
+    if(!allFit) continue;
+
+    // Full sequential check with line clears
+    if(canPlaceAll(copyBoard(currentBoard), shapeSet)){
+      return shapeSet.map(shape => ({
+        shape,
+        color: COLORS[Math.floor(Math.random() * COLORS.length)]
+      }));
+    }
+  }
+
+  // Hard fallback: use only 1x1 and 1x2 shapes that definitely fit
+  const tinyShapes = [[[1]], [[1,1]], [[1],[1]]];
+  return Array.from({length: 3}, () => ({
+    shape: tinyShapes[Math.floor(Math.random() * tinyShapes.length)],
+    color: COLORS[Math.floor(Math.random() * COLORS.length)]
+  }));
 }
 
 /* ── DRAG ─────────────────────────────────────────────── */
@@ -592,6 +689,5 @@ restartBtn.onclick = init;
 /* ── START ────────────────────────────────────────────── */
 init();
 </script>
-
 </body>
 </html>
