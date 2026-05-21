@@ -104,32 +104,18 @@ body{
 }
 
 /* ─── BUTTONS — both solid green ─── */
-.btn-main {
+.btn-main, .btn-outline {
   width:100%; padding:13px;
   background:#4ade80; color:#080808;
   border:none; border-radius:11px;
   font-family:'DM Sans',sans-serif;
   font-size:15px; font-weight:600;
   cursor:pointer; letter-spacing:0.01em;
-  transition:opacity .15s, transform .12s, box-shadow .15s;
-  box-shadow: 0 4px 18px rgba(74,222,128,0.30);
+  transition:box-shadow .15s, transform .12s, opacity .12s;
+  box-shadow: none;
 }
-.btn-main:hover{opacity:.88;transform:translateY(-1px);box-shadow:0 6px 26px rgba(74,222,128,0.45);}
-.btn-main:active{transform:scale(.97);opacity:.8;}
-
-.btn-outline {
-  width:100%; padding:12px;
-  background:#4ade80; color:#080808;
-  border:none; border-radius:11px;
-  font-family:'DM Sans',sans-serif;
-  font-size:15px; font-weight:600;
-  cursor:pointer; letter-spacing:0.01em;
-  opacity:0.72;
-  transition:opacity .15s, transform .12s, box-shadow .15s;
-  box-shadow: 0 4px 18px rgba(74,222,128,0.18);
-}
-.btn-outline:hover{opacity:.88;transform:translateY(-1px);box-shadow:0 6px 26px rgba(74,222,128,0.38);}
-.btn-outline:active{transform:scale(.97);opacity:.8;}
+.btn-main:hover, .btn-outline:hover{box-shadow:0 6px 22px rgba(74,222,128,0.45);transform:translateY(-1px);}
+.btn-main:active, .btn-outline:active{transform:scale(.97);opacity:.85;}
 
 /* ══════════════════════════════════════
    SKIN SCREEN
@@ -153,7 +139,7 @@ body{
 .skin-preview canvas{display:block;}
 .skin-name{font-size:10px;font-weight:500;color:var(--text-muted);letter-spacing:.06em;text-transform:uppercase;}
 .skin-card.selected .skin-name{color:var(--text);}
-.skin-actions{display:flex;gap:10px;width:200px;}
+.skin-actions{display:flex;gap:10px;width:160px;}
 
 /* ══════════════════════════════════════
    GAME SCREEN
@@ -169,10 +155,10 @@ body{
   background:#4ade80;color:#080808;border:none;
   width:36px;height:36px;border-radius:8px;cursor:pointer;font-size:13px;
   display:flex;align-items:center;justify-content:center;
-  transition:opacity .15s,transform .12s;flex-shrink:0;
-  box-shadow:0 3px 12px rgba(74,222,128,0.25);
+  transition:box-shadow .15s,transform .12s,opacity .12s;flex-shrink:0;
+  box-shadow:none;
 }
-#pauseBtn:hover{opacity:.88;transform:scale(1.06);}
+#pauseBtn:hover{box-shadow:0 6px 20px rgba(74,222,128,0.45);transform:scale(1.06);}
 .canvas-wrap{position:relative;}
 canvas#game{display:block;border-radius:6px;border:1px solid var(--border);background:#0a0a0a;touch-action:none;}
 
@@ -188,12 +174,11 @@ canvas#game{display:block;border-radius:6px;border:1px solid var(--border);backg
 .overlay-sub{font-family:'DM Mono',monospace;font-size:12px;color:var(--text-muted);letter-spacing:.08em;}
 .overlay-sub strong{color:var(--text);font-weight:500;}
 .overlay-btns{display:flex;gap:10px;margin-top:4px;}
-.btn-s{padding:10px 20px;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:opacity .15s,transform .12s;}
-.btn-s.green{background:#4ade80;color:#080808;box-shadow:0 3px 14px rgba(74,222,128,0.28);}
-.btn-s.green:hover{opacity:.88;transform:translateY(-1px);}
-.btn-s.ghost{background:#4ade80;color:#080808;font-weight:600;box-shadow:0 3px 14px rgba(74,222,128,0.28);}
-.btn-s.ghost:hover{opacity:.88;transform:translateY(-1px);}
-.btn-s:active{transform:scale(.97)!important;}
+.btn-s{padding:10px 20px;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;border:none;background:#4ade80;color:#080808;box-shadow:none;transition:box-shadow .15s,transform .12s,opacity .12s;}
+.btn-s.green{}
+.btn-s.ghost{}
+.btn-s:hover{box-shadow:0 6px 20px rgba(74,222,128,0.45);transform:translateY(-1px);}
+.btn-s:active{transform:scale(.97)!important;opacity:.85;}
 </style>
 </head>
 <body>
@@ -220,8 +205,7 @@ canvas#game{display:block;border-radius:6px;border:1px solid var(--border);backg
   <span class="section-label">Skin auswählen</span>
   <div class="skin-grid" id="skinGrid"></div>
   <div class="skin-actions">
-    <button class="btn-main" onclick="goToHome()">Bestätigen</button>
-    <button class="btn-outline" onclick="goToHome()">Zurück</button>
+    <button class="btn-main" onclick="goToHome()">← Zurück</button>
   </div>
 </div>
 
