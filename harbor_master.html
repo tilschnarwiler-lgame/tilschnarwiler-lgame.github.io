@@ -1,17 +1,18 @@
+
 <!DOCTYPE html>
 <html lang="de">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>Canal Master</title>
+<title>Canal Master – Container frei & Kollisionsfeuer</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 body {
-  background: #1a2e1a;
+  background: #0a2a1a;
   display: flex; flex-direction: column;
   align-items: center; justify-content: center;
   height: 100vh; overflow: hidden;
-  font-family: Arial, sans-serif;
+  font-family: 'Segoe UI', Arial, sans-serif;
   touch-action: none;
 }
 #ui {
@@ -19,14 +20,14 @@ body {
   display: flex; justify-content: space-between; align-items: center;
   padding: 7px 20px;
   background: linear-gradient(180deg, #2a4a8a, #1e3670);
-  border: 2px solid #4a7acc; border-bottom: none;
-  border-radius: 10px 10px 0 0;
+  border: 2px solid #5a8acc; border-bottom: none;
+  border-radius: 12px 12px 0 0;
 }
 .us { display: flex; flex-direction: column; align-items: center; }
 .ul { color: #8ab4e8; font-size: 11px; font-weight: bold; letter-spacing: 1px; text-transform: uppercase; }
 .uv { color: #fff; font-size: 26px; font-weight: 900; line-height: 1; }
 #tt { color: #c8deff; font-size: 17px; font-weight: 900; letter-spacing: 3px; }
-canvas { display: block; border-radius: 0 0 10px 10px; border: 2px solid #4a7acc; border-top: none; }
+canvas { display: block; border-radius: 0 0 12px 12px; border: 2px solid #5a8acc; border-top: none; }
 #ov {
   position: absolute;
   display: flex; align-items: center; justify-content: center;
@@ -65,7 +66,11 @@ canvas { display: block; border-radius: 0 0 10px 10px; border: 2px solid #4a7acc
     <p>Ziehe vom Schiff eine Linie<br>zum gleichfarbigen Hafen.<br><br>
     <span style="color:#cc44ff">&#9632;</span> Violett &nbsp;&middot;&nbsp;
     <span style="color:#ffdd00">&#9632;</span> Gelb<br><br>
-    Nach dem Entladen leere Schiffe<br>aus dem Spielfeld führen.</p>
+    <span style="color:#88ff88">Level 1:</span> nur 1 Container<br>
+    <span style="color:#88ff88">ab Level 2:</span> 1-2 Container<br>
+    <span style="color:#88ff88">ab Level 4:</span> 1, 2 oder 4 Container<br><br>
+    🔥 Kollision = kleiner Brand mit Rauch<br>
+    Leere Schiffe können aus dem Hafen gelotst werden</p>
     <button class="btn" onclick="startGame()">Spielen</button>
   </div>
 </div>
@@ -78,18 +83,18 @@ const W = 660, H = 540;
 
 const COLORS = ['violet','yellow'];
 const HEX    = { violet:'#cc44ff', yellow:'#ffdd00' };
-const HEXD   = { violet:'#550088', yellow:'#776600' };
+const HEXD   = { violet:'#8800aa', yellow:'#aa8800' };
 
 const LL=140, TRX=510, TRY=115;
 
 const HARBOURS = [
   { color:'violet', bays:[
-    { bx:50, by:76,  bw:92, bh:56 },
-    { bx:50, by:140, bw:92, bh:56 },
+    { bx:50, by:76,  bw:92, bh:56, y1:76, y2:132 },
+    { bx:50, by:140, bw:92, bh:56, y1:140, y2:196 },
   ]},
   { color:'yellow', bays:[
-    { bx:50, by:318, bw:92, bh:56 },
-    { bx:50, by:382, bw:92, bh:56 },
+    { bx:50, by:318, bw:92, bh:56, y1:318, y2:374 },
+    { bx:50, by:382, bw:92, bh:56, y1:382, y2:438 },
   ]},
 ];
 HARBOURS.forEach(h => h.bays.forEach(b => {
@@ -134,6 +139,7 @@ let ships=[],score=0,level=1,running=false;
 let spawnTimer=100,spawnDelay=300,nextZone=0,lastZone=-1;
 let dragShip=null,dragPts=[],dragValid=true;
 let particles=[],wakes=[],flashTimer=0;
+let fireParticles=[];
 
 function rrect(x,y,w,h,r){
   ctx.beginPath();
@@ -144,23 +150,99 @@ function rrect(x,y,w,h,r){
   ctx.closePath();
 }
 
+function getMaxCargoForLevel(currentLevel){
+  if(currentLevel < 2) return 1;
+  if(currentLevel < 4) return 2;
+  return 4;
+}
+
+function spawnCollisionFire(x,y){
+  for(let i=0;i<25;i++){
+    const angle = Math.random() * Math.PI * 2;
+    const speed = 0.3 + Math.random() * 1.2;
+    const type = Math.random() > 0.55 ? 'fire' : 'smoke';
+    fireParticles.push({
+      x: x + (Math.random()-0.5)*25,
+      y: y + (Math.random()-0.5)*20,
+      vx: Math.cos(angle) * speed,
+      vy: -0.4 - Math.random() * 1.2,
+      life: 0.8 + Math.random() * 0.5,
+      type: type,
+      size: 3 + Math.random() * 8
+    });
+  }
+  for(let i=0;i<12;i++){
+    fireParticles.push({
+      x: x + (Math.random()-0.5)*30,
+      y: y - 5 + Math.random() * 15,
+      vx: (Math.random()-0.5) * 0.6,
+      vy: -0.6 - Math.random() * 1.0,
+      life: 0.7 + Math.random() * 0.6,
+      type: 'smoke',
+      size: 7 + Math.random() * 14
+    });
+  }
+}
+
+function updateFire(){
+  fireParticles = fireParticles.filter(p => {
+    p.x += p.vx;
+    p.y += p.vy;
+    p.vx *= 0.98;
+    p.vy *= 0.98;
+    p.life -= 0.008;
+    return p.life > 0;
+  });
+}
+
+function drawFire(){
+  for(const p of fireParticles){
+    ctx.globalAlpha = p.life * 0.6;
+    if(p.type === 'fire'){
+      const grad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size * p.life);
+      grad.addColorStop(0, '#ffaa44');
+      grad.addColorStop(0.5, '#ff6600');
+      grad.addColorStop(1, '#cc3300');
+      ctx.fillStyle = grad;
+    } else {
+      const darkness = 40 + Math.floor(50 * (1 - p.life));
+      ctx.fillStyle = `rgba(${darkness}, ${darkness}, ${darkness}, ${p.life * 0.5})`;
+    }
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.size * p.life * 0.7, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+}
+
 class Ship {
   constructor(zi){
     const sp=SPAWNS[zi];
     this.x=sp.x; this.y=sp.y; this.vx=sp.dx; this.vy=sp.dy;
     this.angle=Math.atan2(sp.dy,sp.dx);
     this.color=COLORS[Math.floor(Math.random()*COLORS.length)];
-    let mx=1+Math.floor(level/2); if(mx>5)mx=5;
-    this.cargo=Math.floor(Math.random()*mx)+1;
-    this.maxCargo=this.cargo;
-    this.spd=0.85-(this.maxCargo-1)*0.1;
+    
+    const maxAllowed = getMaxCargoForLevel(level);
+    let possibleSizes = [];
+    if(maxAllowed === 1) possibleSizes = [1];
+    else if(maxAllowed === 2) possibleSizes = [1, 2];
+    else possibleSizes = [1, 2, 4];
+    
+    this.maxCargo = possibleSizes[Math.floor(Math.random() * possibleSizes.length)];
+    this.cargo = this.maxCargo;
+    
+    this.spd = 0.92 - (this.maxCargo - 1) * 0.08;
+    if(this.spd < 0.55) this.spd = 0.55;
+    if(this.maxCargo === 1) this.spd = 0.92;
+    
     this.state='enter';
     this.path=[]; this.pathIdx=0;
     this.dockBay=null; this.unloadT=0;
     this.pulseT=Math.random()*Math.PI*2;
     this.wakeT=0; this.warn=false; this.blinkT=0;
-    this.HL=30+this.maxCargo*9;
-    this.HW=14+this.maxCargo*2;
+    
+    this.HL = 38 + this.maxCargo * 9;
+    this.HW = 12 + this.maxCargo * 1.5;
   }
 
   getMatchingBay(){
@@ -203,9 +285,12 @@ class Ship {
 
     if(this.state==='unloading'){
       this.unloadT++;
-      if(this.unloadT>=60){
+      if(this.unloadT>=85){
         this.unloadT=0; this.cargo--; score++; updateUI();
-        spawnParticles(this.x,this.y,HEX[this.color],10);
+        for(let i=0;i<6;i++){
+          const a=Math.random()*Math.PI*2, s=1+Math.random()*3;
+          particles.push({x:this.x,y:this.y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,col:HEX[this.color],life:1});
+        }
         if(this.cargo<=0) this.state='docked';
       }
       return;
@@ -285,18 +370,19 @@ class Ship {
     const L=this.HL, B=this.HW, n=this.maxCargo;
     const cc=HEX[this.color], cd=HEXD[this.color];
     const warnOn=this.warn&&this.blinkT<15;
-
+    
     ctx.beginPath();
     ctx.moveTo(L/2,0);
     ctx.bezierCurveTo(L/2,-B/2,L/4,-B/2,0,-B/2);
-    ctx.lineTo(-L/2+8,-B/2);
+    ctx.lineTo(-L/2+10,-B/2);
     ctx.quadraticCurveTo(-L/2,-B/2,-L/2,0);
-    ctx.quadraticCurveTo(-L/2,B/2,-L/2+8,B/2);
+    ctx.quadraticCurveTo(-L/2,B/2,-L/2+10,B/2);
     ctx.lineTo(0,B/2);
     ctx.bezierCurveTo(L/4,B/2,L/2,B/2,L/2,0);
     ctx.closePath();
+    
     if(warnOn){
-      ctx.fillStyle='#ff2222';
+      ctx.fillStyle='#ff4444';
     } else {
       const g=ctx.createLinearGradient(0,-B/2,0,B/2);
       g.addColorStop(0,'#d8dfe8'); g.addColorStop(0.45,'#b8c2cc'); g.addColorStop(1,'#8898a8');
@@ -304,53 +390,82 @@ class Ship {
     }
     ctx.fill();
     ctx.strokeStyle=warnOn?'#ff0000':'#607080'; ctx.lineWidth=1.2; ctx.stroke();
-    ctx.fillStyle='#506070'; ctx.fillRect(-L/2+8,B/2-4,L-14,3);
-
-    const cW=Math.max(8,Math.min(13,(L-22)/n)), cH=B*0.55;
-    const totW=n*cW+(n-1)*2; let cx=-totW/2;
+    ctx.fillStyle='#506070'; ctx.fillRect(-L/2+10,B/2-4,L-18,3);
+    
+    // Container (völlig freistehend)
+    const cW = Math.max(7, Math.min(12, (L-34)/n));
+    const cH = B * 0.55;
+    const totW = n * cW + (n-1) * 2;
+    let cx = -totW/2 + 4;
+    
     for(let i=0;i<n;i++){
-      const filled=i<this.cargo;
-      rrect(cx,-cH/2,cW,cH,2);
-      ctx.fillStyle=filled?cc:'rgba(150,160,175,0.28)'; ctx.fill();
-      ctx.strokeStyle=filled?cd:'rgba(80,100,120,0.3)'; ctx.lineWidth=0.8; ctx.stroke();
-      if(filled&&cW>9){
-        ctx.strokeStyle='rgba(0,0,0,0.18)'; ctx.lineWidth=0.5;
-        ctx.beginPath(); ctx.moveTo(cx+cW*0.35,-cH/2); ctx.lineTo(cx+cW*0.35,cH/2); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(cx+cW*0.65,-cH/2); ctx.lineTo(cx+cW*0.65,cH/2); ctx.stroke();
+      const filled = i < this.cargo;
+      rrect(cx, -cH/2, cW, cH, 2);
+      if(filled){
+        const grad = ctx.createLinearGradient(cx, -cH/2, cx+cW, cH/2);
+        grad.addColorStop(0, cc); grad.addColorStop(1, cd);
+        ctx.fillStyle = grad;
+      } else {
+        ctx.fillStyle = 'rgba(150,160,175,0.28)';
       }
-      cx+=cW+2;
+      ctx.fill();
+      ctx.strokeStyle = filled ? cd : 'rgba(80,100,120,0.5)';
+      ctx.lineWidth = 0.8;
+      ctx.stroke();
+      
+      if(filled && cW > 8){
+        ctx.strokeStyle = 'rgba(0,0,0,0.15)';
+        ctx.lineWidth = 0.5;
+        ctx.beginPath(); ctx.moveTo(cx + cW*0.3, -cH/2); ctx.lineTo(cx + cW*0.3, cH/2); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(cx + cW*0.6, -cH/2); ctx.lineTo(cx + cW*0.6, cH/2); ctx.stroke();
+      }
+      cx += cW + 2;
     }
-    rrect(-L/2+2,-B*0.27,L*0.19,B*0.54,2);
-    ctx.fillStyle='#c8d4de'; ctx.fill(); ctx.strokeStyle='#7888a0'; ctx.lineWidth=0.8; ctx.stroke();
-    ctx.beginPath(); ctx.arc(L/2-4,0,2.5,0,Math.PI*2); ctx.fillStyle='#a0b0c0'; ctx.fill();
-
+    
+    // Heckbrücke (ganz links)
+    ctx.fillStyle = '#6a7e8e';
+    rrect(-L/2+4, -B*0.22, 14, B*0.48, 2);
+    ctx.fill();
+    ctx.fillStyle = '#8aa4b4';
+    rrect(-L/2+6, -B*0.14, 8, B*0.32, 1.5);
+    ctx.fill();
+    ctx.fillStyle = '#c8deff';
+    ctx.fillRect(-L/2+8, -B*0.07, 4, 5);
+    
+    // Schornstein (ganz rechts)
+    ctx.fillStyle = '#5a6a78';
+    rrect(L/2-10, -B*0.3, 5, B*0.45, 1);
+    ctx.fill();
+    
+    ctx.font = `bold ${Math.max(8, Math.min(11, L*0.08))}px "Courier New", monospace`;
+    ctx.fillStyle = '#ffeaaccc';
+    ctx.fillText(`${this.maxCargo}`, L/2-10, -B*0.2);
+    
     if(this.state==='auto'||this.state==='path'){
       const p=0.5+0.5*Math.sin(this.pulseT*2);
-      ctx.beginPath(); ctx.ellipse(0,0,L/2+5+p*4,B/2+4+p*2,0,0,Math.PI*2);
+      ctx.beginPath(); 
+      ctx.ellipse(0,0,L/2+5+p*4,B/2+4+p*2,0,0,Math.PI*2);
       ctx.strokeStyle=cc+Math.floor(p*120).toString(16).padStart(2,'0');
       ctx.lineWidth=1.5; ctx.stroke();
     }
     if(this.state==='docked'){
       const p=0.5+0.5*Math.sin(this.pulseT*1.5);
-      ctx.beginPath(); ctx.ellipse(0,0,L/2+6+p*3,B/2+5+p*2,0,0,Math.PI*2);
-      ctx.strokeStyle=`rgba(80,255,120,${0.4+p*0.5})`; ctx.lineWidth=2; ctx.stroke();
+      ctx.beginPath(); 
+      ctx.ellipse(0,0,L/2+6+p*3,B/2+5+p*2,0,0,Math.PI*2);
+      ctx.strokeStyle=`rgba(80,255,120,${0.4+p*0.5})`; 
+      ctx.lineWidth=2; ctx.stroke();
     }
     if(this.state==='unloading'){
-      const pr=this.unloadT/60;
-      ctx.fillStyle='rgba(0,0,0,0.4)'; ctx.fillRect(-L/2,B/2+3,L,6);
-      ctx.fillStyle=cc; ctx.fillRect(-L/2,B/2+3,L*pr,6);
-      ctx.strokeStyle='rgba(255,255,255,0.2)'; ctx.lineWidth=0.5; ctx.strokeRect(-L/2,B/2+3,L,6);
+      const pr=this.unloadT/85;
+      ctx.fillStyle='rgba(0,0,0,0.3)'; 
+      ctx.fillRect(-L/2,B/2+2,L,5);
+      ctx.fillStyle=cc; 
+      ctx.fillRect(-L/2,B/2+2,L*pr,5);
     }
     ctx.restore();
   }
 }
 
-function spawnParticles(x,y,col,n){
-  for(let i=0;i<n;i++){
-    const a=Math.random()*Math.PI*2, s=1+Math.random()*3;
-    particles.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,col,life:1});
-  }
-}
 function tickParticles(){
   particles=particles.filter(p=>{p.x+=p.vx;p.y+=p.vy;p.vx*=0.9;p.vy*=0.9;p.life-=0.025;return p.life>0;});
   wakes=wakes.filter(p=>{p.life-=0.04;p.r*=0.97;return p.life>0;});
@@ -365,11 +480,89 @@ let bgCanvas=null;
 function buildBackground(){
   bgCanvas=document.createElement('canvas'); bgCanvas.width=W; bgCanvas.height=H;
   const b=bgCanvas.getContext('2d');
+  
+  // Wasser
   const wg=b.createLinearGradient(LL,0,W,H);
   wg.addColorStop(0,'#3a8ec8'); wg.addColorStop(0.5,'#2878b5'); wg.addColorStop(1,'#1c62a0');
   b.fillStyle=wg; b.fillRect(0,0,W,H);
-  drawLandBg(b,0,0,LL,H,'right');
-  drawLandBg(b,TRX,0,W-TRX,TRY,'left');
+  
+  // Linkes Land mit geschwungener Küste
+  b.beginPath();
+  b.moveTo(0,0);
+  for(let y=0; y<=H; y+=12){
+    let x = LL + Math.sin(y*0.035)*8 + Math.cos(y*0.02)*5;
+    b.lineTo(x, y);
+  }
+  b.lineTo(0, H);
+  const gradLand = b.createLinearGradient(0,0,LL,0);
+  gradLand.addColorStop(0,'#2a5a2a');
+  gradLand.addColorStop(0.5,'#4a8a3a');
+  gradLand.addColorStop(1,'#6aaa50');
+  b.fillStyle=gradLand;
+  b.fill();
+  
+  // Sandbuchten
+  b.beginPath();
+  b.moveTo(0,0);
+  for(let y=0; y<=H; y+=12){
+    let x = LL + Math.sin(y*0.035)*8 + Math.cos(y*0.02)*5 - 6;
+    b.lineTo(x, y);
+  }
+  b.lineTo(0, H);
+  b.fillStyle='#d4b87a';
+  b.fill();
+  
+  // Bäume
+  for(let i=0;i<35;i++){
+    let treeX = 15 + Math.random() * (LL - 20);
+    let treeY = 20 + Math.random() * (H - 40);
+    b.fillStyle='#3a6a2a';
+    b.beginPath();
+    b.ellipse(treeX, treeY, 5, 7, 0, 0, Math.PI*2);
+    b.fill();
+    b.fillStyle='#2a4a1a';
+    b.beginPath();
+    b.ellipse(treeX-1, treeY-2, 3, 5, 0, 0, Math.PI*2);
+    b.fill();
+  }
+  
+  // Felsen
+  b.fillStyle='#6a6a5a';
+  for(let i=0;i<18;i++){
+    let rockX = 10 + Math.random() * (LL - 15);
+    let rockY = 30 + Math.random() * (H - 60);
+    b.beginPath();
+    b.ellipse(rockX, rockY, 5+Math.random()*4, 3+Math.random()*3, 0, 0, Math.PI*2);
+    b.fill();
+    b.fillStyle='#8a7a5a';
+    b.beginPath();
+    b.ellipse(rockX-1, rockY-1, 3, 2, 0, 0, Math.PI*2);
+    b.fill();
+    b.fillStyle='#6a6a5a';
+  }
+  
+  // Rechte obere Landzunge
+  b.beginPath();
+  b.moveTo(TRX, 0);
+  for(let x=TRX; x<=W; x+=8){
+    let y = TRY + Math.sin(x*0.04)*8 + Math.cos(x*0.015)*4;
+    b.lineTo(x, y);
+  }
+  b.lineTo(W, 0);
+  b.fillStyle='#4a7a3a';
+  b.fill();
+  
+  // Bäume auf der rechten Landzunge
+  for(let i=0;i<12;i++){
+    let treeX = TRX + 10 + Math.random() * (W - TRX - 20);
+    let treeY = 10 + Math.random() * (TRY - 15);
+    b.fillStyle='#3a6a2a';
+    b.beginPath();
+    b.ellipse(treeX, treeY, 4, 6, 0, 0, Math.PI*2);
+    b.fill();
+  }
+  
+  // Hafenbecken
   HARBOURS.forEach(h=>{
     h.bays.forEach(bay=>{
       const wbg=b.createLinearGradient(bay.bx,0,bay.bx+bay.bw,0);
@@ -394,34 +587,70 @@ function buildBackground(){
       b.stroke(); b.setLineDash([]);
     });
   });
-  b.strokeStyle='#c8b468'; b.lineWidth=3;
-  const ranges=[];
-  HARBOURS.forEach(h=>h.bays.forEach(bay=>ranges.push({y1:bay.by,y2:bay.by+bay.bh})));
-  ranges.sort((a,z)=>a.y1-z.y1);
-  let cur=0;
-  ranges.forEach(({y1,y2})=>{
-    if(cur<y1){b.beginPath();b.moveTo(LL,cur);b.lineTo(LL,y1);b.stroke();}
-    cur=y2;
+  
+  // Küstenlinie - OHNE die Hafenbecken zu durchschneiden
+  b.strokeStyle='#c8b468'; b.lineWidth=2.5;
+  // Sammle alle Y-Bereiche der Hafenbecken, die ausgespart werden müssen
+  const skipRanges = [];
+  HARBOURS.forEach(h => {
+    h.bays.forEach(bay => {
+      skipRanges.push({ start: bay.by - 2, end: bay.by + bay.bh + 2 });
+    });
   });
-  if(cur<H){b.beginPath();b.moveTo(LL,cur);b.lineTo(LL,H);b.stroke();}
-  b.beginPath();b.moveTo(TRX,0);b.lineTo(TRX,TRY);b.stroke();
-  b.beginPath();b.moveTo(TRX,TRY);b.lineTo(W,TRY);b.stroke();
-}
-
-function drawLandBg(b,x,y,w,h,bs){
-  const g=b.createLinearGradient(bs==='right'?x:x+w,0,bs==='right'?x+w:x,0);
-  if(bs==='right'){g.addColorStop(0,'#285020');g.addColorStop(0.68,'#3a7830');g.addColorStop(0.86,'#c0a855');g.addColorStop(1,'#ccb260');}
-  else{g.addColorStop(0,'#ccb260');g.addColorStop(0.14,'#c0a855');g.addColorStop(0.32,'#3a7830');g.addColorStop(1,'#285020');}
-  b.fillStyle=g; b.fillRect(x,y,w,h);
-  b.fillStyle='rgba(18,72,18,0.22)';
-  for(let gy=y+5;gy<y+h-5;gy+=16)
-    for(let gx=x+5;gx<x+w-5;gx+=16){
-      b.beginPath();b.arc(gx+Math.sin(gx*.31+gy*.73)*3.5,gy+Math.cos(gx*.51+gy*.22)*3.5,2.2+Math.abs(Math.sin(gx*gy))*.9,0,Math.PI*2);b.fill();
+  skipRanges.sort((a,b) => a.start - b.start);
+  
+  // Küstenlinie zeichnen, die die Hafenbereiche überspringt
+  b.beginPath();
+  let isDrawing = true;
+  let lastX = null, lastY = null;
+  
+  for(let y=0; y<=H; y+=3){
+    // Prüfen, ob aktuelle Y-Position in einem zu überspringenden Bereich liegt
+    let skip = false;
+    for(const range of skipRanges){
+      if(y >= range.start && y <= range.end){
+        skip = true;
+        break;
+      }
     }
-  b.fillStyle='rgba(10,55,10,0.26)';
-  for(let gy=y+12;gy<y+h-12;gy+=28)
-    for(let gx=x+12;gx<x+w-12;gx+=28)
-      if(Math.sin(gx*1.4+gy*2.2)>0.28){b.beginPath();b.arc(gx,gy,4.5,0,Math.PI*2);b.fill();}
+    
+    let x = LL + Math.sin(y*0.035)*8 + Math.cos(y*0.02)*5;
+    
+    if(!skip){
+      if(!isDrawing){
+        // Neuen Pfad beginnen
+        b.beginPath();
+        b.moveTo(x, y);
+        isDrawing = true;
+        lastX = x; lastY = y;
+      } else {
+        if(lastX !== null && Math.abs(x - lastX) < 30){
+          b.lineTo(x, y);
+        } else {
+          b.stroke();
+          b.beginPath();
+          b.moveTo(x, y);
+        }
+        lastX = x; lastY = y;
+      }
+    } else {
+      if(isDrawing){
+        b.stroke();
+        isDrawing = false;
+        lastX = null;
+      }
+    }
+  }
+  if(isDrawing) b.stroke();
+  
+  // Zusätzliche Küstenlinie für die rechte Landzunge (keine Hafenbecken dort)
+  b.beginPath();
+  b.moveTo(TRX, 0);
+  for(let x=TRX; x<=W; x+=5){
+    let y = TRY + Math.sin(x*0.04)*8 + Math.cos(x*0.015)*4;
+    b.lineTo(x, y);
+  }
+  b.stroke();
 }
 
 function drawWaves(){
@@ -483,36 +712,82 @@ function inAnyBay(ship){
 function updateWarnings(){
   if(!running) return;
   ships.forEach(s=>s.warn=false);
+  
+  const dockOccupancy = new Map();
+  for(const ship of ships){
+    if(ship.state === 'done') continue;
+    for(const h of HARBOURS){
+      for(const b of h.bays){
+        if(ship.x >= b.bx && ship.x <= b.bx+b.bw && ship.y >= b.by && ship.y <= b.by+b.bh){
+          if(!dockOccupancy.has(b)) dockOccupancy.set(b, []);
+          dockOccupancy.get(b).push(ship);
+          break;
+        }
+      }
+    }
+  }
+  
+  for(const [bay, shipsInBay] of dockOccupancy){
+    if(shipsInBay.length >= 2){
+      for(const ship of shipsInBay) ship.warn = true;
+      for(let i=0; i<shipsInBay.length; i++){
+        for(let j=i+1; j<shipsInBay.length; j++){
+          const a = shipsInBay[i], b = shipsInBay[j];
+          const d = Math.hypot(a.x - b.x, a.y - b.y);
+          if(d < (a.HL + b.HL) * 0.28){
+            spawnCollisionFire((a.x+b.x)/2, (a.y+b.y)/2);
+            flashTimer=30;
+            triggerGameOver();
+            return;
+          }
+        }
+      }
+    }
+  }
+  
   for(let i=0;i<ships.length;i++){
     for(let j=i+1;j<ships.length;j++){
       const a=ships[i], b=ships[j];
       if(a.state==='done'||b.state==='done') continue;
       if(offScreen(a.x,a.y)||offScreen(b.x,b.y)) continue;
-      const aB=inAnyBay(a), bB=inAnyBay(b);
-      if(aB&&bB){
-        const d=Math.hypot(a.x-b.x,a.y-b.y);
-        if(d<(a.HL+b.HL)*0.3){spawnParticles((a.x+b.x)/2,(a.y+b.y)/2,'#ff3322',24);flashTimer=30;triggerGameOver();return;}
-        if(d<80){a.warn=true;b.warn=true;}
-        continue;
+      
+      const aInBay = inAnyBay(a);
+      const bInBay = inAnyBay(b);
+      
+      if(aInBay && bInBay) continue;
+      
+      let collisionDist = (a.HL + b.HL) * 0.27;
+      let warningDist = 130;
+      
+      if(aInBay !== bInBay){
+        collisionDist = (a.HL + b.HL) * 0.23;
+        warningDist = 100;
       }
-      if(aB||bB) continue;
-      const d=Math.hypot(a.x-b.x,a.y-b.y);
-      if(d<(a.HL+b.HL)*0.27){spawnParticles((a.x+b.x)/2,(a.y+b.y)/2,'#ff3322',24);flashTimer=30;triggerGameOver();return;}
-      if(d<130){a.warn=true;b.warn=true;}
+      
+      const d = Math.hypot(a.x-b.x, a.y-b.y);
+      if(d < collisionDist){
+        spawnCollisionFire((a.x+b.x)/2, (a.y+b.y)/2);
+        flashTimer=30;
+        triggerGameOver();
+        return;
+      }
+      if(d < warningDist){
+        a.warn=true;
+        b.warn=true;
+      }
     }
   }
 }
 
-function validatePath(ship,pts){
-  const isEmpty=ship.cargo===0||ship.state==='docked';
+function validatePath(ship, pts){
+  if(ship.cargo === 0 || ship.state === 'docked') return true;
   for(let i=1;i<pts.length;i++){
     const a=pts[i-1], bp=pts[i];
     const steps=Math.ceil(Math.hypot(bp.x-a.x,bp.y-a.y)/8);
     for(let s=1;s<=steps;s++){
       const t=s/steps;
       const x=a.x+(bp.x-a.x)*t, y=a.y+(bp.y-a.y)*t;
-      if(x<-5||x>W+5||y<-5||y>H+5){if(!isEmpty) return false; continue;}
-      if(isEmpty&&x<=LL+15) continue;
+      if(x<-5||x>W+5||y<-5||y>H+5) return false;
       if(!inWater(x,y)) return false;
     }
   }
@@ -556,23 +831,17 @@ function pointerUp(pos){
   const ship=dragShip; dragShip=null;
   if(dragPts.length<2||!dragValid){dragPts=[];dragValid=true;return;}
   const finalPath=[{x:ship.x,y:ship.y},...dragPts.slice(1)];
-  // Remove leading waypoints that would make the ship go backwards.
-  // A waypoint is "behind" if the angle to it differs from current heading by > 100°.
-  // Only apply this for moving ships (not docked/stationary).
   const stationary=ship.state==='docked'||ship.state==='unloading';
   if(!stationary && finalPath.length>1){
     let startIdx=0;
     for(let i=1;i<finalPath.length;i++){
       const dx=finalPath[i].x-ship.x, dy=finalPath[i].y-ship.y;
-      const dot=dx*ship.vx+dy*ship.vy; // positive = forward
+      const dot=dx*ship.vx+dy*ship.vy;
       const len=Math.hypot(dx,dy);
-      if(len<8) continue; // too close, skip check
-      // If first usable waypoint is forward (dot>0) or at least sideways, use from here
-      if(dot>-len*0.5){ startIdx=i; break; } // within 120° forward arc
-      // else keep looking for a forward point
-      startIdx=i; // use this one anyway if we find nothing better
+      if(len<8) continue;
+      if(dot>-len*0.5){ startIdx=i; break; }
+      startIdx=i;
     }
-    // Build path from ship pos to waypoints starting at startIdx
     const trimmed=[{x:ship.x,y:ship.y},...finalPath.slice(startIdx)];
     ship.path=trimmed;
   } else {
@@ -594,7 +863,7 @@ function gameLoop(){
     while(SPAWNS.length>1&&nz===lastZone) nz=Math.floor(Math.random()*SPAWNS.length);
     nextZone=nz;
   }
-  const nl=Math.floor(score/15)+1;
+  const nl=Math.floor(score/10)+1;
   if(nl!==level){level=nl;updateUI();}
 
   ships.forEach(s=>s.update());
@@ -607,6 +876,7 @@ function gameLoop(){
   });
   updateWarnings();
   tickParticles();
+  updateFire();
 
   ctx.drawImage(bgCanvas,0,0);
   drawWaves();
@@ -632,6 +902,7 @@ function gameLoop(){
   }
 
   drawParticles();
+  drawFire();
   ships.forEach(s=>s.draw());
   drawSpawnArrow();
 
@@ -655,12 +926,12 @@ function triggerGameOver(){
   running=false;
   setTimeout(()=>{
     const ov=document.getElementById('ov');
-    ov.innerHTML=`<div class="ob"><h2>KOLLISION!</h2><p>Level ${level} erreicht.</p><div class="fin">${score} Cargo</div><button class="btn" onclick="startGame()">Nochmal</button></div>`;
+    ov.innerHTML=`<div class="ob"><h2>🔥 KOLLISION! 🔥</h2><p>Level ${level} erreicht.</p><div class="fin">${score} Cargo</div><button class="btn" onclick="startGame()">Nochmal</button></div>`;
     ov.classList.add('on');
-  },700);
+  },1200);
 }
 function startGame(){
-  ships=[];particles=[];wakes=[];
+  ships=[];particles=[];wakes=[];fireParticles=[];
   score=0;level=1;flashTimer=0;
   dragShip=null;dragPts=[];dragValid=true;
   spawnDelay=300;spawnTimer=260;lastZone=-1;
@@ -668,7 +939,6 @@ function startGame(){
   updateUI();
   const ov=document.getElementById('ov');ov.innerHTML='';ov.classList.remove('on');
   running=true; doSpawn();
-  // Pick next zone different from the first spawn zone
   let nz2=Math.floor(Math.random()*SPAWNS.length);
   while(SPAWNS.length>1&&nz2===nextZone) nz2=Math.floor(Math.random()*SPAWNS.length);
   nextZone=nz2;
@@ -676,7 +946,7 @@ function startGame(){
 }
 
 buildBackground();
-ctx.drawImage(bgCanvas,0,0);
+startGame();
 </script>
 </body>
 </html>
