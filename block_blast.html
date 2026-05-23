@@ -17,7 +17,7 @@
     flex-direction: column;
     align-items: center;
     justify-content: flex-start;
-    padding: 20px 10px;
+    padding: 8px 10px;
     overflow-x: hidden;
     touch-action: none;
   }
@@ -33,32 +33,11 @@
     z-index: 0;
   }
 
-  h1 {
-    font-family: 'Orbitron', sans-serif;
-    font-size: 2.2rem;
-    font-weight: 900;
-    letter-spacing: 0.15em;
-    background: linear-gradient(90deg, #00c8ff, #7b2fff, #00c8ff);
-    background-size: 200%;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    animation: shimmer 3s linear infinite;
-    margin-bottom: 16px;
-    position: relative;
-    z-index: 1;
-  }
-
-  @keyframes shimmer {
-    0% { background-position: 0% }
-    100% { background-position: 200% }
-  }
-
   /* SCORE ROW */
   #scores {
     display: flex;
     gap: 24px;
-    margin-bottom: 14px;
+    margin-bottom: 8px;
     position: relative;
     z-index: 1;
   }
@@ -162,6 +141,51 @@
     100% { opacity: 0; transform: translateY(-70px) scale(1.3); }
   }
 
+  /* LINE CLEAR FLASH */
+  #flash {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 500;
+    opacity: 0;
+  }
+  #flash.go {
+    animation: flashAnim 0.45s ease-out forwards;
+  }
+  @keyframes flashAnim {
+    0%   { opacity: 0.55; background: rgba(0,200,255,0.25); }
+    100% { opacity: 0; background: rgba(0,200,255,0); }
+  }
+
+  /* PERFECT CLEAR BURST */
+  #perfect-banner {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.5);
+    font-family: 'Orbitron', sans-serif;
+    font-size: 2rem;
+    font-weight: 900;
+    color: #ffd700;
+    text-shadow: 0 0 40px rgba(255,215,0,0.9), 0 0 80px rgba(255,215,0,0.5);
+    pointer-events: none;
+    z-index: 600;
+    opacity: 0;
+    white-space: nowrap;
+  }
+  #perfect-banner.go {
+    animation: perfectAnim 1.2s cubic-bezier(0.22,1,0.36,1) forwards;
+  }
+  @keyframes perfectAnim {
+    0%   { opacity: 0; transform: translate(-50%,-50%) scale(0.4); }
+    20%  { opacity: 1; transform: translate(-50%,-50%) scale(1.1); }
+    70%  { opacity: 1; transform: translate(-50%,-50%) scale(1.0); }
+    100% { opacity: 0; transform: translate(-50%,-50%) scale(1.2); }
+  }
+
+  /* SCORE POP gold variant */
+  .score-pop.perfect { color: #ffd700; font-size: 1.8rem; }
+
   /* GAME OVER */
   #gameover {
     position: fixed;
@@ -223,7 +247,8 @@
 </head>
 
 <body>
-<h1>BLOCK BLAST</h1>
+<div id="flash"></div>
+<div id="perfect-banner">✦ PERFECT CLEAR! ✦</div>
 
 <div id="scores">
   <div class="score-box" id="score-box">
@@ -620,23 +645,81 @@ function clearLines(){
   const rowsToClear = [];
   const colsToClear = [];
 
-  for(let y=0;y<SIZE;y++){
-    if(board[y].every(v=>v)) rowsToClear.push(y);
-  }
-  for(let x=0;x<SIZE;x++){
-    if(board.every(row=>row[x])) colsToClear.push(x);
-  }
+  for(let y = 0; y < SIZE; y++)
+    if(board[y].every(v => v)) rowsToClear.push(y);
+  for(let x = 0; x < SIZE; x++)
+    if(board.every(row => row[x])) colsToClear.push(x);
 
   const linesCleared = rowsToClear.length + colsToClear.length;
+  if(linesCleared === 0) return;
 
-  for(const y of rowsToClear) board[y].fill(0);
-  for(const x of colsToClear) for(let y=0;y<SIZE;y++) board[y][x]=0;
+  // Collect which cells are being cleared for animation
+  const clearedCells = [];
+  for(const y of rowsToClear)
+    for(let x = 0; x < SIZE; x++) clearedCells.push([x, y]);
+  for(const x of colsToClear)
+    for(let y = 0; y < SIZE; y++)
+      if(!rowsToClear.includes(y)) clearedCells.push([x, y]);
 
-  if(linesCleared > 0){
-    const pts = linesCleared * 100 * linesCleared; // bonus for combos
+  // Animate cleared cells white, then erase
+  animateClear(clearedCells, () => {
+    for(const y of rowsToClear) board[y].fill(0);
+    for(const x of colsToClear) for(let y = 0; y < SIZE; y++) board[y][x] = 0;
+    drawBoard();
+
+    // Check perfect clear (entire board empty)
+    const isEmpty = board.every(row => row.every(v => !v));
+
+    const pts = linesCleared * 100 * linesCleared;
     addScore(pts);
-    showScorePop(pts, linesCleared);
+    showScorePop(pts, linesCleared, false);
+
+    if(isEmpty){
+      const bonus = 1000;
+      setTimeout(() => {
+        addScore(bonus);
+        showScorePop(bonus, 0, true);
+        triggerPerfectBanner();
+      }, 120);
+    }
+  });
+
+  // Screen flash
+  triggerFlash();
+}
+
+function animateClear(cells, onDone){
+  // Draw white flash over cleared cells, then call onDone
+  const rect = boardEl.getBoundingClientRect();
+  // We'll do it on the canvas itself using a quick repaint loop
+  let frame = 0;
+  const FRAMES = 8;
+  function step(){
+    drawBoard(); // base
+    const alpha = 1 - frame / FRAMES;
+    cells.forEach(([x, y]) => {
+      ctx.fillStyle = `rgba(255,255,255,${alpha})`;
+      ctx.fillRect(x * CELL, y * CELL, CELL, CELL);
+    });
+    frame++;
+    if(frame <= FRAMES) requestAnimationFrame(step);
+    else onDone();
   }
+  requestAnimationFrame(step);
+}
+
+function triggerFlash(){
+  const el = document.getElementById("flash");
+  el.classList.remove("go");
+  void el.offsetWidth; // reflow to restart animation
+  el.classList.add("go");
+}
+
+function triggerPerfectBanner(){
+  const el = document.getElementById("perfect-banner");
+  el.classList.remove("go");
+  void el.offsetWidth;
+  el.classList.add("go");
 }
 
 /* ── SCORE ────────────────────────────────────────────── */
