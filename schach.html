@@ -117,7 +117,6 @@
             padding: 12px;
             box-shadow: inset 0 0 0 2px #f5e7d3, 0 10px 20px rgba(0, 0, 0, 0.3);
             will-change: transform;
-            /* keine CSS-Transition – Animation erfolgt komplett via JavaScript */
             transition: none;
         }
 
@@ -209,7 +208,7 @@
         <div id="homeOptions" class="home-panel" style="display: none;">
             <div class="home-title" style="font-size: 2.5rem;">Brett drehen?</div>
             <button class="home-btn" id="btnRotateYes">↻ Mit Drehung</button>
-            <button class="home-btn" id="btnRotateNo">↺ Ohne Drehung</button>
+            <button class="home-btn" id="btnRotateNo">Ohne Drehung</button>
             <button class="home-btn back-btn" id="btnBackToMain">← Zurück</button>
         </div>
     </div>
@@ -235,7 +234,6 @@
 
 <script>
     (function(){
-        // ---------- Canvas ----------
         const canvas = document.getElementById('chessCanvas');
         const ctx = canvas.getContext('2d');
         const size = 480;
@@ -247,10 +245,15 @@
 
         // ---------- Spielzustand ----------
         let board = Array(8).fill().map(() => Array(8).fill(null));
-        let turn = 'w';        // 'w' weiß beginnt
+        let turn = 'w';
         let gameOver = false;
         let gameResult = null;
-        let orientation = 'w'; // 'w' = Weiß unten, 'b' = Schwarz unten
+
+        // Orientierung des Bretts: 'w' = Weiß unten, 'b' = Schwarz unten
+        let orientation = 'w';
+
+        // Drehung der Figuren (nur für Modus "Ohne Drehung")
+        let figureRotation = 0;   // 0 oder 180
 
         let castlingRights = { wK: true, wQ: true, bK: true, bQ: true };
         let enPassantTarget = null;
@@ -259,10 +262,10 @@
         let legalMoves = [];
 
         let isAnimating = false;
-        let rotateBoard = true;  // Einstellung vom Homescreen
+        let rotateBoard = true;   // true = Brett-Drehung, false = Figuren-Drehung (ohne Animation)
 
-        // Flip-Animation
-        let flipAnimation = null; // { id: rafId }
+        // Aktive Animationen
+        let flipAnimation = null;   // { id: rafId }
 
         // --- Homescreen-Steuerung ---
         document.getElementById('btnTwoPlayer').addEventListener('click', () => {
@@ -278,7 +281,7 @@
             rotateBoard = rotate;
             resetGame();
             homeScreen.classList.add('hidden');
-            drawBoard();
+            drawBoard(figureRotation);
             updateUI();
         }
         document.getElementById('btnRotateYes').addEventListener('click', () => startGameWithRotation(true));
@@ -290,39 +293,32 @@
             homeMain.style.display = 'flex';
             resetGame();
         });
-
         document.getElementById('resetBtn').addEventListener('click', () => {
             resetGame();
-            drawBoard();
+            drawBoard(figureRotation);
             updateUI();
         });
 
-        // ---------- Spiel-Reset ----------
+        // --- Reset ---
         function resetGame() {
-            // Animation abbrechen
-            if (flipAnimation) {
-                cancelAnimationFrame(flipAnimation.id);
-                flipAnimation = null;
-            }
+            if (flipAnimation) { cancelAnimationFrame(flipAnimation.id); flipAnimation = null; }
             isAnimating = false;
             boardWrapper.style.transform = 'rotate(0deg)';
             
-            // Brett initialisieren
-            for (let i = 0; i < 8; i++) {
-                for (let j = 0; j < 8; j++) board[i][j] = null;
-            }
-            for (let i = 0; i < 8; i++) {
-                board[1][i] = { type: 'p', color: 'b' };
-                board[6][i] = { type: 'p', color: 'w' };
+            for (let y = 0; y < 8; y++) for (let x = 0; x < 8; x++) board[y][x] = null;
+            for (let x = 0; x < 8; x++) {
+                board[1][x] = { type: 'p', color: 'b' };
+                board[6][x] = { type: 'p', color: 'w' };
             }
             const backRow = ['r','n','b','q','k','b','n','r'];
-            for (let i = 0; i < 8; i++) {
-                board[0][i] = { type: backRow[i], color: 'b' };
-                board[7][i] = { type: backRow[i], color: 'w' };
+            for (let x = 0; x < 8; x++) {
+                board[0][x] = { type: backRow[x], color: 'b' };
+                board[7][x] = { type: backRow[x], color: 'w' };
             }
 
             turn = 'w';
             orientation = 'w';
+            figureRotation = 0;
             gameOver = false;
             gameResult = null;
             castlingRights = { wK: true, wQ: true, bK: true, bQ: true };
@@ -331,7 +327,7 @@
             legalMoves = [];
         }
 
-        // ---------- Hilfsfunktionen ----------
+        // --- Hilfsfunktionen ---
         function oppositeColor(c) { return c === 'w' ? 'b' : 'w'; }
         function getPieceSymbol(p) {
             if (!p) return '';
@@ -347,8 +343,8 @@
             return { cx: (7 - x) * cellSize, cy: (7 - y) * cellSize };
         }
 
-        // ---------- Zeichnen ----------
-        function drawBoard() {
+        // --- Zeichnen ---
+        function drawBoard(figAngle = 0) {
             for (let row = 0; row < 8; row++) {
                 for (let col = 0; col < 8; col++) {
                     const { cx, cy } = internalToCanvas(col, row);
@@ -372,19 +368,25 @@
                     const piece = board[row][col];
                     if (piece) {
                         const sym = getPieceSymbol(piece);
+                        ctx.save();
+                        ctx.translate(cx + cellSize/2, cy + cellSize/2);
+                        if (figAngle) ctx.rotate(figAngle * Math.PI / 180);
                         ctx.font = `500 ${cellSize*0.68}px 'Segoe UI', 'Noto Sans', system-ui`;
                         ctx.textAlign = 'center';
                         ctx.textBaseline = 'middle';
+
                         const isWhite = piece.color === 'w';
                         ctx.fillStyle = isWhite ? '#FFF9E6' : '#1A1814';
-                        ctx.fillText(sym, cx + cellSize/2, cy + cellSize/2);
+                        ctx.fillText(sym, 0, 0);
                         ctx.fillStyle = isWhite ? '#E0D5B0' : '#4A3E32';
-                        ctx.fillText(sym, cx + cellSize/2 - 1, cy + cellSize/2 - 1);
+                        ctx.fillText(sym, -1, -1);
                         ctx.fillStyle = isWhite ? '#FFFFFF' : '#0A0A0A';
-                        ctx.fillText(sym, cx + cellSize/2, cy + cellSize/2);
+                        ctx.fillText(sym, 0, 0);
+                        ctx.restore();
                     }
                 }
             }
+
             if (!gameOver && isCheck(turn)) {
                 const king = findKing(turn);
                 if (king) {
@@ -395,7 +397,7 @@
             }
         }
 
-        // ---------- Schachlogik ----------
+        // --- Schachlogik (unverändert) ---
         function isSquareAttacked(x, y, attackerColor, brd) {
             for (let r = 0; r < 8; r++) {
                 for (let c = 0; c < 8; c++) {
@@ -451,9 +453,8 @@
         }
 
         function clearLine(fx, fy, tx, ty, brd) {
-            let stepX = tx > fx ? 1 : -1, stepY = ty > fy ? 1 : -1;
-            if (fx === tx) { stepX = 0; for (let y = fy + stepY; y !== ty; y += stepY) if (brd[y][fx]) return false; }
-            else if (fy === ty) { stepY = 0; for (let x = fx + stepX; x !== tx; x += stepX) if (brd[fy][x]) return false; }
+            if (fx === tx) { let step = ty > fy ? 1 : -1; for (let y = fy + step; y !== ty; y += step) if (brd[y][fx]) return false; }
+            else if (fy === ty) { let step = tx > fx ? 1 : -1; for (let x = fx + step; x !== tx; x += step) if (brd[fy][x]) return false; }
             else return false;
             return true;
         }
@@ -529,7 +530,7 @@
             return nb;
         }
 
-        // ---------- Zugausführung + Animationssteuerung ----------
+        // --- Zugausführung ---
         function makeMove(fx, fy, tx, ty) {
             if (isAnimating) return false;
             const piece = board[fy][fx];
@@ -542,7 +543,7 @@
             const king = findKing(turn);
             if (king && isSquareAttacked(king.x, king.y, oppositeColor(turn), copy)) return false;
 
-            // Zug ausführen
+            // Zug durchführen
             executeMoveOnBoard(board, fx, fy, tx, ty, piece, true);
             turn = oppositeColor(turn);
             selectedX = selectedY = null;
@@ -551,12 +552,13 @@
             if (rotateBoard) {
                 startFlipAnimation();
             } else {
-                orientation = orientation === 'w' ? 'b' : 'w';
-                drawBoard();
+                // Keine Animation, Figuren sofort um 180° drehen
+                figureRotation = figureRotation === 0 ? 180 : 0;
+                drawBoard(figureRotation);
             }
 
             if (checkGameOver()) {
-                drawBoard();
+                drawBoard(figureRotation);
                 updateUI();
                 return true;
             }
@@ -578,12 +580,13 @@
             return false;
         }
 
-        // ---------- Flip-Animation (JS) ----------
+        // --- Brett-Dreh-Animation (nur für „Mit Drehung“) ---
         function startFlipAnimation() {
             if (flipAnimation) cancelAnimationFrame(flipAnimation.id);
-            const duration = 450; // ms
+            const duration = 450;
             const start = performance.now();
             let orientationSwitched = false;
+            isAnimating = true;
 
             function step(now) {
                 const t = Math.min((now - start) / duration, 1);
@@ -592,26 +595,23 @@
 
                 if (t >= 0.5 && !orientationSwitched) {
                     orientation = orientation === 'w' ? 'b' : 'w';
-                    drawBoard();
+                    drawBoard(0);
                     orientationSwitched = true;
                 }
 
                 if (t < 1) {
                     flipAnimation.id = requestAnimationFrame(step);
                 } else {
-                    // Animation beendet – auf 0° zurücksetzen (ohne sichtbare Bewegung)
                     boardWrapper.style.transform = 'rotate(0deg)';
                     flipAnimation = null;
                     isAnimating = false;
-                    drawBoard(); // Endgültige Zeichnung
+                    drawBoard(0);
                 }
             }
-
-            isAnimating = true;
             flipAnimation = { id: requestAnimationFrame(step) };
         }
 
-        // ---------- UI ----------
+        // --- UI ---
         function updateUI() {
             const turnSpan = document.getElementById('turnSymbol');
             const statusDiv = document.getElementById('statusMsg');
@@ -630,7 +630,7 @@
             statusDiv.innerHTML = turn === 'w' ? 'Weiß am Zug' : 'Schwarz am Zug';
         }
 
-        // ---------- Klick auf Canvas ----------
+        // --- Canvas-Klick ---
         canvas.addEventListener('click', (e) => {
             if (gameOver || isAnimating || !homeScreen.classList.contains('hidden')) return;
             const rect = canvas.getBoundingClientRect();
@@ -647,7 +647,7 @@
                 } else {
                     selectedX = selectedY = null;
                     legalMoves = [];
-                    drawBoard();
+                    drawBoard(figureRotation);
                 }
             }
 
@@ -655,19 +655,19 @@
             if (piece && piece.color === turn && !gameOver) {
                 selectedX = ix; selectedY = iy;
                 legalMoves = getAllLegalMovesForPiece(ix, iy, piece);
-                drawBoard();
+                drawBoard(figureRotation);
             } else {
                 selectedX = selectedY = null;
                 legalMoves = [];
-                drawBoard();
+                drawBoard(figureRotation);
             }
         });
 
-        // ---------- Initialisierung ----------
+        // --- Initialisierung ---
         resetGame();
-        drawBoard();
+        drawBoard(0);
         updateUI();
-        homeScreen.classList.remove('hidden'); // Homescreen anzeigen
+        homeScreen.classList.remove('hidden');
     })();
 </script>
 </body>
