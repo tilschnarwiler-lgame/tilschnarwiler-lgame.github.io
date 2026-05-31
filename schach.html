@@ -22,11 +22,95 @@
             padding: 20px;
         }
 
+        #app {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Homescreen */
+        #homeScreen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: rgba(30, 20, 10, 0.95);
+            backdrop-filter: blur(12px);
+            border-radius: 36px;
+            z-index: 20;
+            color: #f5e7d3;
+            gap: 30px;
+            box-shadow: 0 20px 35px rgba(0,0,0,0.5);
+            transition: opacity 0.3s;
+        }
+
+        #homeScreen.hidden {
+            display: none;
+        }
+
+        .home-panel {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .home-title {
+            font-size: 3.8rem;
+            font-weight: bold;
+            color: #ecd9b4;
+            text-shadow: 0 4px 8px rgba(0,0,0,0.5);
+            letter-spacing: 4px;
+            margin-bottom: 10px;
+        }
+
+        .home-btn {
+            background: #d9b48b;
+            border: none;
+            font-weight: bold;
+            font-size: 1.4rem;
+            padding: 16px 40px;
+            border-radius: 60px;
+            cursor: pointer;
+            transition: 0.1s linear;
+            color: #2d241c;
+            font-family: inherit;
+            box-shadow: 0 5px 0 #7a5a44, 0 8px 15px rgba(0,0,0,0.3);
+            min-width: 240px;
+            text-align: center;
+            letter-spacing: 1px;
+        }
+
+        .home-btn:active {
+            transform: translateY(3px);
+            box-shadow: 0 2px 0 #7a5a44, 0 4px 8px rgba(0,0,0,0.3);
+        }
+
+        .home-btn.back-btn {
+            background: #b3a08c;
+            box-shadow: 0 5px 0 #6b5b4a;
+        }
+
+        .home-subtitle {
+            font-size: 1rem;
+            color: #c0a882;
+            margin-top: -15px;
+        }
+
+        /* Spielcontainer */
         .game-container {
             background: #3b2e24;
             border-radius: 36px;
             padding: 20px 20px 24px;
             box-shadow: 0 20px 35px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255,255,255,0.1);
+            visibility: visible;
+            transition: filter 0.2s;
         }
 
         .board-wrapper {
@@ -38,7 +122,6 @@
             will-change: transform;
         }
 
-        /* Animationsklasse für die 180° Drehung im Uhrzeigersinn */
         .board-wrapper.flip {
             transform: rotate(180deg);
         }
@@ -111,6 +194,8 @@
         }
 
         @media (max-width: 550px) {
+            .home-title { font-size: 2.5rem; }
+            .home-btn { padding: 12px 30px; font-size: 1.1rem; min-width: 180px; }
             .turn-indicator { font-size: 0.9rem; padding: 5px 15px; }
             .status { font-size: 0.8rem; }
             button { padding: 5px 16px; font-size: 0.8rem; }
@@ -118,8 +203,24 @@
     </style>
 </head>
 <body>
-<div>
-    <div class="game-container">
+<div id="app">
+    <!-- Homescreen -->
+    <div id="homeScreen">
+        <div id="homeMain" class="home-panel">
+            <div class="home-title">♔ Schach ♚</div>
+            <div class="home-subtitle">Lokales Zweispieler-Spiel</div>
+            <button class="home-btn" id="btnTwoPlayer">2 Spieler</button>
+        </div>
+        <div id="homeOptions" class="home-panel" style="display: none;">
+            <div class="home-title" style="font-size: 2.5rem;">Brett drehen?</div>
+            <button class="home-btn" id="btnRotateYes">↻ Mit Drehung</button>
+            <button class="home-btn" id="btnRotateNo">↺ Ohne Drehung</button>
+            <button class="home-btn back-btn" id="btnBackToMain">← Zurück</button>
+        </div>
+    </div>
+
+    <!-- Spiel -->
+    <div class="game-container" id="gameContainer">
         <div class="board-wrapper" id="boardWrapper">
             <canvas id="chessCanvas" width="480" height="480"></canvas>
         </div>
@@ -131,6 +232,7 @@
             <div class="status" id="statusMsg">
                 Spielbereit
             </div>
+            <button id="homeBtn">🏠 Home</button>
             <button id="resetBtn">🔄 Neustart</button>
         </div>
     </div>
@@ -144,6 +246,10 @@
         const size = 480;
         const cellSize = size / 8;
         const boardWrapper = document.getElementById('boardWrapper');
+        const homeScreen = document.getElementById('homeScreen');
+        const gameContainer = document.getElementById('gameContainer');
+        const homeMain = document.getElementById('homeMain');
+        const homeOptions = document.getElementById('homeOptions');
 
         // ---------- Spielzustand ----------
         let board = Array(8).fill().map(() => Array(8).fill(null));
@@ -170,6 +276,9 @@
         // Sperre für Animation: während der Brettdrehung keine weiteren Züge
         let isAnimating = false;
 
+        // Option: Brett drehen oder nicht
+        let rotateBoard = true;
+
         // --- Figuren-Initialisierung ---
         function initBoard() {
             for(let i = 0; i < 8; i++) {
@@ -182,7 +291,7 @@
                 board[1][i] = { type: 'p', color: 'b' };
                 board[6][i] = { type: 'p', color: 'w' };
             }
-            // andere Figuren Schwarz (tiefschwarz)
+            // andere Figuren Schwarz
             const backRowBlack = ['r','n','b','q','k','b','n','r'];
             for(let i = 0; i < 8; i++) {
                 board[0][i] = { type: backRowBlack[i], color: 'b' };
@@ -194,9 +303,9 @@
             }
         }
 
-        // Zurücksetzen
-        function resetGame() {
-            // Animation abbrechen, falls aktiv
+        // Spiel zurücksetzen (ohne Homescreen)
+        function resetGame(keepRotationSetting = true) {
+            // Animation abbrechen
             isAnimating = false;
             boardWrapper.classList.remove('flip');
             boardWrapper.style.transition = '';
@@ -215,11 +324,67 @@
             selectedX = null;
             selectedY = null;
             legalMoves = [];
+            if (keepRotationSetting === false) {
+                rotateBoard = true; // default
+            }
             drawBoard();
             updateUI();
         }
 
-        // --- Figuren-Symbole (einheitlich, aber klar weiß / schwarz) ---
+        // Homescreen-Menüs
+        document.getElementById('btnTwoPlayer').addEventListener('click', () => {
+            homeMain.style.display = 'none';
+            homeOptions.style.display = 'flex';
+        });
+
+        document.getElementById('btnBackToMain').addEventListener('click', () => {
+            homeOptions.style.display = 'none';
+            homeMain.style.display = 'flex';
+        });
+
+        document.getElementById('btnRotateYes').addEventListener('click', () => {
+            rotateBoard = true;
+            startGameFromHome();
+        });
+
+        document.getElementById('btnRotateNo').addEventListener('click', () => {
+            rotateBoard = false;
+            startGameFromHome();
+        });
+
+        function startGameFromHome() {
+            homeScreen.classList.add('hidden');
+            // Spiel zurücksetzen, aber rotateBoard beibehalten
+            resetGame(false);
+            // rotateBoard wurde in resetGame(false) auf true gesetzt, deshalb überschreiben wir es
+            // besser: wir übergeben die Einstellung separat
+        }
+
+        // Korrektur: rotateBoard nach resetGame setzen
+        function startGameWithRotation(rotate) {
+            rotateBoard = rotate;
+            resetGame(true); // behält rotateBoard bei
+            homeScreen.classList.add('hidden');
+            drawBoard();
+        }
+
+        document.getElementById('btnRotateYes').addEventListener('click', () => startGameWithRotation(true));
+        document.getElementById('btnRotateNo').addEventListener('click', () => startGameWithRotation(false));
+
+        document.getElementById('homeBtn').addEventListener('click', () => {
+            // Zurück zum Homescreen
+            homeScreen.classList.remove('hidden');
+            homeOptions.style.display = 'none';
+            homeMain.style.display = 'flex';
+            resetGame(true); // Spielzustand zurücksetzen
+        });
+
+        document.getElementById('resetBtn').addEventListener('click', () => {
+            resetGame(true);
+            drawBoard();
+        });
+
+        // --- Figuren-Symbole ---
         function getPieceSymbol(piece) {
             if(!piece) return '';
             const symbols = {
@@ -246,7 +411,7 @@
             }
         }
 
-        // Zeichnet das gesamte Brett (Figuren: klar weiß / schwarz)
+        // Zeichnet das gesamte Brett
         function drawBoard() {
             for(let row = 0; row < 8; row++) {
                 for(let col = 0; col < 8; col++) {
@@ -255,13 +420,11 @@
                     ctx.fillStyle = isLight ? '#f0d9b5' : '#b58863';
                     ctx.fillRect(cx, cy, cellSize, cellSize);
                     
-                    // Hervorhebung ausgewähltes Feld
                     if(selectedX === col && selectedY === row) {
                         ctx.fillStyle = 'rgba(90, 190, 90, 0.65)';
                         ctx.fillRect(cx, cy, cellSize, cellSize);
                     }
                     
-                    // Mögliche Züge markieren
                     if(legalMoves.some(move => move.x === col && move.y === row)) {
                         ctx.fillStyle = 'rgba(70, 130, 200, 0.55)';
                         ctx.fillRect(cx, cy, cellSize, cellSize);
@@ -271,7 +434,6 @@
                         ctx.fill();
                     }
                     
-                    // Figur zeichnen
                     const piece = board[row][col];
                     if(piece) {
                         const symbol = getPieceSymbol(piece);
@@ -281,7 +443,6 @@
                         const isWhite = piece.color === 'w';
                         ctx.fillStyle = isWhite ? '#FFF9E6' : '#1A1814';
                         ctx.fillText(symbol, cx + cellSize/2, cy + cellSize/2);
-                        // Kontur für bessere Lesbarkeit
                         ctx.fillStyle = isWhite ? '#E0D5B0' : '#4A3E32';
                         ctx.fillText(symbol, cx + cellSize/2 - 1, cy + cellSize/2 - 1);
                         ctx.fillStyle = isWhite ? '#FFFFFF' : '#0A0A0A';
@@ -290,7 +451,6 @@
                 }
             }
             
-            // Schach-Hinweis
             if(!gameOver && isCheck(turn)) {
                 const kingPos = findKing(turn);
                 if(kingPos) {
@@ -517,9 +677,9 @@
             return newBoard;
         }
         
-        // Führt einen Zug aus, startet die Drehanimation, wechselt dann die Orientierung
+        // Führt einen Zug aus, optional mit Drehanimation
         function makeMove(fromX, fromY, toX, toY) {
-            if(isAnimating) return false;   // keine Züge während Animation
+            if(isAnimating) return false;
             const piece = board[fromY][fromX];
             if(!piece || piece.color !== turn) return false;
             const movesForPiece = getAllLegalMovesForPiece(fromX, fromY, piece);
@@ -532,43 +692,40 @@
             const kingPos = findKing(turn);
             if(kingPos && isSquareAttacked(kingPos.x, kingPos.y, oppositeColor(turn), tempBoard)) return false;
             
-            // --- Zug ausführen ---
+            // Zug ausführen
             const realPiece = board[fromY][fromX];
             executeMoveOnBoard(board, fromX, fromY, toX, toY, realPiece, true);
             
             // Spielerwechsel
             turn = oppositeColor(turn);
             
-            // Animation starten
-            isAnimating = true;
-            // Klasse für Drehung setzen
-            boardWrapper.classList.add('flip');
-            
-            // Nach halber Animationszeit: Orientierung wechseln und neu zeichnen,
-            // sodass die Figuren bereits korrekt stehen, während das Brett noch gedreht ist.
-            setTimeout(() => {
-                orientation = (orientation === 'w') ? 'b' : 'w';
-                drawBoard();
-            }, 225);
-            
-            // Nach voller Animationsdauer: Rotation zurücksetzen, ABER ohne sichtbare Rückwärtsanimation.
-            setTimeout(() => {
-                // Transition kurz deaktivieren, um das Zurückspringen unsichtbar zu machen
-                boardWrapper.style.transition = 'none';
-                boardWrapper.classList.remove('flip');
-                boardWrapper.style.transform = 'none';
-                // Reflow erzwingen, damit der Browser den stil ohne transition anwendet
-                boardWrapper.offsetHeight; 
-                // Transition wieder aktivieren für die nächste Drehung
-                boardWrapper.style.transition = '';
-                
-                isAnimating = false;
-                drawBoard(); // sicherstellen, dass alles korrekt gezeichnet ist
-            }, 450);
-            
             selectedX = null;
             selectedY = null;
             legalMoves = [];
+            
+            if (rotateBoard) {
+                // Animation starten
+                isAnimating = true;
+                boardWrapper.classList.add('flip');
+                
+                setTimeout(() => {
+                    orientation = (orientation === 'w') ? 'b' : 'w';
+                    drawBoard();
+                }, 225);
+                
+                setTimeout(() => {
+                    boardWrapper.style.transition = 'none';
+                    boardWrapper.classList.remove('flip');
+                    boardWrapper.style.transform = 'none';
+                    boardWrapper.offsetHeight;
+                    boardWrapper.style.transition = '';
+                    isAnimating = false;
+                    drawBoard();
+                }, 450);
+            } else {
+                // Keine Drehung, einfach neu zeichnen
+                drawBoard();
+            }
             
             if(isGameOverAfterMove()) {
                 drawBoard();
@@ -633,7 +790,8 @@
         
         // Klick-Event mit Koordinatentransformation
         function handleCanvasClick(e) {
-            if(gameOver || isAnimating) return;   // keine Interaktion während Animation
+            if(gameOver || isAnimating) return;
+            if(homeScreen && !homeScreen.classList.contains('hidden')) return; // Spiel versteckt
             const rect = canvas.getBoundingClientRect();
             const scaleX = canvas.width / rect.width;
             const scaleY = canvas.height / rect.height;
@@ -672,12 +830,10 @@
         }
         
         canvas.addEventListener('click', handleCanvasClick);
-        document.getElementById('resetBtn').addEventListener('click', () => {
-            resetGame();
-            drawBoard();
-        });
         
-        resetGame();
+        // Start: Homescreen anzeigen, Spiel initialisieren aber nicht starten
+        homeScreen.classList.remove('hidden');
+        resetGame(true);
         drawBoard();
     })();
 </script>
