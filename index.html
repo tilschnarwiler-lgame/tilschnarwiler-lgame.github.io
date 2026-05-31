@@ -521,6 +521,10 @@ iframe {
                 <span class="card-icon">⚓️</span>
                 <span class="card-title">Harbor Master</span>
             </div>
+            <div class="game-card" onclick="showGame('schach')">
+                <span class="card-icon">♟️</span>
+                <span class="card-title">Schach</span>
+            </div>
         </div>
     </div>
 </div>
@@ -657,7 +661,17 @@ iframe {
         <iframe src="harbor_master.html" width="800" height="600" scrolling="no"></iframe>
     </div>
 </div>
-    
+
+<!-- Schach -->
+<div id="schach" class="game">
+    <div class="game-header">
+        <button class="backBtn" onclick="showGame('menu')">⬅ Zurück</button>
+        <span class="game-title">♟️ Schach</span>
+    </div>
+    <div class="iframe-wrap" style="--iframe-h:600px;">
+        <iframe src="schach.html" width="800" height="600" scrolling="no"></iframe>
+    </div>
+</div>
 ```
 
 </div>
