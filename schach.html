@@ -1,0 +1,686 @@
+```html
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Schach - Drehendes Brett (Animation)</title>
+    <style>
+        * {
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background: linear-gradient(145deg, #2a3b2c 0%, #1e2a1f 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Segoe UI', 'Roboto', 'Noto Sans', system-ui, sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .game-container {
+            background: #3b2e24;
+            border-radius: 36px;
+            padding: 20px 20px 24px;
+            box-shadow: 0 20px 35px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255,255,255,0.1);
+        }
+
+        .board-wrapper {
+            background: #ecd9b4;
+            border-radius: 12px;
+            padding: 12px;
+            box-shadow: inset 0 0 0 2px #f5e7d3, 0 10px 20px rgba(0, 0, 0, 0.3);
+            transition: transform 0.45s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+            will-change: transform;
+        }
+
+        /* Animationsklasse für die 180° Drehung im Uhrzeigersinn */
+        .board-wrapper.flip {
+            transform: rotate(180deg);
+        }
+
+        canvas {
+            display: block;
+            margin: 0 auto;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            cursor: pointer;
+            width: 100%;
+            height: auto;
+            background-color: #f0d9b5;
+        }
+
+        .info-panel {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .turn-indicator {
+            background: #2c2118;
+            padding: 8px 20px;
+            border-radius: 60px;
+            color: #f2e8cf;
+            font-weight: bold;
+            font-size: 1.2rem;
+            letter-spacing: 1px;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.4), 0 2px 3px rgba(255,255,240,0.1);
+        }
+
+        .turn-indicator span {
+            display: inline-block;
+            margin-left: 10px;
+            font-size: 1.5rem;
+            vertical-align: middle;
+        }
+
+        .status {
+            background: #1f1a14;
+            padding: 8px 18px;
+            border-radius: 40px;
+            font-weight: 600;
+            color: #ffde9c;
+            font-size: 1rem;
+            box-shadow: inset 0 1px 2px rgba(0,0,0,0.5), 0 1px 0 rgba(255,255,200,0.1);
+        }
+
+        button {
+            background: #d9b48b;
+            border: none;
+            font-weight: bold;
+            font-size: 1rem;
+            padding: 8px 20px;
+            border-radius: 40px;
+            cursor: pointer;
+            transition: 0.1s linear;
+            color: #2d241c;
+            font-family: inherit;
+            box-shadow: 0 3px 0 #7a5a44;
+        }
+
+        button:active {
+            transform: translateY(2px);
+            box-shadow: 0 1px 0 #7a5a44;
+        }
+
+        @media (max-width: 550px) {
+            .turn-indicator { font-size: 0.9rem; padding: 5px 15px; }
+            .status { font-size: 0.8rem; }
+            button { padding: 5px 16px; font-size: 0.8rem; }
+        }
+    </style>
+</head>
+<body>
+<div>
+    <div class="game-container">
+        <div class="board-wrapper" id="boardWrapper">
+            <canvas id="chessCanvas" width="480" height="480"></canvas>
+        </div>
+        <div class="info-panel">
+            <div class="turn-indicator">
+                🎲 Zug:
+                <span id="turnSymbol">⚪ Weiß</span>
+            </div>
+            <div class="status" id="statusMsg">
+                Spielbereit
+            </div>
+            <button id="resetBtn">🔄 Neustart</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function(){
+        // ---------- Canvas ----------
+        const canvas = document.getElementById('chessCanvas');
+        const ctx = canvas.getContext('2d');
+        const size = 480;
+        const cellSize = size / 8;
+        const boardWrapper = document.getElementById('boardWrapper');
+
+        // ---------- Spielzustand ----------
+        let board = Array(8).fill().map(() => Array(8).fill(null));
+        let turn = 'w';        // 'w' weiß beginnt
+        let gameOver = false;
+        let gameResult = null;
+
+        // Brettorientierung: 'w' = Weiß unten, 'b' = Schwarz unten (für die Zeichnung)
+        let orientation = 'w';
+
+        // Rochaderechte
+        let castlingRights = {
+            wK: true, wQ: true,
+            bK: true, bQ: true
+        };
+
+        // En passant Ziel
+        let enPassantTarget = null;
+
+        // Für UI: ausgewählte Figur (interne Board-Koordinaten!)
+        let selectedX = null, selectedY = null;
+        let legalMoves = [];
+
+        // Sperre für Animation: während der Brettdrehung keine weiteren Züge
+        let isAnimating = false;
+
+        // --- Figuren-Initialisierung ---
+        function initBoard() {
+            for(let i = 0; i < 8; i++) {
+                for(let j = 0; j < 8; j++) {
+                    board[i][j] = null;
+                }
+            }
+            // Bauern
+            for(let i = 0; i < 8; i++) {
+                board[1][i] = { type: 'p', color: 'b' };
+                board[6][i] = { type: 'p', color: 'w' };
+            }
+            // andere Figuren Schwarz (tiefschwarz)
+            const backRowBlack = ['r','n','b','q','k','b','n','r'];
+            for(let i = 0; i < 8; i++) {
+                board[0][i] = { type: backRowBlack[i], color: 'b' };
+            }
+            // Weiß
+            const backRowWhite = ['r','n','b','q','k','b','n','r'];
+            for(let i = 0; i < 8; i++) {
+                board[7][i] = { type: backRowWhite[i], color: 'w' };
+            }
+        }
+
+        // Zurücksetzen
+        function resetGame() {
+            // Animation abbrechen, falls aktiv
+            isAnimating = false;
+            boardWrapper.classList.remove('flip');
+            boardWrapper.style.transition = '';
+            boardWrapper.style.transform = '';
+            
+            initBoard();
+            turn = 'w';
+            orientation = 'w';
+            gameOver = false;
+            gameResult = null;
+            castlingRights = {
+                wK: true, wQ: true,
+                bK: true, bQ: true
+            };
+            enPassantTarget = null;
+            selectedX = null;
+            selectedY = null;
+            legalMoves = [];
+            drawBoard();
+            updateUI();
+        }
+
+        // --- Figuren-Symbole (einheitlich, aber klar weiß / schwarz) ---
+        function getPieceSymbol(piece) {
+            if(!piece) return '';
+            const symbols = {
+                'k': '♔', 'q': '♕', 'r': '♖', 'b': '♗', 'n': '♘', 'p': '♙'
+            };
+            return symbols[piece.type] || '';
+        }
+
+        // Konvertiert Canvas-Koordinaten zu internen Board-Koordinaten (abhängig von Orientierung)
+        function canvasToInternal(colCanvas, rowCanvas) {
+            if(orientation === 'w') {
+                return { x: colCanvas, y: rowCanvas };
+            } else {
+                return { x: 7 - colCanvas, y: 7 - rowCanvas };
+            }
+        }
+
+        // Konvertiert interne Board-Koordinaten zu Canvas-Pixel-Position
+        function internalToCanvas(x, y) {
+            if(orientation === 'w') {
+                return { cx: x * cellSize, cy: y * cellSize };
+            } else {
+                return { cx: (7 - x) * cellSize, cy: (7 - y) * cellSize };
+            }
+        }
+
+        // Zeichnet das gesamte Brett (Figuren: klar weiß / schwarz)
+        function drawBoard() {
+            for(let row = 0; row < 8; row++) {
+                for(let col = 0; col < 8; col++) {
+                    const { cx, cy } = internalToCanvas(col, row);
+                    const isLight = (row + col) % 2 === 0;
+                    ctx.fillStyle = isLight ? '#f0d9b5' : '#b58863';
+                    ctx.fillRect(cx, cy, cellSize, cellSize);
+                    
+                    // Hervorhebung ausgewähltes Feld
+                    if(selectedX === col && selectedY === row) {
+                        ctx.fillStyle = 'rgba(90, 190, 90, 0.65)';
+                        ctx.fillRect(cx, cy, cellSize, cellSize);
+                    }
+                    
+                    // Mögliche Züge markieren
+                    if(legalMoves.some(move => move.x === col && move.y === row)) {
+                        ctx.fillStyle = 'rgba(70, 130, 200, 0.55)';
+                        ctx.fillRect(cx, cy, cellSize, cellSize);
+                        ctx.beginPath();
+                        ctx.arc(cx + cellSize/2, cy + cellSize/2, cellSize*0.18, 0, 2*Math.PI);
+                        ctx.fillStyle = '#2c6e2f';
+                        ctx.fill();
+                    }
+                    
+                    // Figur zeichnen
+                    const piece = board[row][col];
+                    if(piece) {
+                        const symbol = getPieceSymbol(piece);
+                        ctx.font = `500 ${cellSize * 0.68}px 'Segoe UI', 'Noto Sans', system-ui`;
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        const isWhite = piece.color === 'w';
+                        ctx.fillStyle = isWhite ? '#FFF9E6' : '#1A1814';
+                        ctx.fillText(symbol, cx + cellSize/2, cy + cellSize/2);
+                        // Kontur für bessere Lesbarkeit
+                        ctx.fillStyle = isWhite ? '#E0D5B0' : '#4A3E32';
+                        ctx.fillText(symbol, cx + cellSize/2 - 1, cy + cellSize/2 - 1);
+                        ctx.fillStyle = isWhite ? '#FFFFFF' : '#0A0A0A';
+                        ctx.fillText(symbol, cx + cellSize/2, cy + cellSize/2);
+                    }
+                }
+            }
+            
+            // Schach-Hinweis
+            if(!gameOver && isCheck(turn)) {
+                const kingPos = findKing(turn);
+                if(kingPos) {
+                    const { cx, cy } = internalToCanvas(kingPos.x, kingPos.y);
+                    ctx.fillStyle = 'rgba(220, 60, 50, 0.75)';
+                    ctx.fillRect(cx, cy, cellSize, cellSize);
+                }
+            }
+        }
+
+        // --- Kernlogik: Bewegung & Angriffsprüfung ---
+        function isSquareAttacked(x, y, colorDefender, boardState) {
+            for(let row = 0; row < 8; row++) {
+                for(let col = 0; col < 8; col++) {
+                    const piece = boardState[row][col];
+                    if(piece && piece.color === colorDefender) {
+                        if(canPieceMoveTo(piece, col, row, x, y, boardState, true)) {
+                            return true;
+                        }
+                    }
+                }
+            }
+            return false;
+        }
+
+        function canPieceMoveTo(piece, fromX, fromY, toX, toY, boardState, attackOnly = false) {
+            if(toX < 0 || toX > 7 || toY < 0 || toY > 7) return false;
+            const targetPiece = boardState[toY][toX];
+            if(targetPiece && targetPiece.color === piece.color) return false;
+            
+            const deltaX = toX - fromX;
+            const deltaY = toY - fromY;
+            const absDeltaX = Math.abs(deltaX);
+            const absDeltaY = Math.abs(deltaY);
+            
+            switch(piece.type) {
+                case 'p':
+                    const direction = (piece.color === 'w') ? -1 : 1;
+                    const startRow = (piece.color === 'w') ? 6 : 1;
+                    if(deltaX === 0 && deltaY === direction && !targetPiece) return true;
+                    if(deltaX === 0 && deltaY === 2*direction && !targetPiece && fromY === startRow && !boardState[toY - direction][toX]) return true;
+                    if(absDeltaX === 1 && deltaY === direction && targetPiece) return true;
+                    if(!attackOnly && enPassantTarget && enPassantTarget.x === toX && enPassantTarget.y === toY && absDeltaX === 1 && deltaY === direction && !targetPiece) {
+                        const pawnY = (piece.color === 'w') ? toY+1 : toY-1;
+                        const oppPawn = boardState[pawnY][toX];
+                        if(oppPawn && oppPawn.type === 'p' && oppPawn.color !== piece.color) return true;
+                    }
+                    return false;
+                case 'n':
+                    return (absDeltaX === 2 && absDeltaY === 1) || (absDeltaX === 1 && absDeltaY === 2);
+                case 'b':
+                    if(absDeltaX !== absDeltaY) return false;
+                    return isClearDiagonal(fromX, fromY, toX, toY, boardState);
+                case 'r':
+                    if(fromX !== toX && fromY !== toY) return false;
+                    return isClearLine(fromX, fromY, toX, toY, boardState);
+                case 'q':
+                    if(fromX === toX || fromY === toY) return isClearLine(fromX, fromY, toX, toY, boardState);
+                    if(absDeltaX === absDeltaY) return isClearDiagonal(fromX, fromY, toX, toY, boardState);
+                    return false;
+                case 'k':
+                    if(absDeltaX <= 1 && absDeltaY <= 1) return true;
+                    if(!attackOnly && !gameOver && !isCheck(piece.color)) {
+                        if(deltaX === 2 && deltaY === 0 && fromY === toY) {
+                            const backrank = (piece.color === 'w') ? 7 : 0;
+                            if(fromY === backrank && fromX === 4 && toX === 6) {
+                                const kingRook = boardState[backrank][7];
+                                if(castlingRights[piece.color === 'w' ? 'wK' : 'bK'] && kingRook && kingRook.type === 'r' && kingRook.color === piece.color &&
+                                    !boardState[backrank][5] && !boardState[backrank][6] &&
+                                    !isSquareAttacked(5, backrank, oppositeColor(piece.color), boardState) &&
+                                    !isSquareAttacked(6, backrank, oppositeColor(piece.color), boardState)) {
+                                    return true;
+                                }
+                            }
+                        }
+                        if(deltaX === -2 && deltaY === 0 && fromY === toY) {
+                            const backrank = (piece.color === 'w') ? 7 : 0;
+                            if(fromY === backrank && fromX === 4 && toX === 2) {
+                                const queenRook = boardState[backrank][0];
+                                if(castlingRights[piece.color === 'w' ? 'wQ' : 'bQ'] && queenRook && queenRook.type === 'r' && queenRook.color === piece.color &&
+                                    !boardState[backrank][3] && !boardState[backrank][2] && !boardState[backrank][1] &&
+                                    !isSquareAttacked(3, backrank, oppositeColor(piece.color), boardState) &&
+                                    !isSquareAttacked(2, backrank, oppositeColor(piece.color), boardState)) {
+                                    return true;
+                                }
+                            }
+                        }
+                    }
+                    return false;
+                default: return false;
+            }
+        }
+        
+        function isClearLine(fx, fy, tx, ty, boardState) {
+            if(fx === tx) {
+                let stepY = (ty > fy) ? 1 : -1;
+                for(let y = fy+stepY; y !== ty; y += stepY) {
+                    if(boardState[y][fx]) return false;
+                }
+            } else if(fy === ty) {
+                let stepX = (tx > fx) ? 1 : -1;
+                for(let x = fx+stepX; x !== tx; x += stepX) {
+                    if(boardState[fy][x]) return false;
+                }
+            } else return false;
+            return true;
+        }
+        
+        function isClearDiagonal(fx, fy, tx, ty, boardState) {
+            let stepX = (tx > fx) ? 1 : -1;
+            let stepY = (ty > fy) ? 1 : -1;
+            let x = fx+stepX, y = fy+stepY;
+            while(x !== tx && y !== ty) {
+                if(boardState[y][x]) return false;
+                x += stepX;
+                y += stepY;
+            }
+            return true;
+        }
+        
+        function oppositeColor(color) {
+            return color === 'w' ? 'b' : 'w';
+        }
+        
+        function findKing(color) {
+            for(let i=0;i<8;i++) {
+                for(let j=0;j<8;j++) {
+                    if(board[i][j] && board[i][j].type === 'k' && board[i][j].color === color) return { x: j, y: i };
+                }
+            }
+            return null;
+        }
+        
+        function isCheck(color) {
+            const kingPos = findKing(color);
+            if(!kingPos) return false;
+            return isSquareAttacked(kingPos.x, kingPos.y, oppositeColor(color), board);
+        }
+        
+        function getAllLegalMovesForPiece(x, y, piece) {
+            const moves = [];
+            for(let i=0;i<8;i++) {
+                for(let j=0;j<8;j++) {
+                    if(canPieceMoveTo(piece, x, y, i, j, board, false)) {
+                        const tempBoard = copyBoard();
+                        executeMoveOnBoard(tempBoard, x, y, i, j, piece, false);
+                        const kingPosAfter = findKing(piece.color);
+                        if(kingPosAfter && !isSquareAttacked(kingPosAfter.x, kingPosAfter.y, oppositeColor(piece.color), tempBoard)) {
+                            moves.push({ x: i, y: j });
+                        }
+                    }
+                }
+            }
+            return moves;
+        }
+        
+        function executeMoveOnBoard(boardState, fromX, fromY, toX, toY, piece, isRealMove = true) {
+            const capturedPiece = boardState[toY][toX];
+            if(piece.type === 'p' && !capturedPiece && enPassantTarget && enPassantTarget.x === toX && enPassantTarget.y === toY) {
+                const direction = (piece.color === 'w') ? -1 : 1;
+                const capY = toY - direction;
+                const capPawn = boardState[capY][toX];
+                if(capPawn && capPawn.type === 'p' && capPawn.color !== piece.color) {
+                    boardState[capY][toX] = null;
+                }
+            }
+            boardState[toY][toX] = piece;
+            boardState[fromY][fromX] = null;
+            
+            if(piece.type === 'p' && (toY === 0 || toY === 7)) {
+                boardState[toY][toX] = { type: 'q', color: piece.color };
+            }
+            
+            if(piece.type === 'k' && Math.abs(toX - fromX) === 2 && fromY === toY) {
+                const backrank = fromY;
+                if(toX === 6) {
+                    const rook = boardState[backrank][7];
+                    if(rook && rook.type === 'r') {
+                        boardState[backrank][5] = rook;
+                        boardState[backrank][7] = null;
+                    }
+                } else if(toX === 2) {
+                    const rook = boardState[backrank][0];
+                    if(rook && rook.type === 'r') {
+                        boardState[backrank][3] = rook;
+                        boardState[backrank][0] = null;
+                    }
+                }
+            }
+            
+            if(isRealMove) {
+                if(piece.type === 'k') {
+                    if(piece.color === 'w') { castlingRights.wK = false; castlingRights.wQ = false; }
+                    else { castlingRights.bK = false; castlingRights.bQ = false; }
+                }
+                if(piece.type === 'r') {
+                    if(fromY === 0 && fromX === 0) castlingRights.bQ = false;
+                    if(fromY === 0 && fromX === 7) castlingRights.bK = false;
+                    if(fromY === 7 && fromX === 0) castlingRights.wQ = false;
+                    if(fromY === 7 && fromX === 7) castlingRights.wK = false;
+                }
+                if(capturedPiece && capturedPiece.type === 'r') {
+                    if(toY === 0 && toX === 0) castlingRights.bQ = false;
+                    if(toY === 0 && toX === 7) castlingRights.bK = false;
+                    if(toY === 7 && toX === 0) castlingRights.wQ = false;
+                    if(toY === 7 && toX === 7) castlingRights.wK = false;
+                }
+                if(piece.type === 'p' && Math.abs(toY - fromY) === 2) {
+                    const midY = (fromY + toY) / 2;
+                    enPassantTarget = { x: fromX, y: midY };
+                } else {
+                    enPassantTarget = null;
+                }
+            }
+        }
+        
+        function copyBoard() {
+            const newBoard = Array(8).fill().map(()=>Array(8).fill(null));
+            for(let i=0;i<8;i++) {
+                for(let j=0;j<8;j++) {
+                    if(board[i][j]) newBoard[i][j] = {...board[i][j]};
+                }
+            }
+            return newBoard;
+        }
+        
+        // Führt einen Zug aus, startet die Drehanimation, wechselt dann die Orientierung
+        function makeMove(fromX, fromY, toX, toY) {
+            if(isAnimating) return false;   // keine Züge während Animation
+            const piece = board[fromY][fromX];
+            if(!piece || piece.color !== turn) return false;
+            const movesForPiece = getAllLegalMovesForPiece(fromX, fromY, piece);
+            const isValid = movesForPiece.some(m => m.x === toX && m.y === toY);
+            if(!isValid) return false;
+            
+            const tempBoard = copyBoard();
+            const pieceCopy = tempBoard[fromY][fromX];
+            executeMoveOnBoard(tempBoard, fromX, fromY, toX, toY, pieceCopy, false);
+            const kingPos = findKing(turn);
+            if(kingPos && isSquareAttacked(kingPos.x, kingPos.y, oppositeColor(turn), tempBoard)) return false;
+            
+            // --- Zug ausführen ---
+            const realPiece = board[fromY][fromX];
+            executeMoveOnBoard(board, fromX, fromY, toX, toY, realPiece, true);
+            
+            // Spielerwechsel
+            turn = oppositeColor(turn);
+            
+            // Animation starten
+            isAnimating = true;
+            // Klasse für Drehung setzen
+            boardWrapper.classList.add('flip');
+            
+            // Nach halber Animationszeit: Orientierung wechseln und neu zeichnen,
+            // sodass die Figuren bereits korrekt stehen, während das Brett noch gedreht ist.
+            setTimeout(() => {
+                orientation = (orientation === 'w') ? 'b' : 'w';
+                drawBoard();
+            }, 225);
+            
+            // Nach voller Animationsdauer: Rotation zurücksetzen, ABER ohne sichtbare Rückwärtsanimation.
+            setTimeout(() => {
+                // Transition kurz deaktivieren, um das Zurückspringen unsichtbar zu machen
+                boardWrapper.style.transition = 'none';
+                boardWrapper.classList.remove('flip');
+                boardWrapper.style.transform = 'none';
+                // Reflow erzwingen, damit der Browser den stil ohne transition anwendet
+                boardWrapper.offsetHeight; 
+                // Transition wieder aktivieren für die nächste Drehung
+                boardWrapper.style.transition = '';
+                
+                isAnimating = false;
+                drawBoard(); // sicherstellen, dass alles korrekt gezeichnet ist
+            }, 450);
+            
+            selectedX = null;
+            selectedY = null;
+            legalMoves = [];
+            
+            if(isGameOverAfterMove()) {
+                drawBoard();
+                updateUI();
+                return true;
+            }
+            updateUI();
+            return true;
+        }
+        
+        function isGameOverAfterMove() {
+            const currentColor = turn;
+            const allPieces = getAllPiecesOfColor(currentColor);
+            let anyMove = false;
+            for(let p of allPieces) {
+                const moves = getAllLegalMovesForPiece(p.x, p.y, p.piece);
+                if(moves.length > 0) { anyMove = true; break; }
+            }
+            if(!anyMove) {
+                gameOver = true;
+                if(isCheck(currentColor)) {
+                    gameResult = 'checkmate';
+                } else {
+                    gameResult = 'stalemate';
+                }
+                return true;
+            }
+            return false;
+        }
+        
+        function getAllPiecesOfColor(color) {
+            const pieces = [];
+            for(let y=0;y<8;y++) {
+                for(let x=0;x<8;x++) {
+                    if(board[y][x] && board[y][x].color === color) {
+                        pieces.push({ x, y, piece: board[y][x] });
+                    }
+                }
+            }
+            return pieces;
+        }
+        
+        function updateUI() {
+            const turnSpan = document.getElementById('turnSymbol');
+            const statusDiv = document.getElementById('statusMsg');
+            if(gameOver) {
+                if(gameResult === 'checkmate') {
+                    const loser = turn === 'w' ? 'Schwarz' : 'Weiß';
+                    statusDiv.innerHTML = `🏆 Schachmatt! ${loser} gewinnt! 🏆`;
+                } else if(gameResult === 'stalemate') {
+                    statusDiv.innerHTML = `♟️ Patt – Unentschieden! ♟️`;
+                } else {
+                    statusDiv.innerHTML = `Spiel beendet.`;
+                }
+                turnSpan.innerHTML = gameResult === 'checkmate' ? (turn === 'w' ? '⚫ Schwarz' : '⚪ Weiß') + " gewinnt" : "🏁 Ende";
+                return;
+            }
+            const checkNotice = isCheck(turn) ? " (SCHACH!)" : "";
+            turnSpan.innerHTML = turn === 'w' ? '⚪ Weiß' + checkNotice : '⚫ Schwarz' + checkNotice;
+            statusDiv.innerHTML = turn === 'w' ? 'Weiß am Zug' : 'Schwarz am Zug';
+        }
+        
+        // Klick-Event mit Koordinatentransformation
+        function handleCanvasClick(e) {
+            if(gameOver || isAnimating) return;   // keine Interaktion während Animation
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            const mouseX = (e.clientX - rect.left) * scaleX;
+            const mouseY = (e.clientY - rect.top) * scaleY;
+            const colCanvas = Math.floor(mouseX / cellSize);
+            const rowCanvas = Math.floor(mouseY / cellSize);
+            if(colCanvas<0 || colCanvas>7 || rowCanvas<0 || rowCanvas>7) return;
+            
+            const { x: internalX, y: internalY } = canvasToInternal(colCanvas, rowCanvas);
+            
+            if(selectedX !== null && selectedY !== null) {
+                const isLegalTarget = legalMoves.some(m => m.x === internalX && m.y === internalY);
+                if(isLegalTarget) {
+                    makeMove(selectedX, selectedY, internalX, internalY);
+                    return;
+                } else {
+                    selectedX = null;
+                    selectedY = null;
+                    legalMoves = [];
+                    drawBoard();
+                }
+            }
+            const piece = board[internalY][internalX];
+            if(piece && piece.color === turn && !gameOver) {
+                selectedX = internalX;
+                selectedY = internalY;
+                legalMoves = getAllLegalMovesForPiece(selectedX, selectedY, piece);
+                drawBoard();
+            } else {
+                selectedX = null;
+                selectedY = null;
+                legalMoves = [];
+                drawBoard();
+            }
+        }
+        
+        canvas.addEventListener('click', handleCanvasClick);
+        document.getElementById('resetBtn').addEventListener('click', () => {
+            resetGame();
+            drawBoard();
+        });
+        
+        resetGame();
+        drawBoard();
+    })();
+</script>
+</body>
+</html>
+```
