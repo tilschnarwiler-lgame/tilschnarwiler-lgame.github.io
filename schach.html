@@ -103,12 +103,21 @@
             margin-top: -15px;
         }
 
-        /* Spielcontainer */
+        /* Hauptlayout: Brett links, Panel rechts */
+        .main-layout {
+            display: flex;
+            gap: 20px;
+            align-items: stretch;
+        }
+
+        /* Spielcontainer (Brett) */
         .game-container {
             background: #3b2e24;
             border-radius: 36px;
             padding: 20px 20px 24px;
             box-shadow: 0 20px 35px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255,255,255,0.1);
+            display: flex;
+            flex-direction: column;
         }
 
         .board-wrapper {
@@ -131,55 +140,133 @@
             background-color: #f0d9b5;
         }
 
-        .info-panel {
+        /* Rechtes Panel */
+        .side-panel {
+            background: #3b2e24;
+            border-radius: 36px;
+            padding: 24px 20px;
+            box-shadow: 0 20px 35px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255,255,255,0.1);
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-top: 20px;
-            gap: 15px;
-            flex-wrap: wrap;
+            flex-direction: column;
+            justify-content: flex-start;
+            gap: 24px;
+            min-width: 220px;
+            max-width: 260px;
         }
 
         .turn-indicator {
             background: #2c2118;
-            padding: 8px 20px;
+            padding: 12px 20px;
             border-radius: 60px;
             color: #f2e8cf;
             font-weight: bold;
             font-size: 1.2rem;
             letter-spacing: 1px;
             box-shadow: inset 0 1px 3px rgba(0,0,0,0.4), 0 2px 3px rgba(255,255,240,0.1);
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
         }
 
-        .turn-indicator span {
-            display: inline-block;
-            margin-left: 10px;
-            font-size: 1.5rem;
-            vertical-align: middle;
+        .turn-indicator .turn-icon {
+            font-size: 2.2rem;
+            line-height: 1;
+        }
+
+        .turn-indicator .turn-text {
+            font-size: 0.9rem;
+            opacity: 0.8;
         }
 
         .status {
             background: #1f1a14;
-            padding: 8px 18px;
+            padding: 10px 18px;
             border-radius: 40px;
             font-weight: 600;
             color: #ffde9c;
             font-size: 1rem;
             box-shadow: inset 0 1px 2px rgba(0,0,0,0.5), 0 1px 0 rgba(255,255,200,0.1);
+            text-align: center;
+        }
+
+        .captured-section {
+            background: #2c2118;
+            border-radius: 20px;
+            padding: 14px;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.4);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .captured-title {
+            color: #c0a882;
+            font-size: 0.8rem;
+            letter-spacing: 2px;
+            text-align: center;
+            text-transform: uppercase;
+        }
+
+        .captured-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .captured-color-label {
+            font-weight: bold;
+            color: #f2e8cf;
+            font-size: 0.9rem;
+            min-width: 24px;
+            text-align: center;
+        }
+
+        .captured-pieces {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2px;
+            font-size: 1.5rem;
+            line-height: 1;
+            letter-spacing: 2px;
+            background: rgba(0,0,0,0.15);
+            border-radius: 8px;
+            padding: 4px 8px;
+            min-height: 2rem;
+            align-items: center;
+        }
+
+        .captured-pieces .white-piece {
+            color: #FFF9E6;
+            text-shadow: 0 0 3px rgba(255,255,255,0.6);
+        }
+
+        .captured-pieces .black-piece {
+            color: #b0a090;
+            text-shadow: 0 0 3px rgba(0,0,0,0.8);
+        }
+
+        .side-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
         }
 
         button {
             background: #d9b48b;
             border: none;
             font-weight: bold;
-            font-size: 1rem;
-            padding: 8px 20px;
+            font-size: 0.9rem;
+            padding: 10px 18px;
             border-radius: 40px;
             cursor: pointer;
             transition: 0.1s linear;
             color: #2d241c;
             font-family: inherit;
             box-shadow: 0 3px 0 #7a5a44;
+            width: 100%;
+            text-align: center;
         }
 
         button:active {
@@ -187,12 +274,32 @@
             box-shadow: 0 1px 0 #7a5a44;
         }
 
-        @media (max-width: 550px) {
+        @media (max-width: 750px) {
+            .main-layout {
+                flex-direction: column;
+                align-items: center;
+            }
+            .side-panel {
+                min-width: auto;
+                max-width: none;
+                width: 100%;
+                flex-direction: row;
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 12px;
+                padding: 16px;
+            }
+            .side-buttons {
+                flex-direction: row;
+                gap: 8px;
+            }
+            button {
+                width: auto;
+                padding: 8px 16px;
+                font-size: 0.8rem;
+            }
             .home-title { font-size: 2.5rem; }
             .home-btn { padding: 12px 30px; font-size: 1.1rem; min-width: 180px; }
-            .turn-indicator { font-size: 0.9rem; padding: 5px 15px; }
-            .status { font-size: 0.8rem; }
-            button { padding: 5px 16px; font-size: 0.8rem; }
         }
     </style>
 </head>
@@ -213,21 +320,37 @@
         </div>
     </div>
 
-    <!-- Spiel -->
-    <div class="game-container" id="gameContainer">
-        <div class="board-wrapper" id="boardWrapper">
-            <canvas id="chessCanvas" width="480" height="480"></canvas>
+    <!-- Hauptlayout: Brett + Seitenpanel -->
+    <div class="main-layout" id="mainLayout">
+        <div class="game-container" id="gameContainer">
+            <div class="board-wrapper" id="boardWrapper">
+                <canvas id="chessCanvas" width="480" height="480"></canvas>
+            </div>
         </div>
-        <div class="info-panel">
-            <div class="turn-indicator">
-                🎲 Zug:
-                <span id="turnSymbol">⚪ Weiß</span>
+
+        <div class="side-panel" id="sidePanel">
+            <div class="turn-indicator" id="turnIndicator">
+                <div class="turn-icon" id="turnIcon">⚪</div>
+                <div class="turn-text" id="turnText">Weiß am Zug</div>
             </div>
-            <div class="status" id="statusMsg">
-                Spielbereit
+            <div class="status" id="statusMsg">Spielbereit</div>
+            
+            <div class="captured-section">
+                <div class="captured-title">Gefallene Figuren</div>
+                <div class="captured-row">
+                    <div class="captured-color-label">⚪</div>
+                    <div class="captured-pieces" id="capturedWhite"></div>
+                </div>
+                <div class="captured-row">
+                    <div class="captured-color-label">⚫</div>
+                    <div class="captured-pieces" id="capturedBlack"></div>
+                </div>
             </div>
-            <button id="homeBtn">🏠 Home</button>
-            <button id="resetBtn">🔄 Neustart</button>
+
+            <div class="side-buttons">
+                <button id="homeBtn">🏠 Home</button>
+                <button id="resetBtn">🔄 Neustart</button>
+            </div>
         </div>
     </div>
 </div>
@@ -248,12 +371,8 @@
         let turn = 'w';
         let gameOver = false;
         let gameResult = null;
-
-        // Orientierung des Bretts: 'w' = Weiß unten, 'b' = Schwarz unten
         let orientation = 'w';
-
-        // Drehung der Figuren (nur für Modus "Ohne Drehung")
-        let figureRotation = 0;   // 0 oder 180
+        let figureRotation = 0;
 
         let castlingRights = { wK: true, wQ: true, bK: true, bQ: true };
         let enPassantTarget = null;
@@ -262,10 +381,13 @@
         let legalMoves = [];
 
         let isAnimating = false;
-        let rotateBoard = true;   // true = Brett-Drehung, false = Figuren-Drehung (ohne Animation)
+        let rotateBoard = true;
 
-        // Aktive Animationen
-        let flipAnimation = null;   // { id: rafId }
+        let flipAnimation = null;
+
+        // Gefallene Figuren
+        let capturedWhite = [];
+        let capturedBlack = [];
 
         // --- Homescreen-Steuerung ---
         document.getElementById('btnTwoPlayer').addEventListener('click', () => {
@@ -325,6 +447,9 @@
             enPassantTarget = null;
             selectedX = selectedY = null;
             legalMoves = [];
+            capturedWhite = [];
+            capturedBlack = [];
+            updateCapturedDisplay();
         }
 
         // --- Hilfsfunktionen ---
@@ -332,6 +457,10 @@
         function getPieceSymbol(p) {
             if (!p) return '';
             return { k:'♔', q:'♕', r:'♖', b:'♗', n:'♘', p:'♙' }[p.type] || '';
+        }
+        function getPieceValue(p) {
+            const values = { p: 1, n: 3, b: 3, r: 5, q: 9, k: 0 };
+            return values[p.type] || 0;
         }
 
         function canvasToInternal(colCanvas, rowCanvas) {
@@ -397,7 +526,7 @@
             }
         }
 
-        // --- Schachlogik (unverändert) ---
+        // --- Schachlogik ---
         function isSquareAttacked(x, y, attackerColor, brd) {
             for (let r = 0; r < 8; r++) {
                 for (let c = 0; c < 8; c++) {
@@ -496,8 +625,11 @@
             const captured = brd[ty][tx];
             if (piece.type === 'p' && !captured && enPassantTarget && tx === enPassantTarget.x && ty === enPassantTarget.y) {
                 const dir = piece.color === 'w' ? -1 : 1;
+                const capPawn = brd[ty - dir][tx];
+                if (capPawn && real) addCapturedPiece(capPawn, piece.color);
                 brd[ty - dir][tx] = null;
             }
+            if (captured && real) addCapturedPiece(captured, piece.color);
             brd[ty][tx] = piece;
             brd[fy][fx] = null;
             if (piece.type === 'p' && (ty === 0 || ty === 7)) brd[ty][tx] = { type: 'q', color: piece.color };
@@ -524,6 +656,38 @@
             }
         }
 
+        function addCapturedPiece(capturedPiece, capturerColor) {
+            if (capturerColor === 'w') {
+                capturedWhite.push(capturedPiece);
+                capturedWhite.sort((a, b) => getPieceValue(b) - getPieceValue(a));
+            } else {
+                capturedBlack.push(capturedPiece);
+                capturedBlack.sort((a, b) => getPieceValue(b) - getPieceValue(a));
+            }
+            updateCapturedDisplay();
+        }
+
+        function updateCapturedDisplay() {
+            const whiteEl = document.getElementById('capturedWhite');
+            const blackEl = document.getElementById('capturedBlack');
+            
+            whiteEl.innerHTML = '';
+            capturedWhite.forEach(p => {
+                const span = document.createElement('span');
+                span.textContent = getPieceSymbol(p);
+                span.className = p.color === 'w' ? 'white-piece' : 'black-piece';
+                whiteEl.appendChild(span);
+            });
+            
+            blackEl.innerHTML = '';
+            capturedBlack.forEach(p => {
+                const span = document.createElement('span');
+                span.textContent = getPieceSymbol(p);
+                span.className = p.color === 'w' ? 'white-piece' : 'black-piece';
+                blackEl.appendChild(span);
+            });
+        }
+
         function copyBoard() {
             const nb = Array(8).fill().map(() => Array(8).fill(null));
             for (let y = 0; y < 8; y++) for (let x = 0; x < 8; x++) if (board[y][x]) nb[y][x] = { ...board[y][x] };
@@ -543,7 +707,6 @@
             const king = findKing(turn);
             if (king && isSquareAttacked(king.x, king.y, oppositeColor(turn), copy)) return false;
 
-            // Zug durchführen
             executeMoveOnBoard(board, fx, fy, tx, ty, piece, true);
             turn = oppositeColor(turn);
             selectedX = selectedY = null;
@@ -552,7 +715,6 @@
             if (rotateBoard) {
                 startFlipAnimation();
             } else {
-                // Keine Animation, Figuren sofort um 180° drehen
                 figureRotation = figureRotation === 0 ? 180 : 0;
                 drawBoard(figureRotation);
             }
@@ -580,7 +742,7 @@
             return false;
         }
 
-        // --- Brett-Dreh-Animation (nur für „Mit Drehung“) ---
+        // --- Brett-Dreh-Animation ---
         function startFlipAnimation() {
             if (flipAnimation) cancelAnimationFrame(flipAnimation.id);
             const duration = 450;
@@ -613,20 +775,27 @@
 
         // --- UI ---
         function updateUI() {
-            const turnSpan = document.getElementById('turnSymbol');
+            const turnIcon = document.getElementById('turnIcon');
+            const turnText = document.getElementById('turnText');
             const statusDiv = document.getElementById('statusMsg');
+            
             if (gameOver) {
                 if (gameResult === 'checkmate') {
                     const winner = turn === 'w' ? 'Schwarz' : 'Weiß';
-                    statusDiv.innerHTML = `🏆 Schachmatt! ${winner} gewinnt! 🏆`;
+                    statusDiv.innerHTML = `🏆 Schachmatt!<br>${winner} gewinnt!`;
+                    turnIcon.textContent = turn === 'w' ? '⚫' : '⚪';
+                    turnText.textContent = turn === 'w' ? 'Schwarz gewinnt' : 'Weiß gewinnt';
                 } else if (gameResult === 'stalemate') {
-                    statusDiv.innerHTML = `♟️ Patt – Unentschieden! ♟️`;
+                    statusDiv.innerHTML = '♟️ Patt –<br>Unentschieden!';
+                    turnIcon.textContent = '🤝';
+                    turnText.textContent = 'Unentschieden';
                 }
-                turnSpan.innerHTML = gameResult === 'checkmate' ? (turn === 'w' ? '⚫ Schwarz' : '⚪ Weiß') + " gewinnt" : "🏁 Ende";
                 return;
             }
-            const checkMsg = isCheck(turn) ? " (SCHACH!)" : "";
-            turnSpan.innerHTML = turn === 'w' ? '⚪ Weiß' + checkMsg : '⚫ Schwarz' + checkMsg;
+            
+            const checkMsg = isCheck(turn) ? ' ⚠️ SCHACH!' : '';
+            turnIcon.textContent = turn === 'w' ? '⚪' : '⚫';
+            turnText.textContent = (turn === 'w' ? 'Weiß' : 'Schwarz') + ' am Zug' + checkMsg;
             statusDiv.innerHTML = turn === 'w' ? 'Weiß am Zug' : 'Schwarz am Zug';
         }
 
