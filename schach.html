@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="de">
 <head>
@@ -9,6 +8,9 @@
         * {
             user-select: none;
             -webkit-tap-highlight-color: transparent;
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
         }
 
         body {
@@ -18,20 +20,21 @@
             justify-content: center;
             align-items: center;
             font-family: 'Segoe UI', 'Roboto', 'Noto Sans', system-ui, sans-serif;
-            margin: 0;
             padding: 20px;
         }
 
-        #app {
-            position: relative;
+        /* Hauptcontainer: Alles wird nebeneinander dargestellt */
+        .main-wrapper {
             display: flex;
-            justify-content: center;
-            align-items: center;
+            flex-direction: row;
+            align-items: flex-start;
+            gap: 20px;
+            position: relative;
         }
 
         /* Homescreen */
         #homeScreen {
-            position: absolute;
+            position: fixed;
             top: 0;
             left: 0;
             width: 100%;
@@ -42,12 +45,10 @@
             align-items: center;
             background: rgba(30, 20, 10, 0.95);
             backdrop-filter: blur(12px);
-            border-radius: 36px;
             z-index: 20;
             color: #f5e7d3;
             gap: 30px;
             box-shadow: 0 20px 35px rgba(0,0,0,0.5);
-            transition: opacity 0.3s;
         }
 
         #homeScreen.hidden {
@@ -103,22 +104,14 @@
             margin-top: -15px;
         }
 
-        /* Hauptlayout: Brett links, Panel rechts */
-        .main-layout {
-            display: flex;
-            gap: 20px;
-            align-items: stretch;
-            flex-direction: row;
-        }
-
-        /* Spielcontainer (Brett) */
+        /* Spielcontainer (Brett) - LINKS */
         .game-container {
             background: #3b2e24;
             border-radius: 36px;
             padding: 20px 20px 24px;
             box-shadow: 0 20px 35px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255,255,255,0.1);
-            display: flex;
-            flex-direction: column;
+            flex-shrink: 0;
+            width: fit-content;
         }
 
         .board-wrapper {
@@ -132,16 +125,15 @@
 
         canvas {
             display: block;
-            margin: 0 auto;
             border-radius: 8px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
             cursor: pointer;
-            width: 100%;
-            height: auto;
             background-color: #f0d9b5;
+            width: 480px;
+            height: 480px;
         }
 
-        /* Rechtes Panel */
+        /* Rechtes Panel - RECHTS */
         .side-panel {
             background: #3b2e24;
             border-radius: 36px;
@@ -151,8 +143,8 @@
             flex-direction: column;
             justify-content: flex-start;
             gap: 24px;
-            min-width: 220px;
-            max-width: 260px;
+            width: 240px;
+            flex-shrink: 0;
         }
 
         .turn-indicator {
@@ -275,20 +267,25 @@
             box-shadow: 0 1px 0 #7a5a44;
         }
 
-        @media (max-width: 750px) {
-            .main-layout {
+        /* Responsive: Nur bei sehr schmalen Bildschirmen untereinander */
+        @media (max-width: 780px) {
+            .main-wrapper {
                 flex-direction: column;
                 align-items: center;
             }
-            .side-panel {
-                min-width: auto;
-                max-width: none;
+            canvas {
                 width: 100%;
-                flex-direction: row;
-                flex-wrap: wrap;
-                justify-content: center;
-                gap: 12px;
-                padding: 16px;
+                height: auto;
+                max-width: 480px;
+            }
+            .game-container {
+                width: 100%;
+                max-width: 520px;
+            }
+            .side-panel {
+                width: 100%;
+                max-width: 520px;
+                flex-direction: column;
             }
             .side-buttons {
                 flex-direction: row;
@@ -305,7 +302,7 @@
     </style>
 </head>
 <body>
-<div id="app">
+<div class="main-wrapper">
     <!-- Homescreen -->
     <div id="homeScreen">
         <div id="homeMain" class="home-panel">
@@ -321,37 +318,36 @@
         </div>
     </div>
 
-    <!-- Hauptlayout: Brett + Seitenpanel -->
-    <div class="main-layout" id="mainLayout">
-        <div class="game-container" id="gameContainer">
-            <div class="board-wrapper" id="boardWrapper">
-                <canvas id="chessCanvas" width="480" height="480"></canvas>
+    <!-- Spielcontainer (Brett) - LINKS -->
+    <div class="game-container" id="gameContainer">
+        <div class="board-wrapper" id="boardWrapper">
+            <canvas id="chessCanvas" width="480" height="480"></canvas>
+        </div>
+    </div>
+
+    <!-- Rechtes Panel - RECHTS -->
+    <div class="side-panel" id="sidePanel">
+        <div class="turn-indicator" id="turnIndicator">
+            <div class="turn-icon" id="turnIcon">⚪</div>
+            <div class="turn-text" id="turnText">Weiß am Zug</div>
+        </div>
+        <div class="status" id="statusMsg">Spielbereit</div>
+        
+        <div class="captured-section">
+            <div class="captured-title">Gefallene Figuren</div>
+            <div class="captured-row">
+                <div class="captured-color-label">⚪</div>
+                <div class="captured-pieces" id="capturedWhite"></div>
+            </div>
+            <div class="captured-row">
+                <div class="captured-color-label">⚫</div>
+                <div class="captured-pieces" id="capturedBlack"></div>
             </div>
         </div>
 
-        <div class="side-panel" id="sidePanel">
-            <div class="turn-indicator" id="turnIndicator">
-                <div class="turn-icon" id="turnIcon">⚪</div>
-                <div class="turn-text" id="turnText">Weiß am Zug</div>
-            </div>
-            <div class="status" id="statusMsg">Spielbereit</div>
-            
-            <div class="captured-section">
-                <div class="captured-title">Gefallene Figuren</div>
-                <div class="captured-row">
-                    <div class="captured-color-label">⚪</div>
-                    <div class="captured-pieces" id="capturedWhite"></div>
-                </div>
-                <div class="captured-row">
-                    <div class="captured-color-label">⚫</div>
-                    <div class="captured-pieces" id="capturedBlack"></div>
-                </div>
-            </div>
-
-            <div class="side-buttons">
-                <button id="homeBtn">🏠 Home</button>
-                <button id="resetBtn">🔄 Neustart</button>
-            </div>
+        <div class="side-buttons">
+            <button id="homeBtn">🏠 Home</button>
+            <button id="resetBtn">🔄 Neustart</button>
         </div>
     </div>
 </div>
@@ -842,4 +838,3 @@
 </script>
 </body>
 </html>
-```
