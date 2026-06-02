@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="de">
 <head>
@@ -23,7 +24,6 @@
             padding: 20px;
         }
 
-        /* Hauptcontainer: Alles wird nebeneinander dargestellt */
         .main-wrapper {
             display: flex;
             flex-direction: row;
@@ -32,7 +32,6 @@
             position: relative;
         }
 
-        /* Homescreen */
         #homeScreen {
             position: fixed;
             top: 0;
@@ -104,7 +103,6 @@
             margin-top: -15px;
         }
 
-        /* Spielcontainer (Brett) - LINKS */
         .game-container {
             background: #3b2e24;
             border-radius: 36px;
@@ -133,7 +131,6 @@
             height: 480px;
         }
 
-        /* Rechtes Panel - RECHTS */
         .side-panel {
             background: #3b2e24;
             border-radius: 36px;
@@ -267,7 +264,6 @@
             box-shadow: 0 1px 0 #7a5a44;
         }
 
-        /* Responsive: Nur bei sehr schmalen Bildschirmen untereinander */
         @media (max-width: 780px) {
             .main-wrapper {
                 flex-direction: column;
@@ -303,7 +299,6 @@
 </head>
 <body>
 <div class="main-wrapper">
-    <!-- Homescreen -->
     <div id="homeScreen">
         <div id="homeMain" class="home-panel">
             <div class="home-title">♔ Schach ♚</div>
@@ -318,14 +313,12 @@
         </div>
     </div>
 
-    <!-- Spielcontainer (Brett) - LINKS -->
     <div class="game-container" id="gameContainer">
         <div class="board-wrapper" id="boardWrapper">
             <canvas id="chessCanvas" width="480" height="480"></canvas>
         </div>
     </div>
 
-    <!-- Rechtes Panel - RECHTS -->
     <div class="side-panel" id="sidePanel">
         <div class="turn-indicator" id="turnIndicator">
             <div class="turn-icon" id="turnIcon">⚪</div>
@@ -382,7 +375,6 @@
 
         let flipAnimation = null;
 
-        // Gefallene Figuren
         let capturedWhite = [];
         let capturedBlack = [];
 
@@ -469,6 +461,19 @@
             return { cx: (7 - x) * cellSize, cy: (7 - y) * cellSize };
         }
 
+        function copyBoard(brd) {
+            const nb = Array(8).fill().map(() => Array(8).fill(null));
+            for (let y = 0; y < 8; y++) for (let x = 0; x < 8; x++) if (brd[y][x]) nb[y][x] = { ...brd[y][x] };
+            return nb;
+        }
+
+        function findKing(brd, color) {
+            for (let y = 0; y < 8; y++)
+                for (let x = 0; x < 8; x++)
+                    if (brd[y][x]?.type === 'k' && brd[y][x]?.color === color) return { x, y };
+            return null;
+        }
+
         // --- Zeichnen ---
         function drawBoard(figAngle = 0) {
             for (let row = 0; row < 8; row++) {
@@ -513,9 +518,10 @@
                 }
             }
 
-            if (!gameOver && isCheck(turn)) {
-                const king = findKing(turn);
-                if (king) {
+            // Schach-Markierung basierend auf dem aktuellen board
+            if (!gameOver) {
+                const king = findKing(board, turn);
+                if (king && isSquareAttacked(board, king.x, king.y, oppositeColor(turn))) {
                     const { cx, cy } = internalToCanvas(king.x, king.y);
                     ctx.fillStyle = 'rgba(220, 60, 50, 0.75)';
                     ctx.fillRect(cx, cy, cellSize, cellSize);
@@ -523,32 +529,67 @@
             }
         }
 
-        // --- Schachlogik ---
-        function isSquareAttacked(x, y, attackerColor, brd) {
+        // --- SCHACHLOGIK (komplett überarbeitet) ---
+        
+        // Prüft, ob ein Feld von einer Farbe angegriffen wird
+        function isSquareAttacked(brd, x, y, attackerColor) {
             for (let r = 0; r < 8; r++) {
                 for (let c = 0; c < 8; c++) {
                     const piece = brd[r][c];
-                    if (piece && piece.color === attackerColor && canPieceMoveTo(piece, c, r, x, y, brd, true))
-                        return true;
+                    if (piece && piece.color === attackerColor) {
+                        if (canPieceAttack(piece, c, r, x, y, brd)) {
+                            return true;
+                        }
+                    }
                 }
             }
             return false;
         }
 
-        function canPieceMoveTo(piece, fx, fy, tx, ty, brd, attackOnly = false) {
+        // Prüft, ob eine Figur ein bestimmtes Feld angreifen kann (ignoriert Schach-Regeln)
+        function canPieceAttack(piece, fx, fy, tx, ty, brd) {
+            const dx = tx - fx;
+            const dy = ty - fy;
+            const adx = Math.abs(dx);
+            const ady = Math.abs(dy);
+            
+            switch(piece.type) {
+                case 'p': {
+                    const dir = piece.color === 'w' ? -1 : 1;
+                    return adx === 1 && dy === dir;
+                }
+                case 'n': return (adx === 2 && ady === 1) || (adx === 1 && ady === 2);
+                case 'b': return adx === ady && adx > 0 && clearDiagonal(fx, fy, tx, ty, brd);
+                case 'r': return (fx === tx || fy === ty) && clearLine(fx, fy, tx, ty, brd);
+                case 'q': return ((fx === tx || fy === ty) && clearLine(fx, fy, tx, ty, brd)) || (adx === ady && adx > 0 && clearDiagonal(fx, fy, tx, ty, brd));
+                case 'k': return adx <= 1 && ady <= 1 && (adx > 0 || ady > 0);
+            }
+            return false;
+        }
+
+        // Prüft, ob ein Zug für eine Figur grundsätzlich möglich ist (ohne Schach-Validierung)
+        function canPieceMove(piece, fx, fy, tx, ty, brd) {
             if (tx < 0 || tx > 7 || ty < 0 || ty > 7) return false;
             const target = brd[ty][tx];
             if (target && target.color === piece.color) return false;
-            const dx = tx - fx, dy = ty - fy;
-            const adx = Math.abs(dx), ady = Math.abs(dy);
-            switch (piece.type) {
+            
+            const dx = tx - fx;
+            const dy = ty - fy;
+            const adx = Math.abs(dx);
+            const ady = Math.abs(dy);
+            
+            switch(piece.type) {
                 case 'p': {
                     const dir = piece.color === 'w' ? -1 : 1;
                     const startY = piece.color === 'w' ? 6 : 1;
+                    // Geradeaus
                     if (dx === 0 && dy === dir && !target) return true;
+                    // Doppelschritt
                     if (dx === 0 && dy === 2*dir && !target && fy === startY && !brd[fy+dir][fx]) return true;
-                    if (adx === 1 && dy === dir && target) return true;
-                    if (!attackOnly && enPassantTarget && tx === enPassantTarget.x && ty === enPassantTarget.y && adx === 1 && dy === dir && !target) {
+                    // Schlagen
+                    if (adx === 1 && dy === dir && target && target.color !== piece.color) return true;
+                    // En Passant
+                    if (adx === 1 && dy === dir && !target && enPassantTarget && tx === enPassantTarget.x && ty === enPassantTarget.y) {
                         const capY = piece.color === 'w' ? ty+1 : ty-1;
                         const pawn = brd[capY][tx];
                         if (pawn && pawn.type === 'p' && pawn.color !== piece.color) return true;
@@ -556,21 +597,18 @@
                     return false;
                 }
                 case 'n': return (adx === 2 && ady === 1) || (adx === 1 && ady === 2);
-                case 'b': if (adx !== ady) return false; return clearDiagonal(fx, fy, tx, ty, brd);
-                case 'r': if (fx !== tx && fy !== ty) return false; return clearLine(fx, fy, tx, ty, brd);
-                case 'q': if (fx === tx || fy === ty) return clearLine(fx, fy, tx, ty, brd);
-                         if (adx === ady) return clearDiagonal(fx, fy, tx, ty, brd);
-                         return false;
+                case 'b': return adx === ady && adx > 0 && clearDiagonal(fx, fy, tx, ty, brd);
+                case 'r': return (fx === tx || fy === ty) && clearLine(fx, fy, tx, ty, brd);
+                case 'q': return ((fx === tx || fy === ty) && clearLine(fx, fy, tx, ty, brd)) || (adx === ady && adx > 0 && clearDiagonal(fx, fy, tx, ty, brd));
                 case 'k':
-                    if (adx <= 1 && ady <= 1) return true;
-                    if (!attackOnly && !gameOver && !isCheck(piece.color)) {
-                        if (dx === 2 && dy === 0 && fy === ty) {
-                            const rank = piece.color === 'w' ? 7 : 0;
-                            if (fy === rank && fx === 4 && tx === 6 && castlingRights[piece.color === 'w' ? 'wK' : 'bK'] && brd[rank][7]?.type === 'r' && brd[rank][7]?.color === piece.color && !brd[rank][5] && !brd[rank][6] && !isSquareAttacked(5, rank, oppositeColor(piece.color), brd) && !isSquareAttacked(6, rank, oppositeColor(piece.color), brd)) return true;
-                        }
-                        if (dx === -2 && dy === 0 && fy === ty) {
-                            const rank = piece.color === 'w' ? 7 : 0;
-                            if (fy === rank && fx === 4 && tx === 2 && castlingRights[piece.color === 'w' ? 'wQ' : 'bQ'] && brd[rank][0]?.type === 'r' && brd[rank][0]?.color === piece.color && !brd[rank][3] && !brd[rank][2] && !brd[rank][1] && !isSquareAttacked(3, rank, oppositeColor(piece.color), brd) && !isSquareAttacked(2, rank, oppositeColor(piece.color), brd)) return true;
+                    if (adx <= 1 && ady <= 1 && (adx > 0 || ady > 0)) return true;
+                    // Rochade
+                    if (dy === 0 && adx === 2 && !isSquareAttacked(brd, fx, fy, oppositeColor(piece.color))) {
+                        const rank = fy;
+                        if (dx === 2) { // Königsflügel
+                            if (castlingRights[piece.color === 'w' ? 'wK' : 'bK'] && brd[rank][7]?.type === 'r' && brd[rank][7]?.color === piece.color && !brd[rank][5] && !brd[rank][6] && !isSquareAttacked(brd, 5, rank, oppositeColor(piece.color)) && !isSquareAttacked(brd, 6, rank, oppositeColor(piece.color))) return true;
+                        } else if (dx === -2) { // Damenflügel
+                            if (castlingRights[piece.color === 'w' ? 'wQ' : 'bQ'] && brd[rank][0]?.type === 'r' && brd[rank][0]?.color === piece.color && !brd[rank][3] && !brd[rank][2] && !brd[rank][1] && !isSquareAttacked(brd, 3, rank, oppositeColor(piece.color)) && !isSquareAttacked(brd, 2, rank, oppositeColor(piece.color))) return true;
                         }
                     }
                     return false;
@@ -579,78 +617,141 @@
         }
 
         function clearLine(fx, fy, tx, ty, brd) {
-            if (fx === tx) { let step = ty > fy ? 1 : -1; for (let y = fy + step; y !== ty; y += step) if (brd[y][fx]) return false; }
-            else if (fy === ty) { let step = tx > fx ? 1 : -1; for (let x = fx + step; x !== tx; x += step) if (brd[fy][x]) return false; }
-            else return false;
+            if (fx === tx) { 
+                let step = ty > fy ? 1 : -1; 
+                for (let y = fy + step; y !== ty; y += step) if (brd[y][fx]) return false; 
+            } else if (fy === ty) { 
+                let step = tx > fx ? 1 : -1; 
+                for (let x = fx + step; x !== tx; x += step) if (brd[fy][x]) return false; 
+            } else return false;
             return true;
         }
+
         function clearDiagonal(fx, fy, tx, ty, brd) {
-            let stepX = tx > fx ? 1 : -1, stepY = ty > fy ? 1 : -1;
+            let stepX = tx > fx ? 1 : -1;
+            let stepY = ty > fy ? 1 : -1;
             for (let x = fx + stepX, y = fy + stepY; x !== tx && y !== ty; x += stepX, y += stepY)
                 if (brd[y][x]) return false;
             return true;
         }
 
-        function findKing(color) {
-            for (let y = 0; y < 8; y++)
-                for (let x = 0; x < 8; x++)
-                    if (board[y][x]?.type === 'k' && board[y][x]?.color === color) return { x, y };
-            return null;
-        }
-        function isCheck(color) {
-            const k = findKing(color);
-            return k ? isSquareAttacked(k.x, k.y, oppositeColor(color), board) : false;
+        // Führt einen Zug auf einem Brett aus und gibt das neue Brett zurück
+        function simulateMove(brd, fx, fy, tx, ty) {
+            const newBoard = copyBoard(brd);
+            const piece = newBoard[fy][fx];
+            
+            // En Passant schlagen
+            if (piece.type === 'p' && !newBoard[ty][tx] && enPassantTarget && tx === enPassantTarget.x && ty === enPassantTarget.y) {
+                const dir = piece.color === 'w' ? 1 : -1;
+                newBoard[ty + dir][tx] = null;
+            }
+            
+            newBoard[ty][tx] = piece;
+            newBoard[fy][fx] = null;
+            
+            // Bauernumwandlung
+            if (piece.type === 'p' && (ty === 0 || ty === 7)) {
+                newBoard[ty][tx] = { type: 'q', color: piece.color };
+            }
+            
+            // Rochade
+            if (piece.type === 'k' && Math.abs(tx - fx) === 2) {
+                const rank = fy;
+                if (tx === 6) { newBoard[rank][5] = newBoard[rank][7]; newBoard[rank][7] = null; }
+                if (tx === 2) { newBoard[rank][3] = newBoard[rank][0]; newBoard[rank][0] = null; }
+            }
+            
+            return newBoard;
         }
 
+        // Prüft, ob die aktuelle Farbe im Schach steht
+        function isCheck(color) {
+            const king = findKing(board, color);
+            if (!king) return false;
+            return isSquareAttacked(board, king.x, king.y, oppositeColor(color));
+        }
+
+        // Alle legalen Züge für eine Figur
         function getAllLegalMovesForPiece(x, y, piece) {
             const moves = [];
             for (let i = 0; i < 8; i++) {
                 for (let j = 0; j < 8; j++) {
-                    if (canPieceMoveTo(piece, x, y, i, j, board, false)) {
-                        const copy = copyBoard();
-                        executeMoveOnBoard(copy, x, y, i, j, piece, false);
-                        const king = findKing(piece.color);
-                        if (king && !isSquareAttacked(king.x, king.y, oppositeColor(piece.color), copy))
+                    if (canPieceMove(piece, x, y, i, j, board)) {
+                        const simulatedBoard = simulateMove(board, x, y, i, j);
+                        const king = findKing(simulatedBoard, piece.color);
+                        if (king && !isSquareAttacked(simulatedBoard, king.x, king.y, oppositeColor(piece.color))) {
                             moves.push({ x: i, y: j });
+                        }
                     }
                 }
             }
             return moves;
         }
 
-        function executeMoveOnBoard(brd, fx, fy, tx, ty, piece, real = true) {
-            const captured = brd[ty][tx];
+        // Prüft, ob die aktuelle Farbe noch mindestens einen legalen Zug hat
+        function hasAnyLegalMove(color) {
+            for (let y = 0; y < 8; y++) {
+                for (let x = 0; x < 8; x++) {
+                    const piece = board[y][x];
+                    if (piece && piece.color === color) {
+                        const moves = getAllLegalMovesForPiece(x, y, piece);
+                        if (moves.length > 0) return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        // Führt einen Zug auf dem echten Brett aus
+        function executeMove(fx, fy, tx, ty) {
+            const piece = board[fy][fx];
+            const captured = board[ty][tx];
+            
+            // En Passant schlagen
             if (piece.type === 'p' && !captured && enPassantTarget && tx === enPassantTarget.x && ty === enPassantTarget.y) {
-                const dir = piece.color === 'w' ? -1 : 1;
-                const capPawn = brd[ty - dir][tx];
-                if (capPawn && real) addCapturedPiece(capPawn, piece.color);
-                brd[ty - dir][tx] = null;
+                const dir = piece.color === 'w' ? 1 : -1;
+                const capPawn = board[ty + dir][tx];
+                if (capPawn) addCapturedPiece(capPawn, piece.color);
+                board[ty + dir][tx] = null;
             }
-            if (captured && real) addCapturedPiece(captured, piece.color);
-            brd[ty][tx] = piece;
-            brd[fy][fx] = null;
-            if (piece.type === 'p' && (ty === 0 || ty === 7)) brd[ty][tx] = { type: 'q', color: piece.color };
-            if (piece.type === 'k' && Math.abs(tx - fx) === 2 && fy === ty) {
+            
+            if (captured) addCapturedPiece(captured, piece.color);
+            
+            board[ty][tx] = piece;
+            board[fy][fx] = null;
+            
+            // Bauernumwandlung
+            if (piece.type === 'p' && (ty === 0 || ty === 7)) {
+                board[ty][tx] = { type: 'q', color: piece.color };
+            }
+            
+            // Rochade
+            if (piece.type === 'k' && Math.abs(tx - fx) === 2) {
                 const rank = fy;
-                if (tx === 6) { brd[rank][5] = brd[rank][7]; brd[rank][7] = null; }
-                if (tx === 2) { brd[rank][3] = brd[rank][0]; brd[rank][0] = null; }
+                if (tx === 6) { board[rank][5] = board[rank][7]; board[rank][7] = null; }
+                if (tx === 2) { board[rank][3] = board[rank][0]; board[rank][0] = null; }
             }
-            if (real) {
-                if (piece.type === 'k') { castlingRights[piece.color === 'w' ? 'wK' : 'bK'] = false; castlingRights[piece.color === 'w' ? 'wQ' : 'bQ'] = false; }
-                if (piece.type === 'r') {
-                    if (fy === 0 && fx === 0) castlingRights.bQ = false;
-                    if (fy === 0 && fx === 7) castlingRights.bK = false;
-                    if (fy === 7 && fx === 0) castlingRights.wQ = false;
-                    if (fy === 7 && fx === 7) castlingRights.wK = false;
-                }
-                if (captured?.type === 'r') {
-                    if (ty === 0 && tx === 0) castlingRights.bQ = false;
-                    if (ty === 0 && tx === 7) castlingRights.bK = false;
-                    if (ty === 7 && tx === 0) castlingRights.wQ = false;
-                    if (ty === 7 && tx === 7) castlingRights.wK = false;
-                }
-                enPassantTarget = (piece.type === 'p' && Math.abs(ty - fy) === 2) ? { x: fx, y: (fy+ty)/2 } : null;
+            
+            // Rochaderechte aktualisieren
+            if (piece.type === 'k') {
+                if (piece.color === 'w') { castlingRights.wK = false; castlingRights.wQ = false; }
+                else { castlingRights.bK = false; castlingRights.bQ = false; }
             }
+            if (piece.type === 'r') {
+                if (fy === 0 && fx === 0) castlingRights.bQ = false;
+                if (fy === 0 && fx === 7) castlingRights.bK = false;
+                if (fy === 7 && fx === 0) castlingRights.wQ = false;
+                if (fy === 7 && fx === 7) castlingRights.wK = false;
+            }
+            if (captured?.type === 'r') {
+                if (ty === 0 && tx === 0) castlingRights.bQ = false;
+                if (ty === 0 && tx === 7) castlingRights.bK = false;
+                if (ty === 7 && tx === 0) castlingRights.wQ = false;
+                if (ty === 7 && tx === 7) castlingRights.wK = false;
+            }
+            
+            // En Passant Ziel setzen
+            enPassantTarget = (piece.type === 'p' && Math.abs(ty - fy) === 2) ? { x: fx, y: (fy+ty)/2 } : null;
         }
 
         function addCapturedPiece(capturedPiece, capturerColor) {
@@ -685,29 +786,25 @@
             });
         }
 
-        function copyBoard() {
-            const nb = Array(8).fill().map(() => Array(8).fill(null));
-            for (let y = 0; y < 8; y++) for (let x = 0; x < 8; x++) if (board[y][x]) nb[y][x] = { ...board[y][x] };
-            return nb;
-        }
-
         // --- Zugausführung ---
         function makeMove(fx, fy, tx, ty) {
             if (isAnimating) return false;
             const piece = board[fy][fx];
             if (!piece || piece.color !== turn) return false;
+            
             const moves = getAllLegalMovesForPiece(fx, fy, piece);
             if (!moves.some(m => m.x === tx && m.y === ty)) return false;
 
-            const copy = copyBoard();
-            executeMoveOnBoard(copy, fx, fy, tx, ty, piece, false);
-            const king = findKing(turn);
-            if (king && isSquareAttacked(king.x, king.y, oppositeColor(turn), copy)) return false;
-
-            executeMoveOnBoard(board, fx, fy, tx, ty, piece, true);
+            executeMove(fx, fy, tx, ty);
             turn = oppositeColor(turn);
             selectedX = selectedY = null;
             legalMoves = [];
+
+            // Prüfe auf Schachmatt/Patt
+            if (!hasAnyLegalMove(turn)) {
+                gameOver = true;
+                gameResult = isCheck(turn) ? 'checkmate' : 'stalemate';
+            }
 
             if (rotateBoard) {
                 startFlipAnimation();
@@ -716,27 +813,9 @@
                 drawBoard(figureRotation);
             }
 
-            if (checkGameOver()) {
-                drawBoard(figureRotation);
-                updateUI();
-                return true;
-            }
             updateUI();
+            if (gameOver) drawBoard(figureRotation);
             return true;
-        }
-
-        function checkGameOver() {
-            const pieces = [];
-            for (let y = 0; y < 8; y++) for (let x = 0; x < 8; x++)
-                if (board[y][x]?.color === turn) pieces.push({ x, y, piece: board[y][x] });
-            let hasMove = false;
-            for (const p of pieces) if (getAllLegalMovesForPiece(p.x, p.y, p.piece).length > 0) { hasMove = true; break; }
-            if (!hasMove) {
-                gameOver = true;
-                gameResult = isCheck(turn) ? 'checkmate' : 'stalemate';
-                return true;
-            }
-            return false;
         }
 
         // --- Brett-Dreh-Animation ---
@@ -838,3 +917,4 @@
 </script>
 </body>
 </html>
+```
