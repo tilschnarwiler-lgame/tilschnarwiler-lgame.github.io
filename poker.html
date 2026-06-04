@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Texas Hold'em Poker</title>
+    <title>Texas Hold'em Poker – 4 Spieler</title>
     <style>
         :root {
             --bg: #1a1a2e;
@@ -11,11 +11,10 @@
             --table-inner: #0a4a24;
             --text: #f0e6d3;
             --gold: #d4a843;
-            --card-bg: #fff;
-            --card-shadow: rgba(0,0,0,0.3);
+            --card-bg: #ffffff;
+            --card-shadow: rgba(0, 0, 0, 0.35);
             --btn: #c8963e;
             --btn-hover: #d4a843;
-            --chip: #e63946;
             --highlight: #ffd700;
         }
 
@@ -27,6 +26,8 @@
 
         body {
             background: var(--bg);
+            background-image:
+                radial-gradient(ellipse at center, #1a2a3e 0%, #0a0a14 100%);
             font-family: 'Segoe UI', 'Georgia', serif;
             display: flex;
             justify-content: center;
@@ -34,74 +35,162 @@
             min-height: 100vh;
             user-select: none;
             -webkit-user-select: none;
+            padding: 10px;
         }
 
         .game-container {
             width: 100%;
-            max-width: 900px;
-            padding: 20px;
+            max-width: 1000px;
         }
 
         /* ---- TISCH ---- */
         .table {
             background: var(--table);
-            border-radius: 200px;
-            padding: 40px 30px 30px;
+            background: radial-gradient(ellipse at center, #1a7a3a 0%, #0d5e2e 50%, #073a1a 100%);
+            border-radius: 220px;
+            padding: 35px 25px 25px;
             box-shadow:
-                inset 0 0 80px rgba(0, 0, 0, 0.5),
-                0 20px 50px rgba(0, 0, 0, 0.7),
-                0 0 0 12px #3d1c00,
-                0 0 0 18px #1a0a00;
+                inset 0 0 100px rgba(0, 0, 0, 0.5),
+                0 25px 60px rgba(0, 0, 0, 0.8),
+                0 0 0 14px #3d1c00,
+                0 0 0 20px #1a0a00;
             position: relative;
-            border: 4px solid #6b3a1f;
+            border: 5px solid #6b3a1f;
         }
 
         .table-inner {
             background: var(--table-inner);
-            border-radius: 160px;
-            padding: 25px 30px;
+            background: radial-gradient(ellipse at center, #0e5c2c 0%, #0a4a24 70%);
+            border-radius: 180px;
+            padding: 20px 25px;
             position: relative;
-            min-height: 300px;
+            min-height: 380px;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
+            gap: 15px;
+            border: 2px solid rgba(255, 255, 255, 0.06);
+        }
+
+        /* ---- GEGNER-LEISTE OBEN ---- */
+        .opponents-row {
+            display: flex;
+            justify-content: center;
             gap: 20px;
+            flex-wrap: wrap;
+            width: 100%;
+        }
+        .opponent-mini {
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 14px;
+            padding: 10px 14px;
+            text-align: center;
+            color: var(--text);
+            min-width: 100px;
             border: 2px solid rgba(255, 255, 255, 0.08);
+            transition: border-color 0.3s, box-shadow 0.3s;
+            flex: 1;
+            max-width: 160px;
+        }
+        .opponent-mini.active-turn {
+            border-color: var(--highlight);
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%,
+            100% {
+                box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+            }
+            50% {
+                box-shadow: 0 0 40px rgba(255, 215, 0, 0.8);
+            }
+        }
+        .opponent-mini .opp-name {
+            font-weight: bold;
+            font-size: 0.95em;
+            color: #f0e6d3;
+        }
+        .opponent-mini .opp-chips {
+            font-size: 0.8em;
+            color: var(--gold);
+        }
+        .opponent-mini .opp-status {
+            font-size: 0.75em;
+            min-height: 16px;
+            font-weight: bold;
+        }
+        .opponent-mini .opp-cards-mini {
+            display: flex;
+            gap: 3px;
+            justify-content: center;
+            margin: 4px 0;
+        }
+        .mini-card {
+            width: 28px;
+            height: 40px;
+            border-radius: 3px;
+            background: #1a3a5c;
+            border: 1px solid #3a6a9c;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.6em;
+            color: #6a9acc;
+        }
+        .mini-card.revealed {
+            background: #fff;
+            color: #000;
+            font-weight: bold;
+            font-size: 0.55em;
+            line-height: 1.1;
+        }
+        .folded-tag {
+            color: #e74c3c;
+            font-style: italic;
+            font-size: 0.8em;
+        }
+        .allin-tag {
+            color: #ff6b6b;
+            font-weight: bold;
+            font-size: 0.8em;
         }
 
         /* ---- GEMEINSCHAFTSKARTEN ---- */
         .community-area {
             display: flex;
-            gap: 12px;
+            gap: 10px;
             flex-wrap: wrap;
             justify-content: center;
-            min-height: 100px;
+            min-height: 105px;
+            align-items: center;
         }
-
         .community-area .card-placeholder {
-            width: 70px;
-            height: 100px;
-            border-radius: 8px;
-            border: 2px dashed rgba(255, 255, 255, 0.2);
-            background: rgba(0, 0, 0, 0.2);
+            width: 68px;
+            height: 96px;
+            border-radius: 9px;
+            border: 2px dashed rgba(255, 255, 255, 0.15);
+            background: rgba(0, 0, 0, 0.25);
         }
 
-        /* ---- KARTEN ---- */
+        /* ---- KARTEN (richtiges Design) ---- */
         .card {
-            width: 70px;
-            height: 100px;
-            border-radius: 8px;
-            background: var(--card-bg);
+            width: 68px;
+            height: 96px;
+            border-radius: 9px;
+            background: #fff;
+            background: linear-gradient(145deg, #ffffff 0%, #f0ece4 100%);
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            font-weight: bold;
-            box-shadow: 0 4px 15px var(--card-shadow);
+            box-shadow: 0 3px 12px var(--card-shadow), inset 0 0 0 1px rgba(0, 0, 0, 0.06);
             position: relative;
-            transition: transform 0.2s;
+            transition: transform 0.2s, box-shadow 0.2s;
             cursor: default;
+            font-family: 'Georgia', 'Times New Roman', serif;
+            border: 1px solid #ddd;
         }
         .card:hover {
             transform: translateY(-5px);
@@ -113,70 +202,66 @@
         .card.black {
             color: #1a1a1a;
         }
-        .card .card-value {
-            font-size: 1.3em;
-            line-height: 1;
-        }
-        .card .card-suit {
-            font-size: 2em;
-            line-height: 1;
-        }
-        .card .card-corner-top {
+        /* Oberes linkes Eck */
+        .card .corner-top {
             position: absolute;
-            top: 6px;
-            left: 8px;
-            font-size: 0.7em;
-            line-height: 1;
+            top: 5px;
+            left: 7px;
+            font-size: 0.65em;
+            line-height: 1.1;
             text-align: center;
+            font-weight: bold;
         }
-        .card .card-corner-bottom {
+        /* Unteres rechtes Eck (gedreht) */
+        .card .corner-bottom {
             position: absolute;
-            bottom: 6px;
-            right: 8px;
-            font-size: 0.7em;
-            line-height: 1;
+            bottom: 5px;
+            right: 7px;
+            font-size: 0.65em;
+            line-height: 1.1;
             text-align: center;
+            font-weight: bold;
             transform: rotate(180deg);
         }
-
-        /* ---- SPIELERBEREICH ---- */
-        .players-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            width: 100%;
-            gap: 20px;
-            flex-wrap: wrap;
+        /* Großes Bild in der Mitte */
+        .card .card-symbol {
+            font-size: 2.2em;
+            line-height: 1;
+            margin-top: 2px;
         }
+        /* Bild-Karten: Bild statt Zahl */
+        .card .card-face-icon {
+            font-size: 2.6em;
+            line-height: 1;
+            margin-top: 2px;
+        }
+        .card .card-value-text {
+            font-size: 1.1em;
+            font-weight: bold;
+            line-height: 1;
+        }
+
+        /* ---- SPIELER-BEREICH UNTEN ---- */
         .player-area {
-            background: rgba(0, 0, 0, 0.35);
+            background: rgba(0, 0, 0, 0.4);
             border-radius: 16px;
-            padding: 15px 20px;
+            padding: 14px 22px;
             text-align: center;
             color: var(--text);
-            min-width: 160px;
-            flex: 1;
             border: 2px solid rgba(255, 255, 255, 0.1);
             transition: border-color 0.3s, box-shadow 0.3s;
+            max-width: 400px;
+            width: 100%;
         }
-        .player-area.active {
+        .player-area.active-turn {
             border-color: var(--highlight);
-            box-shadow: 0 0 25px rgba(255, 215, 0, 0.4);
+            box-shadow: 0 0 30px rgba(255, 215, 0, 0.5);
             animation: pulse 2s infinite;
-        }
-        @keyframes pulse {
-            0%,
-            100% {
-                box-shadow: 0 0 25px rgba(255, 215, 0, 0.4);
-            }
-            50% {
-                box-shadow: 0 0 45px rgba(255, 215, 0, 0.7);
-            }
         }
         .player-name {
             font-weight: bold;
-            font-size: 1.1em;
-            margin-bottom: 4px;
+            font-size: 1.15em;
+            margin-bottom: 2px;
         }
         .player-chips {
             color: var(--gold);
@@ -190,15 +275,18 @@
             flex-wrap: wrap;
         }
         .player-cards .card {
-            width: 55px;
-            height: 78px;
-            font-size: 0.8em;
+            width: 60px;
+            height: 84px;
         }
-        .player-cards .card .card-value {
-            font-size: 1em;
+        .player-cards .card .corner-top,
+        .player-cards .card .corner-bottom {
+            font-size: 0.55em;
         }
-        .player-cards .card .card-suit {
-            font-size: 1.4em;
+        .player-cards .card .card-symbol {
+            font-size: 1.6em;
+        }
+        .player-cards .card .card-face-icon {
+            font-size: 2em;
         }
         .bet-info {
             font-size: 0.85em;
@@ -206,32 +294,30 @@
             min-height: 20px;
             font-weight: bold;
         }
-        .folded-badge {
-            color: #e74c3c;
-            font-weight: bold;
-            font-style: italic;
-        }
 
         /* ---- POT ---- */
         .pot-display {
             color: var(--highlight);
-            font-size: 1.3em;
+            font-size: 1.2em;
             font-weight: bold;
             text-align: center;
             text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+            background: rgba(0, 0, 0, 0.3);
+            padding: 6px 18px;
+            border-radius: 20px;
         }
 
         /* ---- BUTTONS ---- */
         .actions {
             display: flex;
-            gap: 10px;
+            gap: 8px;
             flex-wrap: wrap;
             justify-content: center;
-            margin-top: 8px;
+            margin-top: 4px;
         }
         .actions button {
-            padding: 12px 20px;
-            font-size: 1em;
+            padding: 11px 18px;
+            font-size: 0.95em;
             font-weight: bold;
             border-radius: 30px;
             border: none;
@@ -248,7 +334,7 @@
             box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
         }
         .actions button:disabled {
-            opacity: 0.4;
+            opacity: 0.35;
             cursor: not-allowed;
             transform: none;
         }
@@ -267,22 +353,22 @@
             background: #f35b4c;
         }
 
-        /* ---- RAISE SLIDER ---- */
+        /* ---- RAISE ---- */
         .raise-control {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
             flex-wrap: wrap;
             justify-content: center;
         }
         .raise-control input[type="range"] {
-            width: 150px;
+            width: 120px;
             accent-color: var(--gold);
         }
         .raise-control span {
             color: var(--text);
             font-weight: bold;
-            min-width: 50px;
+            min-width: 40px;
         }
 
         /* ---- MESSAGE ---- */
@@ -290,17 +376,17 @@
             color: #f1c40f;
             text-align: center;
             font-weight: bold;
-            font-size: 1.1em;
-            min-height: 26px;
+            font-size: 1em;
+            min-height: 24px;
             text-shadow: 0 1px 5px rgba(0, 0, 0, 0.6);
         }
 
-        /* ---- NEUES SPIEL ---- */
+        /* ---- NEUES SPIEL BUTTON ---- */
         .new-game-btn {
             display: block;
-            margin: 20px auto 0;
-            padding: 14px 35px;
-            font-size: 1.1em;
+            margin: 18px auto 0;
+            padding: 12px 30px;
+            font-size: 1em;
             font-weight: bold;
             border-radius: 30px;
             border: 2px solid var(--gold);
@@ -319,11 +405,11 @@
 
         /* ---- ANIMATION ---- */
         .deal-anim {
-            animation: dealCard 0.4s ease-out;
+            animation: dealCard 0.35s ease-out;
         }
         @keyframes dealCard {
             from {
-                transform: translateY(-60px) rotateY(90deg);
+                transform: translateY(-50px) rotateY(90deg);
                 opacity: 0;
             }
             to {
@@ -333,38 +419,49 @@
         }
 
         /* ---- RESPONSIVE ---- */
-        @media (max-width: 650px) {
+        @media (max-width: 700px) {
             .table {
-                border-radius: 40px;
+                border-radius: 60px;
                 padding: 20px 10px 15px;
             }
             .table-inner {
-                border-radius: 30px;
-                padding: 15px 10px;
+                border-radius: 45px;
+                padding: 12px 8px;
+                min-height: 300px;
             }
             .card,
             .community-area .card-placeholder {
-                width: 45px;
-                height: 65px;
+                width: 44px;
+                height: 62px;
                 border-radius: 5px;
             }
-            .card .card-value {
-                font-size: 0.9em;
+            .card .corner-top,
+            .card .corner-bottom {
+                font-size: 0.5em;
+                top: 3px;
+                left: 4px;
             }
-            .card .card-suit {
-                font-size: 1.3em;
+            .card .card-symbol {
+                font-size: 1.4em;
+            }
+            .card .card-face-icon {
+                font-size: 1.7em;
             }
             .player-cards .card {
-                width: 40px;
-                height: 56px;
+                width: 42px;
+                height: 58px;
             }
-            .player-area {
-                padding: 10px 12px;
-                min-width: 120px;
+            .opponent-mini {
+                padding: 6px 8px;
+                min-width: 70px;
+                border-radius: 10px;
+            }
+            .opponent-mini .opp-name {
+                font-size: 0.75em;
             }
             .actions button {
-                padding: 10px 14px;
-                font-size: 0.85em;
+                padding: 8px 12px;
+                font-size: 0.8em;
             }
         }
     </style>
@@ -374,12 +471,29 @@
     <div class="game-container">
         <div class="table">
             <div class="table-inner">
-                <!-- Computer Bereich -->
-                <div class="player-area" id="computerArea">
-                    <div class="player-name">🤖 Computer</div>
-                    <div class="player-chips" id="computerChips">💰 1500</div>
-                    <div class="player-cards" id="computerCards"></div>
-                    <div class="bet-info" id="computerBet"></div>
+                <!-- 3 Gegner (oben) -->
+                <div class="opponents-row" id="opponentsRow">
+                    <!-- Anna -->
+                    <div class="opponent-mini" id="opp1Area">
+                        <div class="opp-name">👩 Anna</div>
+                        <div class="opp-chips" id="opp1Chips">💰 1500</div>
+                        <div class="opp-cards-mini" id="opp1Cards"></div>
+                        <div class="opp-status" id="opp1Status"></div>
+                    </div>
+                    <!-- Ben -->
+                    <div class="opponent-mini" id="opp2Area">
+                        <div class="opp-name">👨 Ben</div>
+                        <div class="opp-chips" id="opp2Chips">💰 1500</div>
+                        <div class="opp-cards-mini" id="opp2Cards"></div>
+                        <div class="opp-status" id="opp2Status"></div>
+                    </div>
+                    <!-- Clara -->
+                    <div class="opponent-mini" id="opp3Area">
+                        <div class="opp-name">👩‍🦰 Clara</div>
+                        <div class="opp-chips" id="opp3Chips">💰 1500</div>
+                        <div class="opp-cards-mini" id="opp3Cards"></div>
+                        <div class="opp-status" id="opp3Status"></div>
+                    </div>
                 </div>
 
                 <!-- Gemeinschaftskarten -->
@@ -394,8 +508,8 @@
                 <!-- Pot -->
                 <div class="pot-display">🤑 Pot: <span id="potAmount">0</span></div>
 
-                <!-- Spieler Bereich -->
-                <div class="player-area active" id="playerArea">
+                <!-- Spieler (unten) -->
+                <div class="player-area active-turn" id="playerArea">
                     <div class="player-name">😎 Du</div>
                     <div class="player-chips" id="playerChips">💰 1500</div>
                     <div class="player-cards" id="playerCards"></div>
@@ -412,8 +526,8 @@
                     <button onclick="spielerAktion('call')" id="callBtn">👈 Call</button>
                     <div class="raise-control">
                         <button onclick="spielerAktion('raise')" id="raiseBtn">🔥 Raise</button>
-                        <input type="range" id="raiseSlider" min="0" max="100" value="20" oninput="updateRaiseLabel()">
-                        <span id="raiseLabel">20</span>
+                        <input type="range" id="raiseSlider" min="0" max="100" value="40" oninput="updateRaiseLabel()">
+                        <span id="raiseLabel">40</span>
                     </div>
                     <button onclick="spielerAktion('allin')" class="allin-btn" id="allinBtn">💀 All-In</button>
                 </div>
@@ -423,34 +537,56 @@
     </div>
 
     <script>
-        // ==================== SPIEL-LOGIK ====================
+        // ==================== SPIEL-LOGIK (4 Spieler) ====================
         const FARBEN = ['Herz', 'Karo', 'Pik', 'Kreuz'];
         const WERTE = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'Bube', 'Dame', 'König', 'As'];
         const SUIT_SYMBOLS = { 'Herz': '♥', 'Karo': '♦', 'Pik': '♠', 'Kreuz': '♣' };
         const RED_SUITS = ['Herz', 'Karo'];
         const BLACK_SUITS = ['Pik', 'Kreuz'];
 
+        // Bild-Emojis für Hofkarten
+        const FACE_ICONS = {
+            'Bube': '🤴',
+            'Dame': '👸',
+            'König': '🤴',
+            'As': '👑'
+        };
+        // Alternative Unicode-Symbole
+        const FACE_SYMBOLS = {
+            'Bube': '♛',
+            'Dame': '♕',
+            'König': '♚',
+            'As': '★'
+        };
+
         const START_CHIPS = 1500;
         const SMALL_BLIND = 10;
         const BIG_BLIND = 20;
 
+        // Spieler-Daten
+        const SPIELER_NAMEN = ['Du', 'Anna', 'Ben', 'Clara'];
+        const SPIELER_EMOJI = ['😎', '👩', '👨', '👩‍🦰'];
+        const ANZAHL_SPIELER = 4;
+
         let deck = [];
         let gemeinschaftsKarten = [];
-        let spielerHand = [];
-        let computerHand = [];
+        let haende = [
+            [],
+            [],
+            [],
+            []
+        ]; // 0=Du, 1=Anna, 2=Ben, 3=Clara
+        let chips = [START_CHIPS, START_CHIPS, START_CHIPS, START_CHIPS];
+        let einsaetze = [0, 0, 0, 0];
+        let gefoldet = [false, false, false, false];
+        let allIn = [false, false, false, false];
         let pot = 0;
-        let spielerChips = START_CHIPS;
-        let computerChips = START_CHIPS;
-        let spielerEinsatz = 0;
-        let computerEinsatz = 0;
-        let spielerGefoldet = false;
-        let computerGefoldet = false;
-        let spielerAllIn = false;
-        let computerAllIn = false;
-        let rundeBeendet = false;
         let aktuellerEinsatz = 0;
-        let dealer = 0; // 0 = Spieler ist Dealer (Computer setzt Small Blind)
-        let gamePhase = 'preflop'; // preflop, flop, turn, river, showdown
+        let dealerIndex = 0; // Wer Dealer ist (rotiert)
+        let gamePhase = 'preflop';
+        let rundeBeendet = false;
+        let aktiverSpielerIndex = -1; // Wer ist dran?
+        let letzterRaiser = -1;
 
         function kartenWert(wert) {
             return WERTE.indexOf(wert) + 2;
@@ -463,7 +599,6 @@
                     deck.push({ wert, farbe });
                 }
             }
-            // Mischen (Fisher-Yates)
             for (let i = deck.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
                 [deck[i], deck[j]] = [deck[j], deck[i]];
@@ -474,49 +609,58 @@
             return deck.pop();
         }
 
-        // Karten-Rendering
-        function kartenHTML(karte, small = false) {
-            const symbol = SUIT_SYMBOLS[karte.farbe];
-            const farbKlasse = RED_SUITS.includes(karte.farbe) ? 'red' : 'black';
-            const sizeClass = small ? ' style="width:45px;height:65px;"' : '';
-            return `
-                <div class="card ${farbKlasse} deal-anim"${sizeClass}>
-                    <div class="card-corner-top">${karte.wert}<br>${symbol}</div>
-                    <div class="card-suit">${symbol}</div>
-                    <div class="card-value">${karte.wert}</div>
-                    <div class="card-corner-bottom">${karte.wert}<br>${symbol}</div>
-                </div>`;
+        // ---- KARTEN-RENDERING (richtiges Design) ----
+        function istBildKarte(wert) {
+            return ['Bube', 'Dame', 'König', 'As'].includes(wert);
         }
 
-        function kartenRueckseite(small = false) {
-            const sizeClass = small ? ' style="width:45px;height:65px;"' : '';
-            return `
-                <div class="card deal-anim" style="background:#1a3a5c;color:#3a6a9c;${sizeClass ? 'width:45px;height:65px;' : ''}">
-                    <div class="card-suit" style="font-size:2.5em;">🂠</div>
-                </div>`;
+        function kartenHTML(karte, klein = false) {
+            const symbol = SUIT_SYMBOLS[karte.farbe];
+            const farbKlasse = RED_SUITS.includes(karte.farbe) ? 'red' : 'black';
+            const sizeStyle = klein ? 'width:44px;height:62px;' : '';
+
+            let inhalt;
+            if (istBildKarte(karte.wert)) {
+                // Bild-Karte: Zeige Symbol/Emoji statt Text
+                const faceIcon = FACE_SYMBOLS[karte.wert];
+                inhalt = `
+                    <div class="corner-top">${karte.wert}<br>${symbol}</div>
+                    <div class="card-face-icon">${faceIcon}</div>
+                    <div class="card-symbol" style="font-size:1.4em;">${symbol}</div>
+                    <div class="corner-bottom">${karte.wert}<br>${symbol}</div>`;
+            } else {
+                // Zahlen-Karte
+                inhalt = `
+                    <div class="corner-top">${karte.wert}<br>${symbol}</div>
+                    <div class="card-symbol">${symbol}</div>
+                    <div class="card-value-text">${karte.wert}</div>
+                    <div class="corner-bottom">${karte.wert}<br>${symbol}</div>`;
+            }
+
+            return `<div class="card ${farbKlasse} deal-anim" style="${sizeStyle}">${inhalt}</div>`;
+        }
+
+        function kartenRueckseite(klein = false) {
+            const sizeStyle = klein ? 'width:44px;height:62px;' : '';
+            return `<div class="card deal-anim" style="background:#1a3a5c;color:#4a7aac;${sizeStyle}">
+                <div class="card-symbol" style="font-size:2em;">🂠</div>
+            </div>`;
+        }
+
+        function miniKarteHTML(karte) {
+            const symbol = SUIT_SYMBOLS[karte.farbe];
+            const farbKlasse = RED_SUITS.includes(karte.farbe) ? 'red' : 'black';
+            let inhalt;
+            if (istBildKarte(karte.wert)) {
+                const faceIcon = FACE_SYMBOLS[karte.wert];
+                inhalt = `${faceIcon} ${symbol}`;
+            } else {
+                inhalt = `${karte.wert} ${symbol}`;
+            }
+            return `<div class="mini-card revealed ${farbKlasse}">${inhalt}</div>`;
         }
 
         function updateUI() {
-            // Spieler Karten
-            const pCardsDiv = document.getElementById('playerCards');
-            if (spielerHand.length > 0) {
-                pCardsDiv.innerHTML = spielerHand.map(k => kartenHTML(k, true)).join('');
-            } else {
-                pCardsDiv.innerHTML = '<span style="color:#888;">Keine Karten</span>';
-            }
-
-            // Computer Karten (verdeckt während des Spiels, aufgedeckt beim Showdown)
-            const cCardsDiv = document.getElementById('computerCards');
-            if (computerHand.length > 0) {
-                if (rundeBeendet || computerGefoldet) {
-                    cCardsDiv.innerHTML = computerHand.map(k => kartenHTML(k, true)).join('');
-                } else {
-                    cCardsDiv.innerHTML = computerHand.map(() => kartenRueckseite(true)).join('');
-                }
-            } else {
-                cCardsDiv.innerHTML = '<span style="color:#888;">Keine Karten</span>';
-            }
-
             // Gemeinschaftskarten
             const commDiv = document.getElementById('communityCards');
             let commHTML = '';
@@ -529,34 +673,59 @@
             }
             commDiv.innerHTML = commHTML;
 
+            // Spieler-Karten (Index 0)
+            const pCardsDiv = document.getElementById('playerCards');
+            if (haende[0].length > 0) {
+                pCardsDiv.innerHTML = haende[0].map(k => kartenHTML(k, true)).join('');
+            } else {
+                pCardsDiv.innerHTML = '<span style="color:#888;">Keine Karten</span>';
+            }
+
+            // Gegner-Karten (Indizes 1,2,3)
+            for (let i = 1; i <= 3; i++) {
+                const oppCardsDiv = document.getElementById(`opp${i}Cards`);
+                const oppStatusDiv = document.getElementById(`opp${i}Status`);
+                if (haende[i].length > 0) {
+                    if (rundeBeendet || gefoldet[i]) {
+                        oppCardsDiv.innerHTML = haende[i].map(k => miniKarteHTML(k)).join('');
+                    } else {
+                        oppCardsDiv.innerHTML = haende[i].map(() =>
+                            '<div class="mini-card">🂠</div>').join('');
+                    }
+                } else {
+                    oppCardsDiv.innerHTML = '';
+                }
+
+                // Status
+                let statusHTML = '';
+                if (gefoldet[i]) statusHTML += '<span class="folded-tag">FOLD</span> ';
+                if (allIn[i]) statusHTML += '<span class="allin-tag">ALL-IN</span> ';
+                if (einsaetze[i] > 0 && !rundeBeendet) statusHTML += `💵 ${einsaetze[i]}`;
+                oppStatusDiv.innerHTML = statusHTML;
+                document.getElementById(`opp${i}Chips`).textContent = `💰 ${chips[i]}`;
+            }
+
             // Chips & Pot
-            document.getElementById('playerChips').textContent = `💰 ${spielerChips}`;
-            document.getElementById('computerChips').textContent = `💰 ${computerChips}`;
+            document.getElementById('playerChips').textContent = `💰 ${chips[0]}`;
             document.getElementById('potAmount').textContent = pot;
+            document.getElementById('playerBet').textContent = einsaetze[0] > 0 ? `💵 Einsatz: ${einsaetze[0]}` : '';
 
-            // Einsätze
-            document.getElementById('playerBet').textContent = spielerEinsatz > 0 ? `💵 Einsatz: ${spielerEinsatz}` :
-                '';
-            document.getElementById('computerBet').textContent = computerEinsatz > 0 ?
-                `💵 Einsatz: ${computerEinsatz}` : '';
-
-            // Gefoldet
-            if (spielerGefoldet) {
-                document.getElementById('playerBet').innerHTML +=
-                    ' <span class="folded-badge">GEFOLDET</span>';
+            if (gefoldet[0]) {
+                document.getElementById('playerBet').innerHTML += ' <span class="folded-tag">GEFOLDET</span>';
             }
-            if (computerGefoldet) {
-                document.getElementById('computerBet').innerHTML +=
-                    ' <span class="folded-badge">GEFOLDET</span>';
+            if (allIn[0]) {
+                document.getElementById('playerBet').innerHTML += ' <span class="allin-tag">ALL-IN</span>';
             }
 
-            // Aktiver Spieler Highlight
-            document.getElementById('playerArea').classList.toggle('active', !rundeBeendet && !spielerGefoldet &&
-                gamePhase !== 'showdown');
-            document.getElementById('computerArea').classList.toggle('active', false); // Computer ist nie visuell aktiv
+            // Aktiver-Spieler Highlight
+            document.getElementById('playerArea').classList.toggle('active-turn', aktiverSpielerIndex === 0 && !rundeBeendet);
+            for (let i = 1; i <= 3; i++) {
+                document.getElementById(`opp${i}Area`).classList.toggle('active-turn', aktiverSpielerIndex === i && !
+                    rundeBeendet);
+            }
 
-            // Raise Slider aktualisieren
-            const maxRaise = Math.max(0, spielerChips - (aktuellerEinsatz - spielerEinsatz));
+            // Raise Slider
+            const maxRaise = Math.max(0, chips[0] - (aktuellerEinsatz - einsaetze[0]));
             const minRaise = Math.min(maxRaise, aktuellerEinsatz > 0 ? aktuellerEinsatz * 2 : BIG_BLIND);
             const slider = document.getElementById('raiseSlider');
             slider.max = maxRaise;
@@ -567,8 +736,7 @@
         }
 
         function updateRaiseLabel() {
-            const val = document.getElementById('raiseSlider').value;
-            document.getElementById('raiseLabel').textContent = val;
+            document.getElementById('raiseLabel').textContent = document.getElementById('raiseSlider').value;
         }
 
         function setMessage(msg) {
@@ -583,7 +751,9 @@
             const allinBtn = document.getElementById('allinBtn');
             const slider = document.getElementById('raiseSlider');
 
-            if (rundeBeendet || spielerGefoldet || spielerAllIn) {
+            const istDran = (aktiverSpielerIndex === 0 && !rundeBeendet && !gefoldet[0] && !allIn[0]);
+
+            if (!istDran) {
                 foldBtn.disabled = true;
                 checkBtn.disabled = true;
                 callBtn.disabled = true;
@@ -594,24 +764,23 @@
             }
 
             foldBtn.disabled = false;
-            allinBtn.disabled = (spielerChips <= 0);
+            allinBtn.disabled = (chips[0] <= 0);
+            slider.disabled = false;
 
-            const callAmount = aktuellerEinsatz - spielerEinsatz;
+            const callAmount = aktuellerEinsatz - einsaetze[0];
 
             if (callAmount <= 0) {
-                // Kann checken
                 checkBtn.disabled = false;
                 callBtn.disabled = true;
                 checkBtn.textContent = '✅ Check';
             } else {
                 checkBtn.disabled = true;
-                callBtn.disabled = (spielerChips <= 0);
+                callBtn.disabled = (chips[0] <= 0);
                 callBtn.textContent = `👈 Call (${callAmount})`;
             }
 
-            const maxRaise = Math.max(0, spielerChips - callAmount);
+            const maxRaise = Math.max(0, chips[0] - callAmount);
             raiseBtn.disabled = (maxRaise <= 0 || (aktuellerEinsatz > 0 && maxRaise < aktuellerEinsatz));
-            slider.disabled = raiseBtn.disabled;
         }
 
         // ==================== HAND-BEWERTUNG ====================
@@ -619,16 +788,12 @@
             const alle = [...hand, ...gemeinschaft];
             const werte = alle.map(k => kartenWert(k.wert));
             const farben = alle.map(k => k.farbe);
-
-            // Nach Wert sortieren (absteigend)
             werte.sort((a, b) => b - a);
 
-            // Flush prüfen
             const farbenZaehler = {};
             farben.forEach(f => farbenZaehler[f] = (farbenZaehler[f] || 0) + 1);
             const istFlush = Object.values(farbenZaehler).some(c => c >= 5);
 
-            // Straight prüfen
             const einzigartig = [...new Set(werte)].sort((a, b) => b - a);
             let istStraight = false;
             let straightHoch = 0;
@@ -639,22 +804,18 @@
                     break;
                 }
             }
-            // Spezial: A-2-3-4-5 (As = 14, aber hier als 5-high straight)
             if (!istStraight && einzigartig.includes(14) && einzigartig.includes(2) && einzigartig.includes(3) &&
                 einzigartig.includes(4) && einzigartig.includes(5)) {
                 istStraight = true;
                 straightHoch = 5;
             }
 
-            // Häufigkeiten
             const haeufigkeiten = {};
             werte.forEach(w => haeufigkeiten[w] = (haeufigkeiten[w] || 0) + 1);
             const counts = Object.entries(haeufigkeiten).map(([w, c]) => [parseInt(w), c]);
             counts.sort((a, b) => b[1] - a[1] || b[0] - a[0]);
 
-            // Royal Flush / Straight Flush
             if (istFlush && istStraight) {
-                // Straight Flush: prüfen ob alle 5 einer Farbe sind
                 const farbeFlush = Object.entries(farbenZaehler).find(([f, c]) => c >= 5)[0];
                 const kartenFarbe = alle.filter(k => k.farbe === farbeFlush).map(k => kartenWert(k.wert)).sort((a, b) =>
                     b - a);
@@ -662,23 +823,17 @@
                 let sfHoch = 0;
                 let istSF = false;
                 for (let i = 0; i <= einzigartigF.length - 5; i++) {
-                    if (einzigartigF[i] - einzigartigF[i + 4] === 4) {
-                        istSF = true;
-                        sfHoch = einzigartigF[i];
-                        break;
-                    }
+                    if (einzigartigF[i] - einzigartigF[i + 4] === 4) { istSF = true;
+                        sfHoch = einzigartigF[i]; break; }
                 }
                 if (!istSF && einzigartigF.includes(14) && einzigartigF.includes(2) && einzigartigF.includes(3) &&
-                    einzigartigF.includes(4) && einzigartigF.includes(5)) {
-                    istSF = true;
-                    sfHoch = 5;
-                }
+                    einzigartigF.includes(4) && einzigartigF.includes(5)) { istSF = true;
+                    sfHoch = 5; }
                 if (istSF) {
                     if (sfHoch === 14) return { rang: 10, name: 'Royal Flush', kicker: [14] };
                     return { rang: 9, name: 'Straight Flush', kicker: [sfHoch] };
                 }
             }
-
             if (counts[0][1] === 4) return { rang: 8, name: 'Vierling', kicker: [counts[0][0], counts[1][0]] };
             if (counts[0][1] === 3 && counts[1][1] === 2) return { rang: 7, name: 'Full House', kicker: [counts[0][0],
                     counts[1][0]
@@ -712,112 +867,127 @@
         }
 
         // ==================== SPIELABLAUF ====================
-        function blindsSetzen() {
-            // Dealer wechselt
-            dealer = 1 - dealer;
-            spielerEinsatz = 0;
-            computerEinsatz = 0;
-            aktuellerEinsatz = 0;
-
-            if (dealer === 0) {
-                // Spieler ist Dealer -> Computer zahlt Small Blind, Spieler Big Blind
-                computerEinsatz = Math.min(SMALL_BLIND, computerChips);
-                spielerEinsatz = Math.min(BIG_BLIND, spielerChips);
-            } else {
-                // Computer ist Dealer -> Spieler zahlt Small Blind, Computer Big Blind
-                spielerEinsatz = Math.min(SMALL_BLIND, spielerChips);
-                computerEinsatz = Math.min(BIG_BLIND, computerChips);
+        function naechsterSpielerMitAktion(startIndex) {
+            let idx = startIndex;
+            for (let i = 0; i < ANZAHL_SPIELER; i++) {
+                idx = (startIndex + i) % ANZAHL_SPIELER;
+                if (!gefoldet[idx] && !allIn[idx]) return idx;
             }
-            spielerChips -= spielerEinsatz;
-            computerChips -= computerEinsatz;
-            pot = spielerEinsatz + computerEinsatz;
-            aktuellerEinsatz = Math.max(spielerEinsatz, computerEinsatz);
+            return -1; // Keiner kann mehr handeln
+        }
 
-            // All-In durch Blinds?
-            if (spielerChips <= 0) spielerAllIn = true;
-            if (computerChips <= 0) computerAllIn = true;
+        function alleHabenGehandelt() {
+            // Prüft ob alle Spieler entweder gefoldet, all-in oder Einsatz gleich aktuellerEinsatz sind
+            for (let i = 0; i < ANZAHL_SPIELER; i++) {
+                if (!gefoldet[i] && !allIn[i] && einsaetze[i] !== aktuellerEinsatz) return false;
+            }
+            return true;
+        }
+
+        function blindsSetzen() {
+            einsaetze = [0, 0, 0, 0];
+            aktuellerEinsatz = 0;
+            pot = 0;
+
+            // Small Blind = dealerIndex + 1, Big Blind = dealerIndex + 2
+            const sbIndex = (dealerIndex + 1) % ANZAHL_SPIELER;
+            const bbIndex = (dealerIndex + 2) % ANZAHL_SPIELER;
+
+            const sbBetrag = Math.min(SMALL_BLIND, chips[sbIndex]);
+            chips[sbIndex] -= sbBetrag;
+            einsaetze[sbIndex] = sbBetrag;
+            pot += sbBetrag;
+
+            const bbBetrag = Math.min(BIG_BLIND, chips[bbIndex]);
+            chips[bbIndex] -= bbBetrag;
+            einsaetze[bbIndex] = bbBetrag;
+            pot += bbBetrag;
+
+            aktuellerEinsatz = Math.max(sbBetrag, bbBetrag);
+
+            if (chips[sbIndex] <= 0) allIn[sbIndex] = true;
+            if (chips[bbIndex] <= 0) allIn[bbIndex] = true;
+
+            // Erster Spieler nach Big Blind ist dran (Under the Gun)
+            aktiverSpielerIndex = (bbIndex + 1) % ANZAHL_SPIELER;
+            letzterRaiser = bbIndex;
         }
 
         function neueRunde() {
             neuesDeck();
             gemeinschaftsKarten = [];
-            spielerHand = [zieheKarte(), zieheKarte()];
-            computerHand = [zieheKarte(), zieheKarte()];
-            spielerGefoldet = false;
-            computerGefoldet = false;
-            spielerAllIn = false;
-            computerAllIn = false;
+            haende = [
+                [zieheKarte(), zieheKarte()],
+                [zieheKarte(), zieheKarte()],
+                [zieheKarte(), zieheKarte()],
+                [zieheKarte(), zieheKarte()]
+            ];
+            gefoldet = [false, false, false, false];
+            allIn = [false, false, false, false];
             rundeBeendet = false;
             gamePhase = 'preflop';
+            dealerIndex = (dealerIndex + 1) % ANZAHL_SPIELER;
             blindsSetzen();
-            updateUI();
-            setMessage('🃏 Pre-Flop – Dein Zug!');
-            updateButtons();
 
-            // Wenn beide All-In sind, direkt aufdecken
-            if (spielerAllIn && computerAllIn) {
-                runShowdown();
-                return;
+            // Wenn aktiver Spieler All-In ist, überspringen
+            while (aktiverSpielerIndex >= 0 && (gefoldet[aktiverSpielerIndex] || allIn[aktiverSpielerIndex])) {
+                aktiverSpielerIndex = (aktiverSpielerIndex + 1) % ANZAHL_SPIELER;
+                if (aktiverSpielerIndex === (dealerIndex + 3) % ANZAHL_SPIELER) break;
             }
-            if (spielerAllIn) {
-                setMessage('🤖 Du bist All-In! Computer ist am Zug...');
-                setTimeout(computerZug, 1200);
+
+            updateUI();
+            updateButtons();
+            setMessage(`🃏 Pre-Flop – ${SPIELER_NAMEN[aktiverSpielerIndex]} ist dran!`);
+
+            if (aktiverSpielerIndex !== 0 && aktiverSpielerIndex >= 0) {
+                setTimeout(() => computerZug(aktiverSpielerIndex), 1000 + Math.random() * 600);
             }
         }
 
         function spielerAktion(aktion) {
-            if (rundeBeendet || spielerGefoldet || spielerAllIn) return;
+            if (aktiverSpielerIndex !== 0 || rundeBeendet || gefoldet[0] || allIn[0]) return;
 
-            const callAmount = aktuellerEinsatz - spielerEinsatz;
+            const callAmount = aktuellerEinsatz - einsaetze[0];
 
             switch (aktion) {
                 case 'fold':
-                    spielerGefoldet = true;
-                    computerChips += pot;
-                    pot = 0;
-                    rundeBeendet = true;
-                    gamePhase = 'showdown';
-                    setMessage('😞 Du hast gefoldet. Computer gewinnt!');
-                    updateUI();
-                    updateButtons();
-                    return;
-
+                    gefoldet[0] = true;
+                    setMessage('😞 Du foldest.');
+                    break;
                 case 'check':
-                    // Nichts tun, Einsatz bleibt
                     setMessage('✅ Du checkst.');
                     break;
-
                 case 'call':
-                    const callBetrag = Math.min(callAmount, spielerChips);
-                    spielerChips -= callBetrag;
-                    spielerEinsatz += callBetrag;
+                    const callBetrag = Math.min(callAmount, chips[0]);
+                    chips[0] -= callBetrag;
+                    einsaetze[0] += callBetrag;
                     pot += callBetrag;
-                    if (spielerChips <= 0) spielerAllIn = true;
+                    if (chips[0] <= 0) allIn[0] = true;
                     setMessage(`👈 Du callst ${callBetrag}.`);
                     break;
-
                 case 'raise':
                     let raiseBetrag = parseInt(document.getElementById('raiseSlider').value);
-                    raiseBetrag = Math.min(raiseBetrag, spielerChips + spielerEinsatz - aktuellerEinsatz);
-                    if (raiseBetrag < aktuellerEinsatz - spielerEinsatz) raiseBetrag = aktuellerEinsatz - spielerEinsatz;
-                    if (raiseBetrag <= 0) return;
-                    const additionalChips = raiseBetrag - (aktuellerEinsatz - spielerEinsatz);
-                    const tatsaechlicherRaise = Math.min(additionalChips, spielerChips);
-                    spielerChips -= tatsaechlicherRaise;
-                    spielerEinsatz += tatsaechlicherRaise;
-                    pot += tatsaechlicherRaise;
-                    aktuellerEinsatz = spielerEinsatz;
-                    if (spielerChips <= 0) spielerAllIn = true;
+                    raiseBetrag = Math.min(raiseBetrag, chips[0] + einsaetze[0]);
+                    if (raiseBetrag <= aktuellerEinsatz) return;
+                    const additional = raiseBetrag - einsaetze[0];
+                    chips[0] -= additional;
+                    einsaetze[0] = raiseBetrag;
+                    pot += additional;
+                    aktuellerEinsatz = einsaetze[0];
+                    letzterRaiser = 0;
+                    if (chips[0] <= 0) allIn[0] = true;
                     setMessage(`🔥 Du raist auf ${aktuellerEinsatz}.`);
                     break;
-
                 case 'allin':
-                    const allInBetrag = spielerChips;
-                    spielerChips = 0;
-                    spielerEinsatz += allInBetrag;
+                    const allInBetrag = chips[0];
+                    chips[0] = 0;
+                    einsaetze[0] += allInBetrag;
                     pot += allInBetrag;
-                    spielerAllIn = true;
-                    if (spielerEinsatz > aktuellerEinsatz) aktuellerEinsatz = spielerEinsatz;
+                    allIn[0] = true;
+                    if (einsaetze[0] > aktuellerEinsatz) {
+                        aktuellerEinsatz = einsaetze[0];
+                        letzterRaiser = 0;
+                    }
                     setMessage('💀 Du gehst ALL-IN!');
                     break;
             }
@@ -827,163 +997,153 @@
 
             if (rundeBeendet) return;
 
-            // Computer ist dran
-            if (!computerAllIn && !computerGefoldet) {
-                setMessage(prev => prev + ' 🤖 Computer überlegt...');
-                setTimeout(computerZug, 1000 + Math.random() * 800);
-            } else if (spielerAllIn && computerAllIn) {
-                runShowdown();
-            } else if (computerAllIn && !spielerAllIn) {
-                // Computer ist All-In, Spieler muss nur callen/checken
-                if (aktuellerEinsatz <= spielerEinsatz) {
-                    naechstePhase();
-                }
+            // Nächsten Spieler bestimmen
+            aktiverSpielerIndex = (aktiverSpielerIndex + 1) % ANZAHL_SPIELER;
+            while (aktiverSpielerIndex !== letzterRaiser && (gefoldet[aktiverSpielerIndex] || allIn[aktiverSpielerIndex])) {
+                aktiverSpielerIndex = (aktiverSpielerIndex + 1) % ANZAHL_SPIELER;
+                if (alleHabenGehandelt()) break;
+            }
+
+            if (alleHabenGehandelt() || aktiverSpielerIndex === letzterRaiser) {
+                naechstePhase();
+                return;
+            }
+
+            updateUI();
+            updateButtons();
+            setMessage(`${SPIELER_NAMEN[aktiverSpielerIndex]} ist dran...`);
+
+            if (aktiverSpielerIndex !== 0) {
+                setTimeout(() => computerZug(aktiverSpielerIndex), 800 + Math.random() * 700);
             }
         }
 
-        function computerZug() {
-            if (rundeBeendet || computerGefoldet || computerAllIn) return;
+        function computerZug(spielerIdx) {
+            if (rundeBeendet || gefoldet[spielerIdx] || allIn[spielerIdx]) return;
+            if (aktiverSpielerIndex !== spielerIdx) return;
 
-            const callAmount = aktuellerEinsatz - computerEinsatz;
-
-            // Einfache KI: Bewerte die eigene Hand-Stärke
-            const bewertung = bewerteHand(computerHand, gemeinschaftsKarten);
-            const handStaerke = bewertung.rang; // 1-10
-
-            // Zufällige Entscheidung mit Gewichtung
+            const callAmount = aktuellerEinsatz - einsaetze[spielerIdx];
+            const bewertung = bewerteHand(haende[spielerIdx], gemeinschaftsKarten);
+            const handStaerke = bewertung.rang;
             const randomFaktor = Math.random();
+
             let aktion;
-
             if (callAmount <= 0) {
-                // Kann checken oder raisen
-                if (handStaerke >= 5 && randomFaktor < 0.6) {
-                    aktion = 'raise';
-                } else if (handStaerke >= 3 && randomFaktor < 0.4) {
-                    aktion = 'raise';
-                } else {
-                    aktion = 'check';
-                }
+                if (handStaerke >= 5 && randomFaktor < 0.55) aktion = 'raise';
+                else if (handStaerke >= 3 && randomFaktor < 0.35) aktion = 'raise';
+                else aktion = 'check';
             } else {
-                const callVerhaeltnis = callAmount / (computerChips + callAmount);
-                if (handStaerke >= 7) {
-                    aktion = randomFaktor < 0.7 ? 'raise' : 'call';
-                } else if (handStaerke >= 5 && callVerhaeltnis < 0.4) {
-                    aktion = randomFaktor < 0.4 ? 'raise' : 'call';
-                } else if (handStaerke >= 3 && callVerhaeltnis < 0.2) {
-                    aktion = 'call';
-                } else if (handStaerke <= 1 && callVerhaeltnis > 0.3) {
-                    aktion = randomFaktor < 0.7 ? 'fold' : 'call';
-                } else if (callVerhaeltnis > 0.6) {
-                    aktion = randomFaktor < 0.8 ? 'fold' : 'call';
-                } else {
-                    aktion = randomFaktor < 0.3 ? 'call' : 'fold';
-                }
+                const callVerhaeltnis = callAmount / (chips[spielerIdx] + callAmount);
+                if (handStaerke >= 7) aktion = randomFaktor < 0.6 ? 'raise' : 'call';
+                else if (handStaerke >= 5 && callVerhaeltnis < 0.4) aktion = randomFaktor < 0.35 ? 'raise' : 'call';
+                else if (handStaerke >= 3 && callVerhaeltnis < 0.25) aktion = 'call';
+                else if (handStaerke <= 1 && callVerhaeltnis > 0.35) aktion = randomFaktor < 0.7 ? 'fold' : 'call';
+                else if (callVerhaeltnis > 0.65) aktion = randomFaktor < 0.8 ? 'fold' : 'call';
+                else aktion = randomFaktor < 0.4 ? 'call' : 'fold';
             }
+            if (aktion === 'raise' && Math.random() < 0.35) aktion = 'call';
 
-            // Nicht zu oft raisen
-            if (aktion === 'raise' && Math.random() < 0.3) aktion = 'call';
-
+            const name = SPIELER_NAMEN[spielerIdx];
             switch (aktion) {
                 case 'fold':
-                    computerGefoldet = true;
-                    spielerChips += pot;
-                    pot = 0;
-                    rundeBeendet = true;
-                    gamePhase = 'showdown';
-                    setMessage('🎉 Computer foldet! Du gewinnst den Pot!');
+                    gefoldet[spielerIdx] = true;
+                    setMessage(`${name} foldet.`);
                     break;
-
                 case 'check':
-                    setMessage('🤖 Computer checkt.');
+                    setMessage(`${name} checkt.`);
                     break;
-
                 case 'call':
-                    const callBetrag = Math.min(callAmount, computerChips);
-                    computerChips -= callBetrag;
-                    computerEinsatz += callBetrag;
-                    pot += callBetrag;
-                    if (computerChips <= 0) computerAllIn = true;
-                    setMessage(`🤖 Computer callt ${callBetrag}.`);
+                    const callB = Math.min(callAmount, chips[spielerIdx]);
+                    chips[spielerIdx] -= callB;
+                    einsaetze[spielerIdx] += callB;
+                    pot += callB;
+                    if (chips[spielerIdx] <= 0) allIn[spielerIdx] = true;
+                    setMessage(`${name} callt ${callB}.`);
                     break;
-
                 case 'raise':
                     let raiseVal = aktuellerEinsatz > 0 ? aktuellerEinsatz * 2 : BIG_BLIND * 2;
-                    raiseVal = Math.min(raiseVal, computerChips + computerEinsatz);
-                    const additional = raiseVal - computerEinsatz;
-                    const tatsaechlich = Math.min(additional, computerChips);
-                    if (tatsaechlich > 0) {
-                        computerChips -= tatsaechlich;
-                        computerEinsatz += tatsaechlich;
-                        pot += tatsaechlich;
-                        aktuellerEinsatz = computerEinsatz;
-                        if (computerChips <= 0) computerAllIn = true;
-                        setMessage(`🤖 Computer raist auf ${aktuellerEinsatz}.`);
+                    raiseVal = Math.min(raiseVal, chips[spielerIdx] + einsaetze[spielerIdx]);
+                    const add = raiseVal - einsaetze[spielerIdx];
+                    if (add > 0) {
+                        chips[spielerIdx] -= add;
+                        einsaetze[spielerIdx] = raiseVal;
+                        pot += add;
+                        aktuellerEinsatz = einsaetze[spielerIdx];
+                        letzterRaiser = spielerIdx;
+                        if (chips[spielerIdx] <= 0) allIn[spielerIdx] = true;
+                        setMessage(`${name} raist auf ${aktuellerEinsatz}.`);
                     } else {
-                        setMessage('🤖 Computer checkt.');
+                        setMessage(`${name} checkt.`);
                     }
                     break;
             }
 
             updateUI();
-            updateButtons();
 
-            if (rundeBeendet) return;
-
-            // Wenn beide All-In -> Showdown
-            if (spielerAllIn && computerAllIn) {
-                runShowdown();
-                return;
+            // Nächsten Spieler finden
+            aktiverSpielerIndex = (spielerIdx + 1) % ANZAHL_SPIELER;
+            let durchlaeufe = 0;
+            while (durchlaeufe < ANZAHL_SPIELER &&
+                aktiverSpielerIndex !== letzterRaiser &&
+                (gefoldet[aktiverSpielerIndex] || allIn[aktiverSpielerIndex])) {
+                aktiverSpielerIndex = (aktiverSpielerIndex + 1) % ANZAHL_SPIELER;
+                durchlaeufe++;
             }
 
-            // Wenn der Spieler All-In ist, aber der Computer noch handeln muss
-            if (spielerAllIn && !computerAllIn) {
+            if (alleHabenGehandelt() || aktiverSpielerIndex === letzterRaiser || durchlaeufe >= ANZAHL_SPIELER) {
                 naechstePhase();
                 return;
             }
 
-            naechstePhase();
+            updateUI();
+            updateButtons();
+            setMessage(`${SPIELER_NAMEN[aktiverSpielerIndex]} ist dran...`);
+
+            if (aktiverSpielerIndex !== 0) {
+                setTimeout(() => computerZug(aktiverSpielerIndex), 700 + Math.random() * 600);
+            }
         }
 
         function naechstePhase() {
             if (rundeBeendet) return;
 
-            // Wenn einer gefoldet hat oder beide All-In -> Showdown
-            if (spielerGefoldet || computerGefoldet) {
+            // Prüfen ob nur noch ein Spieler übrig ist
+            const aktiveSpieler = [];
+            for (let i = 0; i < ANZAHL_SPIELER; i++) {
+                if (!gefoldet[i]) aktiveSpieler.push(i);
+            }
+            if (aktiveSpieler.length <= 1) {
+                const gewinner = aktiveSpieler[0];
+                chips[gewinner] += pot;
+                pot = 0;
                 rundeBeendet = true;
                 gamePhase = 'showdown';
+                setMessage(`🏆 ${SPIELER_NAMEN[gewinner]} gewinnt den Pot (alle anderen gefoldet)!`);
                 updateUI();
                 updateButtons();
                 return;
             }
 
-            if (spielerAllIn && computerAllIn) {
-                runShowdown();
-                return;
-            }
-
-            // Einsatz angleichen für nächste Phase
-            spielerEinsatz = 0;
-            computerEinsatz = 0;
+            // Einsatz zurücksetzen für nächste Phase
+            for (let i = 0; i < ANZAHL_SPIELER; i++) einsaetze[i] = 0;
             aktuellerEinsatz = 0;
+            letzterRaiser = -1;
 
             switch (gamePhase) {
                 case 'preflop':
-                    // Flop austeilen
-                    gemeinschaftsKarten.push(zieheKarte());
-                    gemeinschaftsKarten.push(zieheKarte());
-                    gemeinschaftsKarten.push(zieheKarte());
+                    gemeinschaftsKarten.push(zieheKarte(), zieheKarte(), zieheKarte());
                     gamePhase = 'flop';
-                    setMessage('🃏🃏🃏 Flop! Dein Zug.');
+                    setMessage('🃏🃏🃏 Flop!');
                     break;
                 case 'flop':
                     gemeinschaftsKarten.push(zieheKarte());
                     gamePhase = 'turn';
-                    setMessage('🃏 Turn! Dein Zug.');
+                    setMessage('🃏 Turn!');
                     break;
                 case 'turn':
                     gemeinschaftsKarten.push(zieheKarte());
                     gamePhase = 'river';
-                    setMessage('🃏 River! Dein Zug.');
+                    setMessage('🃏 River!');
                     break;
                 case 'river':
                     gamePhase = 'showdown';
@@ -991,15 +1151,19 @@
                     return;
             }
 
+            // Erster Spieler nach Dealer beginnt
+            aktiverSpielerIndex = (dealerIndex + 1) % ANZAHL_SPIELER;
+            while (gefoldet[aktiverSpielerIndex] || allIn[aktiverSpielerIndex]) {
+                aktiverSpielerIndex = (aktiverSpielerIndex + 1) % ANZAHL_SPIELER;
+            }
+            letzterRaiser = aktiverSpielerIndex;
+
             updateUI();
             updateButtons();
+            setMessage(prev => prev + ` ${SPIELER_NAMEN[aktiverSpielerIndex]} beginnt.`);
 
-            // Wenn Spieler All-In ist, direkt Computer-Zug
-            if (spielerAllIn && !computerAllIn) {
-                setMessage(msg => msg + ' (Du bist All-In) 🤖 Computer...');
-                setTimeout(computerZug, 1000);
-            } else if (computerAllIn && !spielerAllIn) {
-                setMessage(msg => msg + ' (Computer ist All-In)');
+            if (aktiverSpielerIndex !== 0) {
+                setTimeout(() => computerZug(aktiverSpielerIndex), 900 + Math.random() * 600);
             }
         }
 
@@ -1007,86 +1171,88 @@
             rundeBeendet = true;
             gamePhase = 'showdown';
 
-            // Alle restlichen Karten aufdecken
             while (gemeinschaftsKarten.length < 5) {
                 gemeinschaftsKarten.push(zieheKarte());
             }
 
-            let gewinnerText = '';
-            if (spielerGefoldet) {
-                computerChips += pot;
-                gewinnerText = 'Computer gewinnt (Du hast gefoldet)!';
-            } else if (computerGefoldet) {
-                spielerChips += pot;
-                gewinnerText = 'Du gewinnst (Computer hat gefoldet)!';
-            } else {
-                // Hände vergleichen
-                const bewSpieler = bewerteHand(spielerHand, gemeinschaftsKarten);
-                const bewComputer = bewerteHand(computerHand, gemeinschaftsKarten);
-                const vergleich = vergleicheHaende(bewSpieler, bewComputer);
+            const aktiveSpieler = [];
+            for (let i = 0; i < ANZAHL_SPIELER; i++) {
+                if (!gefoldet[i]) aktiveSpieler.push(i);
+            }
 
+            if (aktiveSpieler.length === 1) {
+                chips[aktiveSpieler[0]] += pot;
+                pot = 0;
+                setMessage(`🏆 ${SPIELER_NAMEN[aktiveSpieler[0]]} gewinnt!`);
+                updateUI();
+                updateButtons();
+                return;
+            }
+
+            // Beste Hand ermitteln
+            let besteSpieler = [aktiveSpieler[0]];
+            let besteBewertung = bewerteHand(haende[aktiveSpieler[0]], gemeinschaftsKarten);
+
+            for (let i = 1; i < aktiveSpieler.length; i++) {
+                const bew = bewerteHand(haende[aktiveSpieler[i]], gemeinschaftsKarten);
+                const vergleich = vergleicheHaende(bew, besteBewertung);
                 if (vergleich > 0) {
-                    spielerChips += pot;
-                    gewinnerText = `🎉 Du gewinnst mit: ${bewSpieler.name}! (Computer: ${bewComputer.name})`;
-                } else if (vergleich < 0) {
-                    computerChips += pot;
-                    gewinnerText = `🤖 Computer gewinnt mit: ${bewComputer.name}! (Du: ${bewSpieler.name})`;
-                } else {
-                    // Split Pot
-                    const halfPot = Math.floor(pot / 2);
-                    spielerChips += halfPot;
-                    computerChips += pot - halfPot;
-                    gewinnerText = `🤝 Split Pot! Beide: ${bewSpieler.name}`;
+                    besteSpieler = [aktiveSpieler[i]];
+                    besteBewertung = bew;
+                } else if (vergleich === 0) {
+                    besteSpieler.push(aktiveSpieler[i]);
                 }
             }
 
+            // Pot verteilen
+            const anteil = Math.floor(pot / besteSpieler.length);
+            let rest = pot - anteil * besteSpieler.length;
+            besteSpieler.forEach(idx => {
+                chips[idx] += anteil;
+                if (rest > 0) { chips[idx] += 1;
+                    rest--; }
+            });
+
+            const gewinnerNamen = besteSpieler.map(idx => SPIELER_NAMEN[idx]).join(' & ');
+            setMessage(`🏆 ${gewinnerNamen} gewinnt mit: ${besteBewertung.name}!`);
             pot = 0;
-            spielerEinsatz = 0;
-            computerEinsatz = 0;
-            setMessage(gewinnerText);
             updateUI();
             updateButtons();
 
-            // Spielende prüfen
-            if (spielerChips <= 0) {
-                setTimeout(() => {
-                    setMessage('💀 Du hast alle Chips verloren! Starte ein neues Spiel.');
-                }, 1500);
-            } else if (computerChips <= 0) {
-                setTimeout(() => {
-                    setMessage('🏆 Du hast den Computer besiegt! Starte ein neues Spiel.');
-                }, 1500);
+            if (chips[0] <= 0) {
+                setTimeout(() => setMessage('💀 Du hast alle Chips verloren! Neues Spiel?'), 1500);
             }
         }
 
         function neuesSpiel() {
-            spielerChips = START_CHIPS;
-            computerChips = START_CHIPS;
+            chips = [START_CHIPS, START_CHIPS, START_CHIPS, START_CHIPS];
+            einsaetze = [0, 0, 0, 0];
+            gefoldet = [false, false, false, false];
+            allIn = [false, false, false, false];
             pot = 0;
-            spielerEinsatz = 0;
-            computerEinsatz = 0;
-            spielerGefoldet = false;
-            computerGefoldet = false;
-            spielerAllIn = false;
-            computerAllIn = false;
-            rundeBeendet = false;
             aktuellerEinsatz = 0;
-            dealer = Math.floor(Math.random() * 2);
+            rundeBeendet = false;
             gemeinschaftsKarten = [];
-            spielerHand = [];
-            computerHand = [];
+            haende = [
+                [],
+                [],
+                [],
+                []
+            ];
             gamePhase = 'preflop';
+            dealerIndex = Math.floor(Math.random() * ANZAHL_SPIELER);
+            aktiverSpielerIndex = -1;
+            letzterRaiser = -1;
             document.getElementById('raiseSlider').value = BIG_BLIND * 2;
             updateRaiseLabel();
             setMessage('🔄 Neues Spiel! Viel Glück!');
             neueRunde();
         }
 
-        // ==================== START ====================
         function init() {
             document.getElementById('raiseSlider').value = BIG_BLIND * 2;
             updateRaiseLabel();
-            dealer = Math.floor(Math.random() * 2);
+            dealerIndex = Math.floor(Math.random() * ANZAHL_SPIELER);
             neueRunde();
         }
 
