@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="de">
 <head>
@@ -6,7 +5,8 @@
 <title>Tower Defense</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
-html,body{width:960px;height:660px;overflow:hidden;background:#0a0a0a;font-family:'Segoe UI',sans-serif;}
+html,body{width:100%;height:100%;overflow:hidden;background:#0a0a0a;font-family:'Segoe UI',sans-serif;}
+#scaleRoot{width:960px;height:660px;transform-origin:top left;position:absolute;top:0;left:0;}
 #homescreen{position:absolute;top:0;left:0;width:960px;height:660px;background:#0a0f0a;display:flex;flex-direction:column;z-index:100;}
 .hs-page{display:none;flex:1;overflow-y:auto;padding:28px 48px;}
 .hs-page.active{display:flex;flex-direction:column;}
@@ -101,19 +101,19 @@ html,body{width:960px;height:660px;overflow:hidden;background:#0a0a0a;font-famil
 .tbtn{width:100%;padding:8px 6px;border:none;border-radius:6px;cursor:pointer;font-size:11px;font-weight:bold;text-align:left;display:flex;flex-direction:row;align-items:center;gap:7px;margin-bottom:5px;transition:all 0.15s;background:#3a3a3a;color:#aaa;border:1px solid #555;}
 .tbtn:last-child{margin-bottom:0;}
 .tbtn:disabled{background:#2e2e2e;color:#777;border:1px solid #444;opacity:0.6;cursor:not-allowed;filter:none;}
-.tbtn:disabled canvas{opacity:1 !important;filter:none !important;}
+.tbtn:disabled canvas{opacity:1!important;filter:none!important;}
 .tbtn-text{display:flex;flex-direction:column;gap:1px;flex:1;}
 .tbtn .btn-name{font-size:11px;}
 .tbtn .btn-cost{font-size:10px;opacity:0.8;}
 .tbtn .btn-desc{font-size:9px;opacity:0.65;font-weight:normal;}
 .tbtn canvas{width:44px;height:44px;min-width:44px;max-width:44px;flex-shrink:0;border-radius:4px;}
-.tbtn.can-afford{background:#2d6a2d !important;color:#a8f0a8 !important;border:1px solid #4a9a4a !important;}
-.tbtn.can-afford:disabled{background:#1e4a1e !important;color:#7a9a7a !important;border:1px solid #3a7a3a !important;opacity:0.7;}
-.tbtn.can-afford .btn-name{color:#d4ffd4 !important;}
-.tbtn.can-afford .btn-cost{color:#b8e8b8 !important;}
-.tbtn.active{background:#3a8a3a !important;box-shadow:0 0 12px #4a9a4a88;color:#fff !important;border-color:#5abe5a !important;}
-.tbtn.active .btn-name{color:#fff !important;}
-.tbtn.active .btn-cost{color:#d4ffd4 !important;}
+.tbtn.can-afford{background:#2d6a2d!important;color:#a8f0a8!important;border:1px solid #4a9a4a!important;}
+.tbtn.can-afford:disabled{background:#1e4a1e!important;color:#7a9a7a!important;border:1px solid #3a7a3a!important;opacity:0.7;}
+.tbtn.can-afford .btn-name{color:#d4ffd4!important;}
+.tbtn.can-afford .btn-cost{color:#b8e8b8!important;}
+.tbtn.active{background:#3a8a3a!important;box-shadow:0 0 12px #4a9a4a88;color:#fff!important;border-color:#5abe5a!important;}
+.tbtn.active .btn-name{color:#fff!important;}
+.tbtn.active .btn-cost{color:#d4ffd4!important;}
 .wave-btn{width:100%;padding:8px;border:none;border-radius:5px;cursor:pointer;font-size:12px;font-weight:bold;background:#8b1a1a;color:#ffaaaa;border:1px solid #cc3333;}
 .wave-btn:hover:not(:disabled){background:#cc2222;}
 .wave-btn:disabled{opacity:0.4;cursor:not-allowed;}
@@ -139,6 +139,7 @@ html,body{width:960px;height:660px;overflow:hidden;background:#0a0a0a;font-famil
 </style>
 </head>
 <body>
+<div id="scaleRoot">
 <div id="homescreen">
 <div id="hsHome" class="hs-page active">
 <h1>⚔ TOWER DEFENSE</h1><div class="hs-sub">Verteidige dein Rathaus</div>
@@ -191,7 +192,22 @@ html,body{width:960px;height:660px;overflow:hidden;background:#0a0a0a;font-famil
 </div>
 </div>
 </div>
+</div><!-- end scaleRoot -->
+
 <script>
+// ── SCALING ──
+function scaleGame(){
+  const root=document.getElementById('scaleRoot');
+  const scaleX=window.innerWidth/960;
+  const scaleY=window.innerHeight/660;
+  const scale=Math.min(scaleX,scaleY);
+  const ox=(window.innerWidth-960*scale)/2;
+  const oy=(window.innerHeight-660*scale)/2;
+  root.style.transform=`translate(${ox}px,${oy}px) scale(${scale})`;
+}
+window.addEventListener('resize',scaleGame);
+scaleGame();
+
 let highscore=parseInt(localStorage.getItem('td_highscore')||'0');
 let discovered=JSON.parse(localStorage.getItem('td_discovered')||'["light"]');
 document.getElementById('hsWave').textContent=highscore||'—';
@@ -202,70 +218,17 @@ if(activeDeck.length>4)activeDeck=activeDeck.slice(0,4);
 function saveDeck(){localStorage.setItem('td_deck',JSON.stringify(activeDeck));renderHsDeck();renderDeckPage();}
 let deckPageSelectedSlot=null;
 function hsTab(pageId,btn){document.querySelectorAll('.hs-page').forEach(p=>p.classList.remove('active'));document.querySelectorAll('.hs-nav-btn').forEach(b=>b.classList.remove('active'));document.getElementById(pageId).classList.add('active');btn.classList.add('active');if(pageId==='hsInfo'){renderTowerCards();renderEnemyCards();}if(pageId==='hsDeckPage'){deckPageSelectedSlot=null;renderDeckPage();}if(pageId==='hsHome')renderHsDeck();}
-
-// TOWER_CARD_DATA - baseCost = Basiskosten, levels[].upgradeCost = Upgrade-Kosten für DIESES Level
 const TOWER_CARD_DATA={
-  archer:{name:'Bogenschützenturm',baseCost:60,special:'Einzelschuss — schnell & präzise',
-    levels:[
-      {lvl:1,dmg:3,range:150,tempo:'1.25/s',upgradeCost:60},
-      {lvl:2,dmg:5,range:175,tempo:'1.5/s',upgradeCost:50},
-      {lvl:3,dmg:7,range:200,tempo:'2.0/s',upgradeCost:70}
-    ]},
-  cannon:{name:'Kanonenturm',baseCost:100,special:'Einzelschuss — hoher Schaden, langsam',
-    levels:[
-      {lvl:1,dmg:5,range:120,tempo:'0.6/s',upgradeCost:100},
-      {lvl:2,dmg:7,range:150,tempo:'0.75/s',upgradeCost:70},
-      {lvl:3,dmg:10,range:175,tempo:'1.0/s',upgradeCost:100}
-    ]},
-  mage:{name:'Magierturm',baseCost:120,special:'Flächenschaden — trifft alle Gegner im Radius',
-    levels:[
-      {lvl:1,dmg:4,range:100,tempo:'0.6/s',upgradeCost:120},
-      {lvl:2,dmg:6,range:130,tempo:'0.75/s',upgradeCost:80},
-      {lvl:3,dmg:8,range:160,tempo:'1.0/s',upgradeCost:120}
-    ]}
+  archer:{name:'Bogenschützenturm',baseCost:60,special:'Einzelschuss — schnell & präzise',levels:[{lvl:1,dmg:3,range:150,tempo:'1.25/s',upgradeCost:60},{lvl:2,dmg:5,range:175,tempo:'1.5/s',upgradeCost:50},{lvl:3,dmg:7,range:200,tempo:'2.0/s',upgradeCost:70}]},
+  cannon:{name:'Kanonenturm',baseCost:100,special:'Einzelschuss — hoher Schaden, langsam',levels:[{lvl:1,dmg:5,range:120,tempo:'0.6/s',upgradeCost:100},{lvl:2,dmg:7,range:150,tempo:'0.75/s',upgradeCost:70},{lvl:3,dmg:10,range:175,tempo:'1.0/s',upgradeCost:100}]},
+  mage:{name:'Magierturm',baseCost:120,special:'Flächenschaden — trifft alle Gegner im Radius',levels:[{lvl:1,dmg:4,range:100,tempo:'0.6/s',upgradeCost:120},{lvl:2,dmg:6,range:130,tempo:'0.75/s',upgradeCost:80},{lvl:3,dmg:8,range:160,tempo:'1.0/s',upgradeCost:120}]}
 };
 let infoTowerLevels={archer:1,cannon:1,mage:1};
-
-function renderDeckPage(){
-  const slotsDiv=document.getElementById('deckPageSlots');if(!slotsDiv)return;slotsDiv.innerHTML='';
-  for(let i=0;i<4;i++){const t=activeDeck[i];const slot=document.createElement('div');slot.className='deck-page-slot'+(t?' filled':'')+(deckPageSelectedSlot===i?' selected':'');slot.innerHTML=`<span class="slot-num">${i+1}</span>`;if(t){const c=document.createElement('canvas');c.width=64;c.height=64;setTimeout(()=>{drawTowerOnCanvas(c,t,1);},0);slot.appendChild(c);}slot.onclick=()=>{deckPageSelectedSlot=(deckPageSelectedSlot===i)?null:i;renderDeckPage();};slotsDiv.appendChild(slot);}
-  const clearDiv=document.getElementById('deckPageClearBtn');if(deckPageSelectedSlot!==null&&activeDeck[deckPageSelectedSlot]){clearDiv.style.display='block';clearDiv.innerHTML='<button onclick="clearDeckSlot()">🗑️ Slot '+(deckPageSelectedSlot+1)+' leeren</button>';}else{clearDiv.style.display='none';clearDiv.innerHTML='';}
-  const towersDiv=document.getElementById('deckPageTowers');towersDiv.innerHTML='';
-  ALL_TOWER_TYPES.forEach(type=>{const d=TOWER_CARD_DATA[type];const opt=document.createElement('div');opt.className='deck-page-tower';const c=document.createElement('canvas');c.width=56;c.height=56;setTimeout(()=>{drawTowerOnCanvas(c,type,1);},0);opt.appendChild(c);const name=document.createElement('span');name.className='dpt-name';name.textContent=d.name;opt.appendChild(name);opt.onclick=()=>{if(deckPageSelectedSlot!==null){for(let i=0;i<4;i++){if(activeDeck[i]===type)activeDeck[i]=null;}activeDeck[deckPageSelectedSlot]=type;deckPageSelectedSlot=null;saveDeck();renderDeckPage();}};towersDiv.appendChild(opt);});
-}
+function renderDeckPage(){const slotsDiv=document.getElementById('deckPageSlots');if(!slotsDiv)return;slotsDiv.innerHTML='';for(let i=0;i<4;i++){const t=activeDeck[i];const slot=document.createElement('div');slot.className='deck-page-slot'+(t?' filled':'')+(deckPageSelectedSlot===i?' selected':'');slot.innerHTML=`<span class="slot-num">${i+1}</span>`;if(t){const c=document.createElement('canvas');c.width=64;c.height=64;setTimeout(()=>{drawTowerOnCanvas(c,t,1);},0);slot.appendChild(c);}slot.onclick=()=>{deckPageSelectedSlot=(deckPageSelectedSlot===i)?null:i;renderDeckPage();};slotsDiv.appendChild(slot);}const clearDiv=document.getElementById('deckPageClearBtn');if(deckPageSelectedSlot!==null&&activeDeck[deckPageSelectedSlot]){clearDiv.style.display='block';clearDiv.innerHTML='<button onclick="clearDeckSlot()">🗑️ Slot '+(deckPageSelectedSlot+1)+' leeren</button>';}else{clearDiv.style.display='none';clearDiv.innerHTML='';}const towersDiv=document.getElementById('deckPageTowers');towersDiv.innerHTML='';ALL_TOWER_TYPES.forEach(type=>{const d=TOWER_CARD_DATA[type];const opt=document.createElement('div');opt.className='deck-page-tower';const c=document.createElement('canvas');c.width=56;c.height=56;setTimeout(()=>{drawTowerOnCanvas(c,type,1);},0);opt.appendChild(c);const name=document.createElement('span');name.className='dpt-name';name.textContent=d.name;opt.appendChild(name);opt.onclick=()=>{if(deckPageSelectedSlot!==null){for(let i=0;i<4;i++){if(activeDeck[i]===type)activeDeck[i]=null;}activeDeck[deckPageSelectedSlot]=type;deckPageSelectedSlot=null;saveDeck();renderDeckPage();}};towersDiv.appendChild(opt);});}
 function clearDeckSlot(){if(deckPageSelectedSlot!==null){activeDeck[deckPageSelectedSlot]=null;deckPageSelectedSlot=null;saveDeck();renderDeckPage();}}
 function renderHsDeck(){const row=document.getElementById('hsDeckRow');if(!row)return;row.innerHTML='';for(let i=0;i<4;i++){const t=activeDeck[i];const slot=document.createElement('div');slot.className='hs-deck-slot';if(t){const c=document.createElement('canvas');c.width=44;c.height=44;setTimeout(()=>{drawTowerOnCanvas(c,t,1);},0);slot.appendChild(c);}else{slot.innerHTML='<span style="color:#333;font-size:20px;">+</span>';}row.appendChild(slot);}}
 function drawTowerOnCanvas(canvas,type,lvl){const savedCtx=ctx;const x=canvas.getContext('2d');x.clearRect(0,0,canvas.width,canvas.height);x.save();const cx=canvas.width/2,cy=canvas.height/2;if(type==='archer'){x.translate(cx-20,cy-22);ctx=x;drawTowerArcher(0,0,lvl);}else if(type==='cannon'){x.translate(cx-20,cy-20);ctx=x;drawTowerCannon(0,0,lvl);}else{x.translate(cx-20,cy-20);ctx=x;drawTowerMage(0,0,lvl);}ctx=savedCtx;x.restore();}
-
-function renderTowerCards(){
-  const c=document.getElementById('towerCardsContainer');if(!c)return;c.innerHTML='';
-  ALL_TOWER_TYPES.forEach(type=>{
-    const d=TOWER_CARD_DATA[type];
-    const lvl=infoTowerLevels[type];
-    const info=d.levels[lvl-1];
-    const div=document.createElement('div');div.className='tower-card';
-    const wrap=document.createElement('div');wrap.className='tower-card-canvas';
-    const can=document.createElement('canvas');can.width=80;can.height=80;wrap.appendChild(can);div.appendChild(wrap);
-    const inf=document.createElement('div');inf.className='tower-card-info';
-    const tabs=document.createElement('div');tabs.className='lvl-tabs-mini';
-    [1,2,3].forEach(l=>{const t=document.createElement('button');t.className='lvl-tab-mini'+(l===lvl?' active':'');t.textContent='Lvl '+l;t.onclick=function(e){e.stopPropagation();infoTowerLevels[type]=l;renderTowerCards();};tabs.appendChild(t);});
-    inf.appendChild(tabs);
-    const h3=document.createElement('h3');h3.textContent=d.name+' (Level '+lvl+')';inf.appendChild(h3);
-    const statsDiv=document.createElement('div');statsDiv.className='tower-stats';
-    // Zeige upgradeCost des aktuellen Levels als "Kosten"
-    statsDiv.innerHTML=`
-      <div><b>Kosten:</b> ${info.upgradeCost} 💰</div>
-      <div><b>Schaden:</b> ${info.dmg}${type==='mage'?' (Fläche)':''}</div>
-      <div><b>Reichweite:</b> ${info.range}</div>
-      <div><b>Tempo:</b> ${info.tempo}</div>`;
-    inf.appendChild(statsDiv);
-    const specDiv=document.createElement('div');specDiv.className='tower-special';
-    specDiv.innerHTML='⚡ '+d.special;inf.appendChild(specDiv);
-    div.appendChild(inf);c.appendChild(div);
-    setTimeout(()=>{drawTowerOnCanvas(can,type,lvl);},0);
-  });
-}
-
+function renderTowerCards(){const c=document.getElementById('towerCardsContainer');if(!c)return;c.innerHTML='';ALL_TOWER_TYPES.forEach(type=>{const d=TOWER_CARD_DATA[type];const lvl=infoTowerLevels[type];const info=d.levels[lvl-1];const div=document.createElement('div');div.className='tower-card';const wrap=document.createElement('div');wrap.className='tower-card-canvas';const can=document.createElement('canvas');can.width=80;can.height=80;wrap.appendChild(can);div.appendChild(wrap);const inf=document.createElement('div');inf.className='tower-card-info';const tabs=document.createElement('div');tabs.className='lvl-tabs-mini';[1,2,3].forEach(l=>{const t=document.createElement('button');t.className='lvl-tab-mini'+(l===lvl?' active':'');t.textContent='Lvl '+l;t.onclick=function(e){e.stopPropagation();infoTowerLevels[type]=l;renderTowerCards();};tabs.appendChild(t);});inf.appendChild(tabs);const h3=document.createElement('h3');h3.textContent=d.name+' (Level '+lvl+')';inf.appendChild(h3);const statsDiv=document.createElement('div');statsDiv.className='tower-stats';statsDiv.innerHTML=`<div><b>Kosten:</b> ${info.upgradeCost} 💰</div><div><b>Schaden:</b> ${info.dmg}${type==='mage'?' (Fläche)':''}</div><div><b>Reichweite:</b> ${info.range}</div><div><b>Tempo:</b> ${info.tempo}</div>`;inf.appendChild(statsDiv);const specDiv=document.createElement('div');specDiv.className='tower-special';specDiv.innerHTML='⚡ '+d.special;inf.appendChild(specDiv);div.appendChild(inf);c.appendChild(div);setTimeout(()=>{drawTowerOnCanvas(can,type,lvl);},0);});}
 const ENEMY_CARD_DATA={light:{name:'Normaler Soldat',badge:'badge-light',badgeText:'Ab Welle 1',hp:10,dmg:'1 pro Sekunde',speed:'Normal',gold:5,schwaeche:'Alle Türme',special:'Tritt in großen Gruppen auf',color:'#8B3a3a',S:0.85},fast:{name:'Schneller Scout',badge:'badge-fast',badgeText:'Ab Welle 11',hp:5,dmg:'2 alle 0.5s',speed:'Sehr hoch',gold:5,schwaeche:'Bogenschützenturm',special:'Überholt langsamere Gruppen',color:'#00aaff',S:0.7},heavy:{name:'Schwerer Krieger',badge:'badge-heavy',badgeText:'Ab Welle 21',hp:30,dmg:'5 alle 3s',speed:'Langsam',gold:15,schwaeche:'Kanonenturm',special:'Sehr zäh, schwer zu stoppen',color:'#8a0000',S:1.1},boss:{name:'Boss',badge:'badge-boss',badgeText:'Alle 10 Wellen',hp:200,dmg:'10 alle 2s',speed:'Sehr langsam',gold:50,schwaeche:'Alle Türme kombiniert',special:'Erscheint alleine, aber mit Begleitern',color:'#ff4400',S:1.4}};
 function renderEnemyCards(){const c=document.getElementById('enemyCardsContainer');if(!c)return;c.innerHTML='';['light','fast','heavy','boss'].forEach(type=>{const d=ENEMY_CARD_DATA[type];const isDiscovered=discovered.includes(type);const div=document.createElement('div');div.className='enemy-card'+(isDiscovered?'':' locked');const wrap=document.createElement('div');wrap.className='enemy-card-canvas';wrap.style.width='100px';wrap.style.height='100px';if(isDiscovered){const can=document.createElement('canvas');can.width=100;can.height=100;wrap.appendChild(can);setTimeout(()=>{const savedCtx=ctx;const x=can.getContext('2d');x.clearRect(0,0,100,100);x.save();x.translate(50,65);x.scale(d.S,d.S);ctx=x;drawEnemyStatic({type,color:d.color});ctx=savedCtx;x.restore();},0);}else{wrap.innerHTML='<div style="width:100px;height:100px;display:flex;align-items:center;justify-content:center;font-size:36px;color:#333;">???</div>';}div.appendChild(wrap);const inf=document.createElement('div');inf.className='enemy-card-info';if(isDiscovered){inf.innerHTML=`<span class="enemy-badge ${d.badge}">${d.badgeText}</span><h3>${d.name}</h3><div class="enemy-stats"><div><b>HP:</b> ${d.hp}</div><div><b>Schaden:</b> ${d.dmg}</div><div><b>Geschwindigkeit:</b> ${d.speed}</div><div><b>Gold:</b> ${d.gold} 💰</div><div><b>Schwäche:</b> ${d.schwaeche}</div></div><div class="tower-special" style="border-color:#aa6600;margin-top:8px;">💡 ${d.special}</div>`;}else{inf.innerHTML=`<span class="enemy-badge ${d.badge}">${d.badgeText}</span><h3 style="color:#333;">???</h3><div class="locked-msg">Noch nicht entdeckt. Überlebe bis ${d.badgeText.toLowerCase()} um diesen Gegner zu enthüllen.</div>`;}div.appendChild(inf);c.appendChild(div);});}
 function startGame(){document.getElementById('homescreen').style.display='none';document.getElementById('wrapper').style.display='flex';initGame();}
@@ -276,7 +239,6 @@ function drawSpeedCanvas(id,n,active){const c=document.getElementById(id);if(!c)
 function renderSpeedCanvases(){drawSpeedCanvas('sc1',1,true);drawSpeedCanvas('sc2',2,false);drawSpeedCanvas('sc4',4,false);}
 let gameSpeed=1;
 function setSpeed(s){gameSpeed=s;[1,2,4].forEach(n=>{const a=n===s;document.getElementById('speed'+n).classList.toggle('active',a);drawSpeedCanvas('sc'+n,n,a);});}
-
 let canvas,ctx,baseHP,money,gameOver,enemies=[],towers=[],arrows=[],particles=[],explosions=[],buildMode=null,popup=null,selectedTower=null,wave=0,enemiesToSpawn=0,spawnTimer=0,phase='prep',terrain=[],grid=[];
 const TOWER_DEFS={archer:{cost:60,range:150,cooldown:48,dmg:3,label:'Bogenschützenturm'},cannon:{cost:100,range:120,cooldown:96,dmg:5,label:'Kanonenturm'},mage:{cost:120,range:100,cooldown:96,dmg:4,label:'Magierturm',splash:55}};
 const UPGRADE_DEFS={archer:[{cost:50,newDmg:5,newRange:175,newCd:40,label:'Schaden: 3 → 5<br>Reichweite: 150 → 175<br>Tempo: 1.25 → 1.5/s'},{cost:70,newDmg:7,newRange:200,newCd:30,label:'Schaden: 5 → 7<br>Reichweite: 175 → 200<br>Tempo: 1.5 → 2.0/s'}],cannon:[{cost:70,newDmg:7,newRange:150,newCd:80,label:'Schaden: 5 → 7<br>Reichweite: 120 → 150<br>Tempo: 0.6 → 0.75/s'},{cost:100,newDmg:10,newRange:175,newCd:60,label:'Schaden: 7 → 10<br>Reichweite: 150 → 175<br>Tempo: 0.75 → 1.0/s'}],mage:[{cost:80,newDmg:6,newRange:130,newCd:80,label:'Schaden: 4 → 6<br>Reichweite: 100 → 130<br>Tempo: 0.6 → 0.75/s'},{cost:120,newDmg:8,newRange:160,newCd:60,label:'Schaden: 6 → 8<br>Reichweite: 130 → 160<br>Tempo: 0.75 → 1.0/s'}]};
@@ -284,12 +246,7 @@ function cdToRate(cd){return Math.round((60/cd)*100)/100;}
 const ENEMY_TYPES={light:{hp:10,maxHp:10,speed:0.015,dmg:1,hitInterval:60,reward:5,scale:0.52,color:'random'},fast:{hp:5,maxHp:5,speed:0.028,dmg:2,hitInterval:30,reward:5,scale:0.45,color:'#00aaff'},heavy:{hp:30,maxHp:30,speed:0.009,dmg:5,hitInterval:180,reward:15,scale:0.75,color:'#8a0000'},boss:{hp:200,maxHp:200,speed:0.005,dmg:10,hitInterval:120,reward:50,scale:1.1,color:'#ff4400'}};
 const GS=40,COLS=15,ROWS=15,CX=7,CY=7;
 function discoverEnemy(type){if(!discovered.includes(type)){discovered.push(type);localStorage.setItem('td_discovered',JSON.stringify(discovered));}}
-function renderTowerButtons(){
-  const container=document.getElementById('towerBtnsContainer');if(!container)return;container.innerHTML='';
-  const buttonDefs={archer:{name:'Bogenschützenturm',cost:60,dmg:3,range:150,tempo:'1.25/s',drawFn:drawPreviewArcher},cannon:{name:'Kanonenturm',cost:100,dmg:5,range:120,tempo:'0.6/s',drawFn:drawPreviewCannon},mage:{name:'Magierturm',cost:120,dmg:4,range:100,tempo:'0.6/s',drawFn:drawPreviewMage}};
-  for(let i=0;i<4;i++){const type=activeDeck[i];if(!type)continue;const def=buttonDefs[type];const btn=document.createElement('button');btn.className='tbtn';btn.id='btn'+type.charAt(0).toUpperCase()+type.slice(1);const canAfford=money>=def.cost&&phase!=='wave';if(canAfford)btn.classList.add('can-afford');btn.disabled=money<def.cost||phase==='wave';btn.innerHTML=`<div class="tbtn-text"><span class="btn-name">${def.name}</span><span class="btn-cost">${def.cost} 💰</span><span class="btn-desc">Schaden: ${def.dmg}${type==='mage'?' (Fläche)':''}</span><span class="btn-desc">Reichweite: ${def.range}</span><span class="btn-desc">Tempo: ${def.tempo}</span></div>`;const c=document.createElement('canvas');c.width=44;c.height=44;setTimeout(()=>{def.drawFn(c);},0);btn.appendChild(c);btn.onclick=()=>{if(!btn.disabled){buildMode=buildMode===type?null:type;hideUpgPanel();updateUI();}};container.appendChild(btn);}
-  if(container.children.length===0){container.innerHTML='<div style="color:#555;font-size:11px;padding:8px;text-align:center;">Keine Türme im Deck.<br>Öffne das Deck im Hauptmenü.</div>';}
-}
+function renderTowerButtons(){const container=document.getElementById('towerBtnsContainer');if(!container)return;container.innerHTML='';const buttonDefs={archer:{name:'Bogenschützenturm',cost:60,dmg:3,range:150,tempo:'1.25/s',drawFn:drawPreviewArcher},cannon:{name:'Kanonenturm',cost:100,dmg:5,range:120,tempo:'0.6/s',drawFn:drawPreviewCannon},mage:{name:'Magierturm',cost:120,dmg:4,range:100,tempo:'0.6/s',drawFn:drawPreviewMage}};for(let i=0;i<4;i++){const type=activeDeck[i];if(!type)continue;const def=buttonDefs[type];const btn=document.createElement('button');btn.className='tbtn';btn.id='btn'+type.charAt(0).toUpperCase()+type.slice(1);const canAfford=money>=def.cost&&phase!=='wave';if(canAfford)btn.classList.add('can-afford');btn.disabled=money<def.cost||phase==='wave';btn.innerHTML=`<div class="tbtn-text"><span class="btn-name">${def.name}</span><span class="btn-cost">${def.cost} 💰</span><span class="btn-desc">Schaden: ${def.dmg}${type==='mage'?' (Fläche)':''}</span><span class="btn-desc">Reichweite: ${def.range}</span><span class="btn-desc">Tempo: ${def.tempo}</span></div>`;const c=document.createElement('canvas');c.width=44;c.height=44;setTimeout(()=>{def.drawFn(c);},0);btn.appendChild(c);btn.onclick=()=>{if(!btn.disabled){buildMode=buildMode===type?null:type;hideUpgPanel();updateUI();}};container.appendChild(btn);}if(container.children.length===0){container.innerHTML='<div style="color:#555;font-size:11px;padding:8px;text-align:center;">Keine Türme im Deck.<br>Öffne das Deck im Hauptmenü.</div>';}}
 function initGame(){canvas=document.getElementById('game');ctx=canvas.getContext('2d');baseHP=100;money=180;gameOver=false;enemies=[];towers=[];arrows=[];particles=[];explosions=[];buildMode=null;popup=null;selectedTower=null;wave=0;enemiesToSpawn=0;spawnTimer=0;phase='prep';terrain=[];for(let y=0;y<ROWS;y++){terrain[y]=[];for(let x=0;x<COLS;x++){if(x===CX&&y===CY){terrain[y][x]=0;continue;}const r=Math.random();terrain[y][x]=r<0.55?0:r<0.70?1:r<0.88?2:3;}}grid=Array.from({length:ROWS},()=>Array(COLS).fill(null));renderTowerButtons();renderSpeedCanvases();updateUI();canvas.addEventListener('click',handleClick);document.getElementById('waveBtn').onclick=()=>{if(phase==='prep')startWave();};document.getElementById('upgClose').onclick=hideUpgPanel;loop();}
 function drawPreviewArcher(c){const x=c.getContext('2d');x.clearRect(0,0,44,44);x.save();x.translate(-6,2);x.fillStyle='#6d4c41';x.fillRect(13,22,18,18);x.fillStyle='#5d4037';x.fillRect(11,14,22,12);x.fillStyle='#4e342e';x.fillRect(11,9,6,9);x.fillRect(19,9,6,9);x.fillRect(27,9,6,9);x.fillStyle='#3e2723';x.fillRect(13,9,4,6);x.fillRect(21,9,4,6);x.fillRect(29,9,4,6);x.fillStyle='#795548';x.fillRect(11,37,22,4);x.fillStyle='#d4a96e';x.beginPath();x.arc(22,12,3.5,0,Math.PI*2);x.fill();x.fillStyle='#4a4a4a';x.beginPath();x.arc(22,9,4,Math.PI,0);x.fill();x.fillStyle='#546e7a';x.fillRect(18.5,14,7,6);x.strokeStyle='#5d4037';x.lineWidth=1.5;x.beginPath();x.moveTo(15,13);x.lineTo(15,20);x.stroke();x.strokeStyle='#e8d5b0';x.lineWidth=0.8;x.beginPath();x.moveTo(15,13);x.quadraticCurveTo(21,17,15,20);x.stroke();x.restore();}
 function drawPreviewCannon(c){const x=c.getContext('2d');x.clearRect(0,0,44,44);x.save();x.translate(2,1);x.fillStyle='#5a4a3a';x.fillRect(10,20,24,18);x.fillStyle='#7a6a58';x.fillRect(8,12,28,12);x.fillStyle='#6a5a48';x.fillRect(8,6,8,10);x.fillRect(20,6,8,10);x.fillStyle='#5a4a38';x.fillRect(10,6,4,7);x.fillRect(22,6,4,7);x.fillStyle='#888';x.fillRect(18,16,8,5);x.fillStyle='#aaa';x.fillRect(25,17,6,3);x.fillStyle='#333';x.beginPath();x.arc(15,32,3,0,Math.PI*2);x.fill();x.beginPath();x.arc(21,32,3,0,Math.PI*2);x.fill();x.beginPath();x.arc(18,28,3,0,Math.PI*2);x.fill();x.restore();}
