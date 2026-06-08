@@ -1,5 +1,4 @@
 
-```html
 <!DOCTYPE html>
 <html lang="de">
 <head>
@@ -38,8 +37,24 @@ canvas { display: block; border-radius: 0 0 12px 12px; border: 2px solid #5a8acc
 .ob .fin { color: #ffd844; font-size: 44px; font-weight: 900; margin: 10px 0 20px; }
 .btn { background: linear-gradient(180deg, #4a9eff, #2266cc); color: #fff; border: 2px solid #6ab4ff; padding: 12px 44px; font-size: 15px; font-weight: 900; letter-spacing: 2px; border-radius: 8px; cursor: pointer; transition: all .15s; text-transform: uppercase; }
 .btn:hover { background: linear-gradient(180deg, #6ab4ff, #3377dd); transform: scale(1.05); }
-#pause-btn { background: rgba(255,255,255,0.12); color: #c8deff; border: 2px solid rgba(90,138,204,0.6); width: 40px; height: 40px; border-radius: 8px; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; transition: all .15s; flex-shrink: 0; }
-#pause-btn:hover { background: rgba(255,255,255,0.22); border-color: #8ab4e8; }
+#pause-btn, #speed1-btn, #speed2-btn { 
+  background: rgba(255,255,255,0.12); 
+  color: #c8deff; 
+  border: 2px solid rgba(90,138,204,0.6); 
+  width: 40px; 
+  height: 40px; 
+  border-radius: 8px; 
+  cursor: pointer; 
+  font-size: 14px; 
+  font-weight: bold;
+  display: flex; 
+  align-items: center; 
+  justify-content: center; 
+  transition: all .15s; 
+  flex-shrink: 0; 
+}
+#pause-btn:hover, #speed1-btn:hover, #speed2-btn:hover { background: rgba(255,255,255,0.22); border-color: #8ab4e8; }
+#speed1-btn.active, #speed2-btn.active { background: rgba(74,158,255,0.4); border-color: #4a9eff; color: white; }
 </style>
 </head>
 <body>
@@ -49,9 +64,11 @@ canvas { display: block; border-radius: 0 0 12px 12px; border: 2px solid #5a8acc
     <div class="us"><div class="ul">Rekord</div><div class="uv" id="hv">0</div></div>
   </div>
   <div id="tt">CANAL MASTER</div>
-  <div style="display:flex;align-items:center;gap:14px;">
+  <div style="display:flex;align-items:center;gap:10px;">
     <div class="us"><div class="ul">Level</div><div class="uv" id="lv">1</div></div>
-    <button id="pause-btn" onclick="togglePause()" title="Pause">&#9646;&#9646;</button>
+    <button id="pause-btn" onclick="togglePause()" title="Pause">⏸</button>
+    <button id="speed1-btn" class="active" onclick="setSpeed(1)" title="Normalgeschwindigkeit">1x</button>
+    <button id="speed2-btn" onclick="setSpeed(2)" title="Doppelte Geschwindigkeit">2x</button>
   </div>
 </div>
 <canvas id="gc" width="660" height="540"></canvas>
@@ -100,6 +117,16 @@ const SPAWNS=[
   {x:692,y:190,dx:-1,dy:0 },{x:692,y:330,dx:-1,dy:0 },
   {x:260,y:572,dx:0, dy:-1},{x:420,y:572,dx:0, dy:-1},
 ];
+
+// ── Geschwindigkeitsfaktor ───────────────────────────────────────────
+let speedFactor = 1;  // 1 = normal, 2 = doppelt
+
+function setSpeed(factor) {
+  speedFactor = factor;
+  document.getElementById('speed1-btn').classList.toggle('active', factor === 1);
+  document.getElementById('speed2-btn').classList.toggle('active', factor === 2);
+  // Spawn-Delay und Timer anpassen (optional, wird in gameLoop dynamisch verwendet)
+}
 
 // ── Water / land tests ────────────────────────────────────────────────
 function inWater(x,y){
@@ -155,7 +182,7 @@ function spawnFire(x,y){
     type:'smoke',size:7+Math.random()*14});
 }
 function updateFire(){
-  fireParticles=fireParticles.filter(p=>{p.x+=p.vx;p.y+=p.vy;p.vx*=.98;p.vy*=.98;p.life-=.008;return p.life>0;});
+  fireParticles=fireParticles.filter(p=>{p.x+=p.vx;p.y+=p.vy;p.vx*=.98;p.vy*=.98;p.life-=.008 * speedFactor; return p.life>0;});
 }
 function drawFire(){
   for(const p of fireParticles){
@@ -181,8 +208,8 @@ class Ship{
     const sizes=mx===1?[1]:mx===2?[1,2]:[1,2,4];
     this.maxCargo=sizes[Math.floor(Math.random()*sizes.length)];
     this.cargo=this.maxCargo;
-    // Small ships faster, big ships slower
-    this.spd=this.maxCargo===1?1.4:this.maxCargo===2?1.0:0.7;
+    // Basisgeschwindigkeit (kleine Schiffe schneller, große langsamer)
+    this.baseSpd=this.maxCargo===1?1.4:this.maxCargo===2?1.0:0.7;
     this.state='enter';
     this.path=[];this.pathIdx=0;
     this.dockBay=null;this.unloadT=0;
@@ -191,6 +218,8 @@ class Ship{
     this.HL=38+this.maxCargo*9;
     this.HW=12+this.maxCargo*1.5;
   }
+
+  get spd() { return this.baseSpd * speedFactor; }
 
   getMatchingBay(){
     for(const h of HARBOURS){if(h.color!==this.color)continue;
@@ -225,13 +254,15 @@ class Ship{
   }
 
   update(){
-    this.pulseT+=.04;this.blinkT=(this.blinkT+1)%30;
+    this.pulseT+=.04 * speedFactor;
+    this.blinkT=(this.blinkT+1)%30;
     const sp=this.spd;
     if(this.state==='enter'){this.x+=this.vx*sp;this.y+=this.vy*sp;if(inWater(this.x,this.y))this.state='auto';return;}
     if(this.state==='done'||this.state==='docked') return;
     if(this.state==='unloading'){
       this.unloadT++;
-      if(this.unloadT>=85){
+      const unloadMax = Math.floor(85 / speedFactor);
+      if(this.unloadT>=unloadMax){
         this.unloadT=0;this.cargo--;score++;updateUI();
         for(let i=0;i<6;i++){const a=Math.random()*Math.PI*2,s=1+Math.random()*3;
           particles.push({x:this.x,y:this.y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,col:HEX[this.color],life:1});}
@@ -325,15 +356,15 @@ class Ship{
       const p=.5+.5*Math.sin(this.pulseT*2);ctx.beginPath();ctx.ellipse(0,0,L/2+5+p*4,B/2+4+p*2,0,0,Math.PI*2);
       ctx.strokeStyle=cc+Math.floor(p*120).toString(16).padStart(2,'0');ctx.lineWidth=1.5;ctx.stroke();}
     if(this.state==='docked'){const p=.5+.5*Math.sin(this.pulseT*1.5);ctx.beginPath();ctx.ellipse(0,0,L/2+6+p*3,B/2+5+p*2,0,0,Math.PI*2);ctx.strokeStyle=`rgba(80,255,120,${.4+p*.5})`;ctx.lineWidth=2;ctx.stroke();}
-    if(this.state==='unloading'){const pr=this.unloadT/85;ctx.fillStyle='rgba(0,0,0,.3)';ctx.fillRect(-L/2,B/2+2,L,5);ctx.fillStyle=cc;ctx.fillRect(-L/2,B/2+2,L*pr,5);}
+    if(this.state==='unloading'){const pr=this.unloadT / Math.floor(85 / speedFactor);ctx.fillStyle='rgba(0,0,0,.3)';ctx.fillRect(-L/2,B/2+2,L,5);ctx.fillStyle=cc;ctx.fillRect(-L/2,B/2+2,L*pr,5);}
     ctx.restore();
   }
 }
 
 // ── Particles ─────────────────────────────────────────────────────────
 function tickParticles(){
-  particles=particles.filter(p=>{p.x+=p.vx;p.y+=p.vy;p.vx*=.9;p.vy*=.9;p.life-=.025;return p.life>0;});
-  wakes=wakes.filter(p=>{p.life-=.04;p.r*=.97;return p.life>0;});
+  particles=particles.filter(p=>{p.x+=p.vx;p.y+=p.vy;p.vx*=.9;p.vy*=.9;p.life-=.025 * speedFactor; return p.life>0;});
+  wakes=wakes.filter(p=>{p.life-=.04 * speedFactor;p.r*=.97;return p.life>0;});
 }
 function drawParticles(){
   wakes.forEach(p=>{ctx.globalAlpha=p.life*.18;ctx.fillStyle='#cde';ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fill();});
@@ -447,11 +478,12 @@ function buildBackground(){
 
 // ── Animated overlays ─────────────────────────────────────────────────
 function drawWaves(){
-  const t=Date.now()*.0008;
+  const t=Date.now()*.0008 * speedFactor;
   ctx.save();
   ctx.beginPath();ctx.rect(LL,0,TRX-LL,TRY);ctx.rect(LL,TRY,W-LL,H-TRY);ctx.clip();
   for(let row=0;row<9;row++){
-    ctx.strokeStyle=`rgba(255,255,255,${.03+row*.003})`;ctx.lineWidth=.8;ctx.beginPath();
+    ctx.strokeStyle=`rgba(255,255,255,${.03+row*.003})`;ctx.lineWidth=.8;
+    ctx.beginPath();
     for(let x=LL;x<=W;x+=3){const y=42+row*58+Math.sin(x*.028+t+row*.9)*5+Math.sin(x*.012+t*.55+row)*3;x===LL?ctx.moveTo(x,y):ctx.lineTo(x,y);}
     ctx.stroke();
   }
@@ -468,7 +500,8 @@ function drawHarbourGlows(){
 }
 function drawSpawnArrow(){
   if(!running)return;
-  const thr=Math.min(spawnDelay*.55,280);if(spawnTimer>thr)return;
+  const thr=Math.min(spawnDelay*.55,280);
+  if(spawnTimer>thr)return;
   const sp=SPAWNS[nextZone],frac=spawnTimer/thr,alpha=(1-frac)*.9,bounce=Math.sin(Date.now()*.005)*5*(1-frac);
   ctx.save();ctx.globalAlpha=alpha;
   ctx.translate(Math.max(20,Math.min(W-20,sp.x)),Math.max(20,Math.min(H-20,sp.y)));
@@ -573,7 +606,7 @@ function pointerUp(pos){
 // ── Game loop ─────────────────────────────────────────────────────────
 function gameLoop(){
   if(!running||paused)return;
-  spawnTimer--;
+  spawnTimer -= speedFactor;
   if(spawnTimer<=0){
     doSpawn();spawnDelay=Math.max(140,300-level*13);spawnTimer=spawnDelay;
     let nz=Math.floor(Math.random()*SPAWNS.length);
@@ -631,11 +664,11 @@ function togglePause(){
   paused=!paused;
   const btn=document.getElementById('pause-btn'),ov=document.getElementById('ov');
   if(paused){
-    btn.innerHTML='&#9654;';btn.title='Fortsetzen';
+    btn.innerHTML='▶';btn.title='Fortsetzen';
     ov.innerHTML=`<div class="ob" style="padding:32px 52px;"><p style="color:#c8deff;font-size:16px;font-weight:900;letter-spacing:3px;margin-bottom:20px;">PAUSE</p><button class="btn" onclick="togglePause()">Fortsetzen</button></div>`;
     ov.classList.add('on');
   }else{
-    btn.innerHTML='&#9646;&#9646;';btn.title='Pause';
+    btn.innerHTML='⏸';btn.title='Pause';
     ov.innerHTML='';ov.classList.remove('on');
     requestAnimationFrame(gameLoop);
   }
@@ -656,7 +689,8 @@ function startGame(){
   nextZone=Math.floor(Math.random()*SPAWNS.length);
   updateUI();
   const ov=document.getElementById('ov');ov.innerHTML='';ov.classList.remove('on');
-  const pb=document.getElementById('pause-btn');pb.innerHTML='&#9646;&#9646;';pb.title='Pause';
+  const pb=document.getElementById('pause-btn');pb.innerHTML='⏸';pb.title='Pause';
+  setSpeed(1);
   running=true;doSpawn();
   let nz2=Math.floor(Math.random()*SPAWNS.length);
   while(SPAWNS.length>1&&nz2===nextZone)nz2=Math.floor(Math.random()*SPAWNS.length);
@@ -669,4 +703,701 @@ startGame();
 </script>
 </body>
 </html>
-```
+
+<!-- HTML -->
+<div id="ui">
+  <div style="display:flex;align-items:center;gap:14px;">
+    <div class="us"><div class="ul">Cargo</div><div class="uv" id="sv">0</div></div>
+    <div class="us"><div class="ul">Rekord</div><div class="uv" id="hv">0</div></div>
+  </div>
+  <div id="tt">CANAL MASTER</div>
+  <div style="display:flex;align-items:center;gap:10px;">
+    <div class="us"><div class="ul">Level</div><div class="uv" id="lv">1</div></div>
+    <button id="pause-btn" onclick="togglePause()" title="Pause">⏸</button>
+    <button id="speed1-btn" class="active" onclick="setSpeed(1)" title="Normalgeschwindigkeit">1x</button>
+    <button id="speed2-btn" onclick="setSpeed(2)" title="Doppelte Geschwindigkeit">2x</button>
+  </div>
+</div>
+<canvas id="gc" width="660" height="540"></canvas>
+<div id="ov" class="on">
+  <div class="ob">
+    <h1>CANAL MASTER</h1>
+    <p>Ziehe vom Schiff eine Linie<br>zum gleichfarbigen Hafen.<br><br>
+    <span style="color:#cc44ff">&#9632;</span> Violett &nbsp;&middot;&nbsp;
+    <span style="color:#ffdd00">&#9632;</span> Gelb<br><br>
+    <span style="color:#88ff88">Level 1:</span> nur 1 Container<br>
+    <span style="color:#88ff88">ab Level 2:</span> 1-2 Container<br>
+    <span style="color:#88ff88">ab Level 4:</span> 1, 2 oder 4 Container</p>
+    <button class="btn" onclick="startGame()">Spielen</button>
+  </div>
+</div>
+
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  background: #0a2a1a;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  height: 100vh; overflow: hidden;
+  font-family: 'Segoe UI', Arial, sans-serif;
+  touch-action: none;
+}
+#ui {
+  width: 660px;
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 7px 20px;
+  background: linear-gradient(180deg, #2a4a8a, #1e3670);
+  border: 2px solid #5a8acc; border-bottom: none;
+  border-radius: 12px 12px 0 0;
+}
+.us { display: flex; flex-direction: column; align-items: center; }
+.ul { color: #8ab4e8; font-size: 11px; font-weight: bold; letter-spacing: 1px; text-transform: uppercase; }
+.uv { color: #fff; font-size: 26px; font-weight: 900; line-height: 1; }
+#tt { color: #c8deff; font-size: 17px; font-weight: 900; letter-spacing: 3px; }
+canvas { display: block; border-radius: 0 0 12px 12px; border: 2px solid #5a8acc; border-top: none; }
+#ov { position: absolute; display: flex; align-items: center; justify-content: center; pointer-events: none; }
+#ov.on { pointer-events: all; }
+.ob { background: rgba(8,20,45,.96); border: 3px solid #5599ff; border-radius: 16px; padding: 36px 56px; text-align: center; box-shadow: 0 0 60px rgba(85,153,255,.3); }
+.ob h1 { color: #6bf; font-size: 28px; font-weight: 900; letter-spacing: 4px; margin-bottom: 12px; }
+.ob h2 { color: #f55; font-size: 22px; font-weight: 900; margin-bottom: 8px; }
+.ob p  { color: #9bc; font-size: 13px; line-height: 2; margin-bottom: 18px; }
+.ob .fin { color: #ffd844; font-size: 44px; font-weight: 900; margin: 10px 0 20px; }
+.btn { background: linear-gradient(180deg, #4a9eff, #2266cc); color: #fff; border: 2px solid #6ab4ff; padding: 12px 44px; font-size: 15px; font-weight: 900; letter-spacing: 2px; border-radius: 8px; cursor: pointer; transition: all .15s; text-transform: uppercase; }
+.btn:hover { background: linear-gradient(180deg, #6ab4ff, #3377dd); transform: scale(1.05); }
+#pause-btn, #speed1-btn, #speed2-btn { 
+  background: rgba(255,255,255,0.12); 
+  color: #c8deff; 
+  border: 2px solid rgba(90,138,204,0.6); 
+  width: 40px; 
+  height: 40px; 
+  border-radius: 8px; 
+  cursor: pointer; 
+  font-size: 14px; 
+  font-weight: bold;
+  display: flex; 
+  align-items: center; 
+  justify-content: center; 
+  transition: all .15s; 
+  flex-shrink: 0; 
+}
+#pause-btn:hover, #speed1-btn:hover, #speed2-btn:hover { background: rgba(255,255,255,0.22); border-color: #8ab4e8; }
+#speed1-btn.active, #speed2-btn.active { background: rgba(74,158,255,0.4); border-color: #4a9eff; color: white; }
+</style>
+
+<script>
+'use strict';
+const canvas=document.getElementById('gc');
+const ctx=canvas.getContext('2d');
+const W=660,H=540;
+
+const COLORS=['violet','yellow'];
+const HEX={violet:'#cc44ff',yellow:'#ffdd00'};
+const HEXD={violet:'#8800aa',yellow:'#aa8800'};
+
+// Map layout: left land x=0..140, top-right corner x>510 y<115
+const LL=140,TRX=510,TRY=115;
+
+const HARBOURS=[
+  {color:'violet',bays:[
+    {bx:50,by:76, bw:92,bh:56},
+    {bx:50,by:140,bw:92,bh:56},
+  ]},
+  {color:'yellow',bays:[
+    {bx:50,by:318,bw:92,bh:56},
+    {bx:50,by:382,bw:92,bh:56},
+  ]},
+];
+HARBOURS.forEach(h=>h.bays.forEach(b=>{
+  b.dockX=b.bx+b.bw*0.45; b.dockY=b.by+b.bh*0.5;
+  b.entX=b.bx+b.bw; b.entY=b.dockY; b.color=h.color;
+}));
+
+const SPAWNS=[
+  {x:230,y:-32,dx:0, dy:1 },{x:360,y:-32,dx:0, dy:1 },{x:470,y:-32,dx:0, dy:1 },
+  {x:692,y:190,dx:-1,dy:0 },{x:692,y:330,dx:-1,dy:0 },
+  {x:260,y:572,dx:0, dy:-1},{x:420,y:572,dx:0, dy:-1},
+];
+
+// ── Geschwindigkeitsfaktor ───────────────────────────────────────────
+let speedFactor = 1;  // 1 = normal, 2 = doppelt
+
+function setSpeed(factor) {
+  speedFactor = factor;
+  document.getElementById('speed1-btn').classList.toggle('active', factor === 1);
+  document.getElementById('speed2-btn').classList.toggle('active', factor === 2);
+  // Spawn-Delay und Timer anpassen (optional, wird in gameLoop dynamisch verwendet)
+}
+
+// ── Water / land tests ────────────────────────────────────────────────
+function inWater(x,y){
+  if(x<0||x>W||y<0||y>H) return false;
+  if(x>TRX&&y<TRY) return false;
+  if(x<LL){
+    for(const h of HARBOURS) for(const b of h.bays)
+      if(x>=b.bx&&x<=b.bx+b.bw&&y>=b.by&&y<=b.by+b.bh) return true;
+    return false;
+  }
+  return true;
+}
+function offScreen(x,y){return x<-40||x>W+40||y<-40||y>H+40;}
+function isLeftLand(x,y){
+  if(x>=LL||x<0) return false;
+  for(const h of HARBOURS) for(const b of h.bays)
+    if(x>=b.bx&&x<=b.bx+b.bw&&y>=b.by&&y<=b.by+b.bh) return false;
+  return true;
+}
+function isAnyLand(x,y){
+  if(x<0||x>W||y<0||y>H) return false;
+  if(x>TRX&&y<TRY) return true;
+  return isLeftLand(x,y);
+}
+
+// ── State ─────────────────────────────────────────────────────────────
+let ships=[],score=0,level=1,running=false,paused=false,highScore=0;
+let spawnTimer=100,spawnDelay=300,nextZone=0,lastZone=-1;
+let dragShip=null,livePath=[],liveValid=true,dragActive=false;
+let particles=[],wakes=[],flashTimer=0,fireParticles=[];
+
+function rrect(x,y,w,h,r){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.arcTo(x+w,y,x+w,y+r,r);
+  ctx.lineTo(x+w,y+h-r);ctx.arcTo(x+w,y+h,x+w-r,y+h,r);
+  ctx.lineTo(x+r,y+h);ctx.arcTo(x,y+h,x,y+h-r,r);
+  ctx.lineTo(x,y+r);ctx.arcTo(x,y,x+r,y,r);
+  ctx.closePath();
+}
+function getMaxCargoForLevel(lv){if(lv<2)return 1;if(lv<4)return 2;return 4;}
+
+// ── Fire effect ───────────────────────────────────────────────────────
+function spawnFire(x,y){
+  for(let i=0;i<25;i++){
+    const a=Math.random()*Math.PI*2,s=0.3+Math.random()*1.2;
+    fireParticles.push({x:x+(Math.random()-.5)*25,y:y+(Math.random()-.5)*20,
+      vx:Math.cos(a)*s,vy:-.4-Math.random()*1.2,life:.8+Math.random()*.5,
+      type:Math.random()>.55?'fire':'smoke',size:3+Math.random()*8});
+  }
+  for(let i=0;i<12;i++) fireParticles.push({
+    x:x+(Math.random()-.5)*30,y:y-5+Math.random()*15,
+    vx:(Math.random()-.5)*.6,vy:-.6-Math.random()*1,life:.7+Math.random()*.6,
+    type:'smoke',size:7+Math.random()*14});
+}
+function updateFire(){
+  fireParticles=fireParticles.filter(p=>{p.x+=p.vx;p.y+=p.vy;p.vx*=.98;p.vy*=.98;p.life-=.008 * speedFactor; return p.life>0;});
+}
+function drawFire(){
+  for(const p of fireParticles){
+    ctx.globalAlpha=p.life*.6;
+    if(p.type==='fire'){
+      const g=ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,p.size*p.life);
+      g.addColorStop(0,'#ffaa44');g.addColorStop(.5,'#ff6600');g.addColorStop(1,'#cc3300');
+      ctx.fillStyle=g;
+    }else{const d=40+Math.floor(50*(1-p.life));ctx.fillStyle=`rgba(${d},${d},${d},${p.life*.5})`;}
+    ctx.beginPath();ctx.arc(p.x,p.y,p.size*p.life*.7,0,Math.PI*2);ctx.fill();
+  }
+  ctx.globalAlpha=1;
+}
+
+// ── SHIP ──────────────────────────────────────────────────────────────
+class Ship{
+  constructor(zi){
+    const sp=SPAWNS[zi];
+    this.x=sp.x;this.y=sp.y;this.vx=sp.dx;this.vy=sp.dy;
+    this.angle=Math.atan2(sp.dy,sp.dx);
+    this.color=COLORS[Math.floor(Math.random()*COLORS.length)];
+    const mx=getMaxCargoForLevel(level);
+    const sizes=mx===1?[1]:mx===2?[1,2]:[1,2,4];
+    this.maxCargo=sizes[Math.floor(Math.random()*sizes.length)];
+    this.cargo=this.maxCargo;
+    // Basisgeschwindigkeit (kleine Schiffe schneller, große langsamer)
+    this.baseSpd=this.maxCargo===1?1.4:this.maxCargo===2?1.0:0.7;
+    this.state='enter';
+    this.path=[];this.pathIdx=0;
+    this.dockBay=null;this.unloadT=0;
+    this.pulseT=Math.random()*Math.PI*2;
+    this.wakeT=0;this.warn=false;this.blinkT=0;
+    this.HL=38+this.maxCargo*9;
+    this.HW=12+this.maxCargo*1.5;
+  }
+
+  get spd() { return this.baseSpd * speedFactor; }
+
+  getMatchingBay(){
+    for(const h of HARBOURS){if(h.color!==this.color)continue;
+      for(const b of h.bays) if(this.x>=b.bx&&this.x<=b.bx+b.bw&&this.y>=b.by&&this.y<=b.by+b.bh) return b;}
+    return null;
+  }
+  isInAnyBay(){
+    for(const h of HARBOURS) for(const b of h.bays)
+      if(this.x>=b.bx&&this.x<=b.bx+b.bw&&this.y>=b.by&&this.y<=b.by+b.bh) return b;
+    return null;
+  }
+
+  moveCargoStep(nx,ny){
+    if(inWater(nx,ny)){this.x=nx;this.y=ny;return;}
+    const cx=inWater(nx,this.y),cy=inWater(this.x,ny);
+    if(cx){this.x=nx;this.vy*=-1;}else if(cy){this.y=ny;this.vx*=-1;}else{this.vx*=-1;this.vy*=-1;}
+    this.angle=Math.atan2(this.vy,this.vx);
+  }
+
+  clampCargo(){
+    const bay=this.isInAnyBay();
+    if(!bay){
+      if(this.x<LL+2){this.x=LL+2;this.vx=Math.abs(this.vx)||.3;this.angle=Math.atan2(this.vy,this.vx);}
+    }else{
+      if(this.x<bay.bx+4){this.x=bay.bx+4;this.vx=Math.abs(this.vx)||.3;this.angle=Math.atan2(this.vy,this.vx);}
+      if(this.y<bay.by+4){this.y=bay.by+4;this.vy=Math.abs(this.vy)||.3;this.angle=Math.atan2(this.vy,this.vx);}
+      if(this.y>bay.by+bay.bh-4){this.y=bay.by+bay.bh-4;this.vy=-(Math.abs(this.vy)||.3);this.angle=Math.atan2(this.vy,this.vx);}
+    }
+    if(this.x>W-2){this.x=W-2;this.vx=-(Math.abs(this.vx)||.3);this.angle=Math.atan2(this.vy,this.vx);}
+    if(this.y<2){this.y=2;this.vy=Math.abs(this.vy)||.3;this.angle=Math.atan2(this.vy,this.vx);}
+    if(this.y>H-2){this.y=H-2;this.vy=-(Math.abs(this.vy)||.3);this.angle=Math.atan2(this.vy,this.vx);}
+  }
+
+  update(){
+    this.pulseT+=.04 * speedFactor;
+    this.blinkT=(this.blinkT+1)%30;
+    const sp=this.spd;
+    if(this.state==='enter'){this.x+=this.vx*sp;this.y+=this.vy*sp;if(inWater(this.x,this.y))this.state='auto';return;}
+    if(this.state==='done'||this.state==='docked') return;
+    if(this.state==='unloading'){
+      this.unloadT++;
+      const unloadMax = Math.floor(85 / speedFactor);
+      if(this.unloadT>=unloadMax){
+        this.unloadT=0;this.cargo--;score++;updateUI();
+        for(let i=0;i<6;i++){const a=Math.random()*Math.PI*2,s=1+Math.random()*3;
+          particles.push({x:this.x,y:this.y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,col:HEX[this.color],life:1});}
+        if(score>highScore){highScore=score;updateUI();}
+        if(this.cargo<=0)this.state='docked';
+      }
+      return;
+    }
+    if(this.state==='docking'){
+      const b=this.dockBay,dx=b.dockX-this.x,dy=b.dockY-this.y,d=Math.hypot(dx,dy);
+      if(d<2){this.x=b.dockX;this.y=b.dockY;this.angle=Math.PI;this.state='unloading';this.unloadT=0;}
+      else{const s=Math.min(sp*.8,d);this.x+=dx/d*s;this.y+=dy/d*s;this.angle=Math.atan2(dy,dx);}
+      return;
+    }
+    if(this.state==='auto'){
+      const nx=this.x+this.vx*sp,ny=this.y+this.vy*sp;
+      if(this.cargo>0){
+        this.moveCargoStep(nx,ny);this.clampCargo();
+        const bay=this.getMatchingBay();if(bay){this.dockBay=bay;this.state='docking';return;}
+      }else{
+        this.x=nx;this.y=ny;
+        if(offScreen(this.x,this.y)){this.state='done';return;}
+        if(isAnyLand(this.x,this.y)){
+          this.x-=this.vx*sp;this.y-=this.vy*sp;
+          const cx=inWater(nx,this.y)||offScreen(nx,this.y),cy=inWater(this.x,ny)||offScreen(this.x,ny);
+          if(!cx)this.vx*=-1;if(!cy)this.vy*=-1;if(cx&&cy){this.vx*=-1;this.vy*=-1;}
+          this.angle=Math.atan2(this.vy,this.vx);
+        }
+      }
+      return;
+    }
+    if(this.state==='path'){
+      if(this.pathIdx>=this.path.length){
+        if(this.cargo>0){const bay=this.getMatchingBay();if(bay){this.dockBay=bay;this.state='docking';}else this.state='auto';}
+        else this.state='auto';
+        this.path=[];this.pathIdx=0;return;
+      }
+      const tgt=this.path[this.pathIdx],dx=tgt.x-this.x,dy=tgt.y-this.y,d=Math.hypot(dx,dy);
+      if(d<5){this.pathIdx++;return;}
+      const s=Math.min(sp,d),nx=this.x+dx/d*s,ny=this.y+dy/d*s;
+      if(this.cargo>0){
+        this.moveCargoStep(nx,ny);this.clampCargo();
+        const bay=this.getMatchingBay();if(bay){this.dockBay=bay;this.state='docking';this.path=[];this.pathIdx=0;return;}
+      }else{
+        this.x=nx;this.y=ny;
+        if(offScreen(this.x,this.y)){this.state='done';return;}
+        if(isAnyLand(this.x,this.y)){
+          this.x-=dx/d*s;this.y-=dy/d*s;
+          const cx=inWater(nx,this.y)||offScreen(nx,this.y),cy=inWater(this.x,ny)||offScreen(this.x,ny);
+          if(!cx)this.vx*=-1;if(!cy)this.vy*=-1;if(cx&&cy){this.vx*=-1;this.vy*=-1;}
+          this.angle=Math.atan2(this.vy,this.vx);
+          this.state='auto';this.path=[];this.pathIdx=0;return;
+        }
+      }
+      this.angle=Math.atan2(dy,dx);this.vx=Math.cos(this.angle);this.vy=Math.sin(this.angle);
+    }
+  }
+
+  draw(){
+    ctx.save();ctx.translate(this.x,this.y);ctx.rotate(this.angle);
+    const L=this.HL,B=this.HW,n=this.maxCargo,cc=HEX[this.color],cd=HEXD[this.color];
+    const warnOn=this.warn&&this.blinkT<15;
+    ctx.beginPath();ctx.moveTo(L/2,0);ctx.bezierCurveTo(L/2,-B/2,L/4,-B/2,0,-B/2);
+    ctx.lineTo(-L/2+10,-B/2);ctx.quadraticCurveTo(-L/2,-B/2,-L/2,0);
+    ctx.quadraticCurveTo(-L/2,B/2,-L/2+10,B/2);ctx.lineTo(0,B/2);
+    ctx.bezierCurveTo(L/4,B/2,L/2,B/2,L/2,0);ctx.closePath();
+    if(warnOn){ctx.fillStyle='#ff4444';}else{
+      const g=ctx.createLinearGradient(0,-B/2,0,B/2);
+      g.addColorStop(0,'#d8dfe8');g.addColorStop(.45,'#b8c2cc');g.addColorStop(1,'#8898a8');
+      ctx.fillStyle=g;}
+    ctx.fill();ctx.strokeStyle=warnOn?'#ff0000':'#607080';ctx.lineWidth=1.2;ctx.stroke();
+    ctx.fillStyle='#506070';ctx.fillRect(-L/2+10,B/2-4,L-18,3);
+    const cW=Math.max(7,Math.min(12,(L-34)/n)),cH=B*.55,totW=n*cW+(n-1)*2;let cx=-totW/2+4;
+    for(let i=0;i<n;i++){
+      const filled=i<this.cargo;rrect(cx,-cH/2,cW,cH,2);
+      if(filled){const g=ctx.createLinearGradient(cx,-cH/2,cx+cW,cH/2);g.addColorStop(0,cc);g.addColorStop(1,cd);ctx.fillStyle=g;}
+      else ctx.fillStyle='rgba(150,160,175,.28)';
+      ctx.fill();ctx.strokeStyle=filled?cd:'rgba(80,100,120,.5)';ctx.lineWidth=.8;ctx.stroke();
+      if(filled&&cW>8){ctx.strokeStyle='rgba(0,0,0,.15)';ctx.lineWidth=.5;
+        ctx.beginPath();ctx.moveTo(cx+cW*.3,-cH/2);ctx.lineTo(cx+cW*.3,cH/2);ctx.stroke();
+        ctx.beginPath();ctx.moveTo(cx+cW*.6,-cH/2);ctx.lineTo(cx+cW*.6,cH/2);ctx.stroke();}
+      cx+=cW+2;
+    }
+    ctx.fillStyle='#6a7e8e';rrect(-L/2+4,-B*.22,14,B*.48,2);ctx.fill();
+    ctx.fillStyle='#8aa4b4';rrect(-L/2+6,-B*.14,8,B*.32,1.5);ctx.fill();
+    ctx.fillStyle='#c8deff';ctx.fillRect(-L/2+8,-B*.07,4,5);
+    ctx.fillStyle='#5a6a78';rrect(L/2-10,-B*.3,5,B*.45,1);ctx.fill();
+    ctx.font=`bold ${Math.max(8,Math.min(11,L*.08))}px "Courier New",monospace`;
+    ctx.fillStyle='rgba(255,234,172,.85)';ctx.fillText(`${this.maxCargo}`,L/2-10,-B*.2);
+    if(this.state==='auto'||this.state==='path'){
+      const p=.5+.5*Math.sin(this.pulseT*2);ctx.beginPath();ctx.ellipse(0,0,L/2+5+p*4,B/2+4+p*2,0,0,Math.PI*2);
+      ctx.strokeStyle=cc+Math.floor(p*120).toString(16).padStart(2,'0');ctx.lineWidth=1.5;ctx.stroke();}
+    if(this.state==='docked'){const p=.5+.5*Math.sin(this.pulseT*1.5);ctx.beginPath();ctx.ellipse(0,0,L/2+6+p*3,B/2+5+p*2,0,0,Math.PI*2);ctx.strokeStyle=`rgba(80,255,120,${.4+p*.5})`;ctx.lineWidth=2;ctx.stroke();}
+    if(this.state==='unloading'){const pr=this.unloadT / Math.floor(85 / speedFactor);ctx.fillStyle='rgba(0,0,0,.3)';ctx.fillRect(-L/2,B/2+2,L,5);ctx.fillStyle=cc;ctx.fillRect(-L/2,B/2+2,L*pr,5);}
+    ctx.restore();
+  }
+}
+
+// ── Particles ─────────────────────────────────────────────────────────
+function tickParticles(){
+  particles=particles.filter(p=>{p.x+=p.vx;p.y+=p.vy;p.vx*=.9;p.vy*=.9;p.life-=.025 * speedFactor; return p.life>0;});
+  wakes=wakes.filter(p=>{p.life-=.04 * speedFactor;p.r*=.97;return p.life>0;});
+}
+function drawParticles(){
+  wakes.forEach(p=>{ctx.globalAlpha=p.life*.18;ctx.fillStyle='#cde';ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fill();});
+  particles.forEach(p=>{ctx.globalAlpha=p.life;ctx.fillStyle=p.col;ctx.beginPath();ctx.arc(p.x,p.y,3*p.life,0,Math.PI*2);ctx.fill();});
+  ctx.globalAlpha=1;
+}
+
+// ── Background ────────────────────────────────────────────────────────
+let bgCanvas=null;
+function buildBackground(){
+  bgCanvas=document.createElement('canvas');bgCanvas.width=W;bgCanvas.height=H;
+  const b=bgCanvas.getContext('2d');
+
+  // Water
+  const wg=b.createLinearGradient(LL,0,W,H);
+  wg.addColorStop(0,'#3a8ec8');wg.addColorStop(.4,'#2878b5');wg.addColorStop(1,'#1a5a8a');
+  b.fillStyle=wg;b.fillRect(0,0,W,H);
+
+  // ── TOP-RIGHT CORNER LAND (fills entire corner, straight edges) ──────
+  // Simple solid rectangle fills the corner, then a natural coast along bottom
+  b.beginPath();
+  b.moveTo(TRX,0); // top of coast line
+  // Wavy coast line going right across bottom of island
+  for(let x=TRX;x<=W;x+=8){
+    const y=TRY+Math.sin(x*.04)*8+Math.cos(x*.022)*5;
+    b.lineTo(x,y);
+  }
+  b.lineTo(W,TRY+10); b.lineTo(W,0); b.closePath();
+  // Grass gradient
+  const ig=b.createLinearGradient(TRX,0,W,TRY);
+  ig.addColorStop(0,'#2d5a2d');ig.addColorStop(.5,'#4a8a3a');ig.addColorStop(1,'#5a9a45');
+  b.fillStyle=ig;b.fill();
+
+  // Sandy beach strip along island coast
+  b.beginPath();b.moveTo(TRX,0);
+  for(let x=TRX;x<=W;x+=8){
+    const y=TRY+Math.sin(x*.04)*8+Math.cos(x*.022)*5-6;
+    b.lineTo(x,y);
+  }
+  b.lineTo(W,TRY); b.lineTo(W,0); b.closePath();
+  b.fillStyle='#d4b87a';b.fill();
+
+  // Trees on island
+  for(let i=0;i<28;i++){
+    const tx=TRX+15+Math.random()*(W-TRX-20);
+    const coastY=TRY+Math.sin(tx*.04)*8+Math.cos(tx*.022)*5;
+    const ty=5+Math.random()*(coastY-18);
+    if(ty<4||ty>coastY-10) continue;
+    b.fillStyle='#3a7a2a';b.beginPath();b.ellipse(tx,ty,4+Math.random()*3,6+Math.random()*4,0,0,Math.PI*2);b.fill();
+    b.fillStyle='#2a5a1a';b.beginPath();b.ellipse(tx-1,ty-2,2.5,4,0,0,Math.PI*2);b.fill();
+  }
+
+  // Island coast line
+  b.strokeStyle='#c8b468';b.lineWidth=2.5;
+  // Vertical left edge of island
+  b.beginPath();b.moveTo(TRX,0);b.lineTo(TRX,TRY+Math.sin(TRX*.04)*8+Math.cos(TRX*.022)*5);b.stroke();
+  // Bottom wavy coast
+  b.beginPath();b.moveTo(TRX,TRY+Math.sin(TRX*.04)*8+Math.cos(TRX*.022)*5);
+  for(let x=TRX;x<=W;x+=6){
+    const y=TRY+Math.sin(x*.04)*8+Math.cos(x*.022)*5;b.lineTo(x,y);
+  }
+  b.stroke();
+
+  // ── LEFT LAND ─────────────────────────────────────────────────────────
+  b.beginPath();b.moveTo(0,0);
+  for(let y=0;y<=H;y+=10){const x=LL+Math.sin(y*.03)*10+Math.cos(y*.018)*6;b.lineTo(x,y);}
+  b.lineTo(0,H);
+  const gl=b.createLinearGradient(0,0,LL,0);
+  gl.addColorStop(0,'#2d5a2d');gl.addColorStop(.4,'#4a8a3a');gl.addColorStop(1,'#6aaa50');
+  b.fillStyle=gl;b.fill();
+  // Sandy beach
+  b.beginPath();b.moveTo(0,0);
+  for(let y=0;y<=H;y+=10){const x=LL+Math.sin(y*.03)*10+Math.cos(y*.018)*6-5;b.lineTo(x,y);}
+  b.lineTo(0,H);b.fillStyle='#e8d4a0';b.fill();
+  // Trees
+  for(let i=0;i<50;i++){
+    const tx=15+Math.random()*(LL-25),ty=25+Math.random()*(H-50);
+    b.fillStyle='#3a7a2a';b.beginPath();b.ellipse(tx,ty,5,7,0,0,Math.PI*2);b.fill();
+    b.fillStyle='#2a5a1a';b.beginPath();b.ellipse(tx-1,ty-2,3,5,0,0,Math.PI*2);b.fill();
+  }
+
+  // ── DOCK BAYS ─────────────────────────────────────────────────────────
+  const margin=28;
+  HARBOURS.forEach(h=>{h.bays.forEach(bay=>{
+    const{bx:x,by:y,bw:w,bh:hgt}=bay,col=HEX[h.color];
+    b.fillStyle='#2a7ab8';b.fillRect(x,y,w,hgt);
+    b.fillStyle='#4a4a4a';
+    b.fillRect(x-margin,y-5,margin,hgt+10);b.fillRect(x-margin,y-5,w+margin,5);b.fillRect(x-margin,y+hgt,w+margin,5);
+    b.fillStyle='#6a6a6a';
+    b.fillRect(x-margin+2,y-3,margin-4,hgt+6);b.fillRect(x-margin+2,y-5,w+margin-4,3);b.fillRect(x-margin+2,y+hgt,w+margin-4,3);
+    b.fillStyle=col+'aa';b.fillRect(x+4,y+4,8,hgt-8);
+    b.fillStyle=col;
+    for(let i=0;i<3;i++){b.beginPath();b.arc(x+12+i*25,y+hgt-5,3,0,Math.PI*2);b.fill();b.beginPath();b.arc(x+12+i*25,y+5,3,0,Math.PI*2);b.fill();}
+  });});
+
+  // ── LEFT COAST LINE (skip dock openings) ──────────────────────────────
+  b.strokeStyle='#c8b468';b.lineWidth=2.5;
+  const skip=[];HARBOURS.forEach(h=>h.bays.forEach(bay=>skip.push({s:bay.by-8,e:bay.by+bay.bh+8})));
+  skip.sort((a,z)=>a.s-z.s);
+  let drawing=false,lastX2=null;
+  for(let y=0;y<=H;y+=4){
+    const inSkip=skip.some(r=>y>=r.s&&y<=r.e);
+    const x=LL+Math.sin(y*.03)*10+Math.cos(y*.018)*6;
+    if(!inSkip){
+      if(!drawing){b.beginPath();b.moveTo(x,y);drawing=true;lastX2=x;}
+      else{if(Math.abs(x-lastX2)<40)b.lineTo(x,y);else{b.stroke();b.beginPath();b.moveTo(x,y);}lastX2=x;}
+    }else{if(drawing){b.stroke();drawing=false;lastX2=null;}}
+  }
+  if(drawing)b.stroke();
+}
+
+// ── Animated overlays ─────────────────────────────────────────────────
+function drawWaves(){
+  const t=Date.now()*.0008 * speedFactor;
+  ctx.save();
+  ctx.beginPath();ctx.rect(LL,0,TRX-LL,TRY);ctx.rect(LL,TRY,W-LL,H-TRY);ctx.clip();
+  for(let row=0;row<9;row++){
+    ctx.strokeStyle=`rgba(255,255,255,${.03+row*.003})`;ctx.lineWidth=.8;
+    ctx.beginPath();
+    for(let x=LL;x<=W;x+=3){const y=42+row*58+Math.sin(x*.028+t+row*.9)*5+Math.sin(x*.012+t*.55+row)*3;x===LL?ctx.moveTo(x,y):ctx.lineTo(x,y);}
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+function drawHarbourGlows(){
+  const t=Date.now()*.002;
+  HARBOURS.forEach((h,hi)=>{h.bays.forEach((bay,bi)=>{
+    const p=.55+.45*Math.sin(t+hi*1.4+bi*.7),a16=Math.floor(p*160).toString(16).padStart(2,'0');
+    const g=ctx.createRadialGradient(bay.entX,bay.entY,2,bay.entX,bay.entY,30);
+    g.addColorStop(0,HEX[h.color]+a16);g.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle=g;ctx.beginPath();ctx.arc(bay.entX,bay.entY,28,0,Math.PI*2);ctx.fill();
+  });});
+}
+function drawSpawnArrow(){
+  if(!running)return;
+  const thr=Math.min(spawnDelay*.55,280);
+  if(spawnTimer>thr)return;
+  const sp=SPAWNS[nextZone],frac=spawnTimer/thr,alpha=(1-frac)*.9,bounce=Math.sin(Date.now()*.005)*5*(1-frac);
+  ctx.save();ctx.globalAlpha=alpha;
+  ctx.translate(Math.max(20,Math.min(W-20,sp.x)),Math.max(20,Math.min(H-20,sp.y)));
+  ctx.rotate(Math.atan2(sp.dy,sp.dx));ctx.translate(bounce,0);
+  ctx.fillStyle='#ffdd22';ctx.strokeStyle='rgba(0,0,0,.5)';ctx.lineWidth=1.5;
+  ctx.beginPath();ctx.moveTo(18,0);ctx.lineTo(2,-11);ctx.lineTo(2,-5);ctx.lineTo(-14,-5);ctx.lineTo(-14,5);ctx.lineTo(2,5);ctx.lineTo(2,11);ctx.closePath();ctx.fill();ctx.stroke();
+  ctx.beginPath();ctx.arc(0,0,22,-Math.PI/2,-Math.PI/2+Math.PI*2*(1-frac));ctx.strokeStyle='rgba(255,220,0,.6)';ctx.lineWidth=3;ctx.stroke();
+  ctx.restore();
+}
+
+// ── Collision & warnings ──────────────────────────────────────────────
+function inAnyBay(ship){
+  for(const h of HARBOURS) for(const b of h.bays)
+    if(ship.x>=b.bx&&ship.x<=b.bx+b.bw&&ship.y>=b.by&&ship.y<=b.by+b.bh) return true;
+  return false;
+}
+function updateWarnings(){
+  if(!running)return;ships.forEach(s=>s.warn=false);
+  const occ=new Map();
+  for(const ship of ships){if(ship.state==='done')continue;
+    for(const h of HARBOURS) for(const b of h.bays)
+      if(ship.x>=b.bx&&ship.x<=b.bx+b.bw&&ship.y>=b.by&&ship.y<=b.by+b.bh){if(!occ.has(b))occ.set(b,[]);occ.get(b).push(ship);break;}
+  }
+  for(const[bay,list]of occ){
+    if(list.length>=2){list.forEach(s=>s.warn=true);
+      for(let i=0;i<list.length;i++)for(let j=i+1;j<list.length;j++){
+        const a=list[i],bsh=list[j];
+        if(Math.hypot(a.x-bsh.x,a.y-bsh.y)<(a.HL+bsh.HL)*.28){spawnFire((a.x+bsh.x)/2,(a.y+bsh.y)/2);flashTimer=30;triggerGameOver();return;}
+      }
+    }
+  }
+  for(let i=0;i<ships.length;i++)for(let j=i+1;j<ships.length;j++){
+    const a=ships[i],b=ships[j];
+    if(a.state==='done'||b.state==='done')continue;
+    if(offScreen(a.x,a.y)||offScreen(b.x,b.y))continue;
+    if(inAnyBay(a)&&inAnyBay(b))continue;
+    const d=Math.hypot(a.x-b.x,a.y-b.y),cd=(inAnyBay(a)!==inAnyBay(b))?(a.HL+b.HL)*.23:(a.HL+b.HL)*.27,wd=inAnyBay(a)!==inAnyBay(b)?100:130;
+    if(d<cd){spawnFire((a.x+b.x)/2,(a.y+b.y)/2);flashTimer=30;triggerGameOver();return;}
+    if(d<wd){a.warn=true;b.warn=true;}
+  }
+}
+
+// ── Path validation ───────────────────────────────────────────────────
+function validateSegment(x1,y1,x2,y2){
+  const steps=Math.ceil(Math.hypot(x2-x1,y2-y1)/8);
+  for(let s=1;s<=steps;s++){
+    const t=s/steps,x=x1+(x2-x1)*t,y=y1+(y2-y1)*t;
+    if(x<-5||x>W+5||y<-5||y>H+5)return false;
+    if(!inWater(x,y))return false;
+  }
+  return true;
+}
+
+// ── Input ─────────────────────────────────────────────────────────────
+function getPos(e,te){
+  const r=canvas.getBoundingClientRect(),sx=W/r.width,sy=H/r.height;
+  const src=te?e.changedTouches[0]:(e.touches?e.touches[0]:e);
+  return{x:(src.clientX-r.left)*sx,y:(src.clientY-r.top)*sy};
+}
+canvas.addEventListener('mousedown', e=>{e.preventDefault();pointerDown(getPos(e,false));});
+canvas.addEventListener('mousemove', e=>{e.preventDefault();pointerMove(getPos(e,false));});
+canvas.addEventListener('mouseup',   e=>{e.preventDefault();pointerUp(getPos(e,false));});
+canvas.addEventListener('touchstart',e=>{e.preventDefault();pointerDown(getPos(e,false));},{passive:false});
+canvas.addEventListener('touchmove', e=>{e.preventDefault();pointerMove(getPos(e,false));},{passive:false});
+canvas.addEventListener('touchend',  e=>{e.preventDefault();pointerUp(getPos(e,true)); },{passive:false});
+
+function pointerDown(pos){
+  if(!running||paused)return;
+  dragShip=null;livePath=[];liveValid=true;dragActive=false;
+  for(let i=ships.length-1;i>=0;i--){
+    const s=ships[i];
+    if(s.state==='done'||s.state==='docking'||s.state==='unloading')continue;
+    if(Math.hypot(pos.x-s.x,pos.y-s.y)<s.HL/2+18){
+      dragShip=s;dragActive=true;livePath=[{x:s.x,y:s.y}];break;
+    }
+  }
+}
+function pointerMove(pos){
+  if(!dragShip||!dragActive)return;
+  const ship=dragShip;
+  if(ship.state==='unloading'){dragShip=null;dragActive=false;livePath=[];liveValid=true;return;}
+  const stat=ship.state==='docked';
+  const last=livePath[livePath.length-1];
+  if(Math.hypot(pos.x-last.x,pos.y-last.y)<8)return;
+  const isEmpty=ship.cargo===0||ship.state==='docked';
+  const segOk=isEmpty||validateSegment(last.x,last.y,pos.x,pos.y);
+  if(!segOk){liveValid=false;return;}
+  liveValid=true;livePath.push({x:pos.x,y:pos.y});
+  if(stat){
+    ship.path=[{x:ship.x,y:ship.y},{x:pos.x,y:pos.y}];ship.pathIdx=0;ship.state='path';
+  }else{
+    if(ship.state!=='path'||livePath.length===2){
+      ship.path=[{x:ship.x,y:ship.y},{x:pos.x,y:pos.y}];ship.pathIdx=0;ship.state='path';
+    }else{ship.path.push({x:pos.x,y:pos.y});}
+  }
+}
+function pointerUp(pos){
+  if(!dragShip)return;
+  dragShip=null;dragActive=false;livePath=[];liveValid=true;
+}
+
+// ── Game loop ─────────────────────────────────────────────────────────
+function gameLoop(){
+  if(!running||paused)return;
+  spawnTimer -= speedFactor;
+  if(spawnTimer<=0){
+    doSpawn();spawnDelay=Math.max(140,300-level*13);spawnTimer=spawnDelay;
+    let nz=Math.floor(Math.random()*SPAWNS.length);
+    while(SPAWNS.length>1&&nz===lastZone)nz=Math.floor(Math.random()*SPAWNS.length);
+    nextZone=nz;
+  }
+  const nl=Math.floor(score/10)+1;if(nl!==level){level=nl;updateUI();}
+  ships.forEach(s=>s.update());ships=ships.filter(s=>s.state!=='done');
+  ships.forEach(s=>{if(s.state==='auto'||s.state==='path'||s.state==='enter'||s.state==='docking'){
+    s.wakeT++;if(s.wakeT>=5){s.wakeT=0;wakes.push({x:s.x,y:s.y,life:1,r:2+Math.random()*2});}
+  }});
+  updateWarnings();tickParticles();updateFire();
+
+  ctx.drawImage(bgCanvas,0,0);drawWaves();drawHarbourGlows();
+
+  // White path lines
+  const dashOff=-(Date.now()*.05%9);
+  ships.forEach(s=>{
+    if(s.state!=='path'||s.path.length<2||s.pathIdx>=s.path.length)return;
+    ctx.save();ctx.setLineDash([5,4]);ctx.lineDashOffset=dashOff;
+    ctx.strokeStyle='rgba(255,255,255,.75)';ctx.lineWidth=2;
+    ctx.beginPath();ctx.moveTo(s.x,s.y);
+    for(let i=s.pathIdx;i<s.path.length;i++)ctx.lineTo(s.path[i].x,s.path[i].y);
+    ctx.stroke();ctx.setLineDash([]);ctx.restore();
+  });
+  // Live drag line
+  if(dragShip&&dragActive&&livePath.length>1){
+    ctx.save();ctx.setLineDash([5,4]);ctx.lineDashOffset=-(Date.now()*.06%9);
+    ctx.strokeStyle=liveValid?'rgba(255,255,255,.9)':'rgba(255,60,60,.9)';
+    ctx.lineWidth=2.5;ctx.globalAlpha=.9;
+    ctx.beginPath();livePath.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));
+    ctx.stroke();ctx.setLineDash([]);ctx.restore();
+  }
+
+  drawParticles();
+  // Schiffe zeichnen
+  ships.forEach(s=>s.draw());
+  // Feuer im Vordergrund (über den Schiffen)
+  drawFire();
+  drawSpawnArrow();
+
+  if(flashTimer>0){ctx.fillStyle=`rgba(255,30,30,${flashTimer/30*.44})`;ctx.fillRect(0,0,W,H);flashTimer--;}
+  requestAnimationFrame(gameLoop);
+}
+
+// ── UI / control ──────────────────────────────────────────────────────
+function doSpawn(){if(ships.filter(s=>s.state!=='done').length>=5+level)return;lastZone=nextZone;ships.push(new Ship(nextZone));}
+function updateUI(){
+  document.getElementById('sv').textContent=score;
+  document.getElementById('lv').textContent=level;
+  document.getElementById('hv').textContent=highScore;
+}
+function togglePause(){
+  if(!running)return;
+  paused=!paused;
+  const btn=document.getElementById('pause-btn'),ov=document.getElementById('ov');
+  if(paused){
+    btn.innerHTML='▶';btn.title='Fortsetzen';
+    ov.innerHTML=`<div class="ob" style="padding:32px 52px;"><p style="color:#c8deff;font-size:16px;font-weight:900;letter-spacing:3px;margin-bottom:20px;">PAUSE</p><button class="btn" onclick="togglePause()">Fortsetzen</button></div>`;
+    ov.classList.add('on');
+  }else{
+    btn.innerHTML='⏸';btn.title='Pause';
+    ov.innerHTML='';ov.classList.remove('on');
+    requestAnimationFrame(gameLoop);
+  }
+}
+function triggerGameOver(){
+  running=false;
+  setTimeout(()=>{
+    const ov=document.getElementById('ov');
+    ov.innerHTML=`<div class="ob"><h2>&#128293; KOLLISION! &#128293;</h2><p>Level ${level} erreicht.</p><div class="fin">${score} Cargo</div><button class="btn" onclick="startGame()">Nochmal</button></div>`;
+    ov.classList.add('on');
+  },1200);
+}
+function startGame(){
+  ships=[];particles=[];wakes=[];fireParticles=[];
+  score=0;level=1;flashTimer=0;paused=false;
+  dragShip=null;livePath=[];liveValid=true;dragActive=false;
+  spawnDelay=300;spawnTimer=260;lastZone=-1;
+  nextZone=Math.floor(Math.random()*SPAWNS.length);
+  updateUI();
+  const ov=document.getElementById('ov');ov.innerHTML='';ov.classList.remove('on');
+  const pb=document.getElementById('pause-btn');pb.innerHTML='⏸';pb.title='Pause';
+  setSpeed(1);
+  running=true;doSpawn();
+  let nz2=Math.floor(Math.random()*SPAWNS.length);
+  while(SPAWNS.length>1&&nz2===nextZone)nz2=Math.floor(Math.random()*SPAWNS.length);
+  nextZone=nz2;
+  requestAnimationFrame(gameLoop);
+}
+
+buildBackground();
+startGame();
+</script>
