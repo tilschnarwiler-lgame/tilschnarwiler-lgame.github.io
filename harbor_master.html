@@ -17,7 +17,8 @@ body {
 }
 #ui {
   width: 660px;
-  display: flex; justify-content: space-between; align-items: center;
+  display: flex; justify-content: space-between;
+  align-items: center;
   padding: 7px 20px;
   background: linear-gradient(180deg, #2a4a8a, #1e3670);
   border: 2px solid #5a8acc; border-bottom: none;
@@ -37,24 +38,55 @@ canvas { display: block; border-radius: 0 0 12px 12px; border: 2px solid #5a8acc
 .ob .fin { color: #ffd844; font-size: 44px; font-weight: 900; margin: 10px 0 20px; }
 .btn { background: linear-gradient(180deg, #4a9eff, #2266cc); color: #fff; border: 2px solid #6ab4ff; padding: 12px 44px; font-size: 15px; font-weight: 900; letter-spacing: 2px; border-radius: 8px; cursor: pointer; transition: all .15s; text-transform: uppercase; }
 .btn:hover { background: linear-gradient(180deg, #6ab4ff, #3377dd); transform: scale(1.05); }
-#pause-btn, #speed1-btn, #speed2-btn { 
-  background: rgba(255,255,255,0.12); 
-  color: #c8deff; 
-  border: 2px solid rgba(90,138,204,0.6); 
-  width: 40px; 
-  height: 40px; 
-  border-radius: 8px; 
-  cursor: pointer; 
-  font-size: 14px; 
-  font-weight: bold;
-  display: flex; 
-  align-items: center; 
-  justify-content: center; 
-  transition: all .15s; 
-  flex-shrink: 0; 
+
+/* Steuerungsleiste - durchgehender Balken, keine runden Hinterlegungen */
+.control-bar {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  background: rgba(0,0,0,0.35);
+  border-radius: 24px;
+  backdrop-filter: blur(4px);
 }
-#pause-btn:hover, #speed1-btn:hover, #speed2-btn:hover { background: rgba(255,255,255,0.22); border-color: #8ab4e8; }
-#speed1-btn.active, #speed2-btn.active { background: rgba(74,158,255,0.4); border-color: #4a9eff; color: white; }
+.ctrl-btn {
+  background: transparent;
+  border: none;
+  min-width: 48px;
+  height: 34px;
+  padding: 0 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+  color: #c8deff;
+  font-size: 18px;
+  font-weight: bold;
+  font-family: monospace;
+  position: relative;
+}
+/* Trennlinien zwischen den Buttons */
+.ctrl-btn:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 8px;
+  height: 18px;
+  width: 1px;
+  background: rgba(255,255,255,0.2);
+}
+.ctrl-btn:hover {
+  background: rgba(255,255,255,0.1);
+}
+/* Aktiver Button - verfärbt sich, kein extra Overlay */
+.ctrl-btn.active {
+  background: rgba(30,100,200,0.7);
+  color: white;
+  text-shadow: 0 0 2px rgba(0,0,0,0.3);
+}
+.pause-symbol { font-size: 18px; font-weight: bold; }
+.play-symbol { font-size: 16px; margin-left: 2px; }
+.speed-symbol { font-size: 13px; letter-spacing: 1px; font-weight: bold; }
 </style>
 </head>
 <body>
@@ -66,9 +98,11 @@ canvas { display: block; border-radius: 0 0 12px 12px; border: 2px solid #5a8acc
   <div id="tt">CANAL MASTER</div>
   <div style="display:flex;align-items:center;gap:10px;">
     <div class="us"><div class="ul">Level</div><div class="uv" id="lv">1</div></div>
-    <button id="pause-btn" onclick="togglePause()" title="Pause">⏸</button>
-    <button id="speed1-btn" class="active" onclick="setSpeed(1)" title="Normalgeschwindigkeit">1x</button>
-    <button id="speed2-btn" onclick="setSpeed(2)" title="Doppelte Geschwindigkeit">2x</button>
+    <div class="control-bar">
+      <button id="pause-btn" class="ctrl-btn" title="Pause"><span class="pause-symbol">❚❚</span></button>
+      <button id="play-btn" class="ctrl-btn active" title="Normalgeschwindigkeit"><span class="play-symbol">▶</span></button>
+      <button id="speed-btn" class="ctrl-btn" title="Doppelte Geschwindigkeit"><span class="speed-symbol">▶▶</span></button>
+    </div>
   </div>
 </div>
 <canvas id="gc" width="660" height="540"></canvas>
@@ -119,13 +153,48 @@ const SPAWNS=[
 ];
 
 // ── Geschwindigkeitsfaktor ───────────────────────────────────────────
-let speedFactor = 1;  // 1 = normal, 2 = doppelt
+let speedFactor = 1;
+let paused = false;
+let running = false;
 
 function setSpeed(factor) {
+  if (!running) return;
   speedFactor = factor;
-  document.getElementById('speed1-btn').classList.toggle('active', factor === 1);
-  document.getElementById('speed2-btn').classList.toggle('active', factor === 2);
-  // Spawn-Delay und Timer anpassen (optional, wird in gameLoop dynamisch verwendet)
+  const playBtn = document.getElementById('play-btn');
+  const speedBtn = document.getElementById('speed-btn');
+  if (factor === 1) {
+    playBtn.classList.add('active');
+    speedBtn.classList.remove('active');
+  } else {
+    playBtn.classList.remove('active');
+    speedBtn.classList.add('active');
+  }
+}
+
+function setPause(isPaused) {
+  if (!running) return;
+  paused = isPaused;
+  const playBtn = document.getElementById('play-btn');
+  const speedBtn = document.getElementById('speed-btn');
+  const pauseBtn = document.getElementById('pause-btn');
+  
+  if (isPaused) {
+    // Pause aktiv: Alle Geschwindigkeits-Buttons inaktiv, Pause-Button dunkel
+    playBtn.classList.remove('active');
+    speedBtn.classList.remove('active');
+    pauseBtn.classList.add('active');
+  } else {
+    // Spiel läuft: Pause-Button normal, aktuellen Speed-Button aktivieren
+    pauseBtn.classList.remove('active');
+    if (speedFactor === 1) {
+      playBtn.classList.add('active');
+    } else {
+      speedBtn.classList.add('active');
+    }
+  }
+  if (!isPaused) {
+    requestAnimationFrame(gameLoop);
+  }
 }
 
 // ── Water / land tests ────────────────────────────────────────────────
@@ -153,7 +222,7 @@ function isAnyLand(x,y){
 }
 
 // ── State ─────────────────────────────────────────────────────────────
-let ships=[],score=0,level=1,running=false,paused=false,highScore=0;
+let ships=[],score=0,level=1,highScore=0;
 let spawnTimer=100,spawnDelay=300,nextZone=0,lastZone=-1;
 let dragShip=null,livePath=[],liveValid=true,dragActive=false;
 let particles=[],wakes=[],flashTimer=0,fireParticles=[];
@@ -208,7 +277,6 @@ class Ship{
     const sizes=mx===1?[1]:mx===2?[1,2]:[1,2,4];
     this.maxCargo=sizes[Math.floor(Math.random()*sizes.length)];
     this.cargo=this.maxCargo;
-    // Basisgeschwindigkeit (kleine Schiffe schneller, große langsamer)
     this.baseSpd=this.maxCargo===1?1.4:this.maxCargo===2?1.0:0.7;
     this.state='enter';
     this.path=[];this.pathIdx=0;
@@ -378,27 +446,21 @@ function buildBackground(){
   bgCanvas=document.createElement('canvas');bgCanvas.width=W;bgCanvas.height=H;
   const b=bgCanvas.getContext('2d');
 
-  // Water
   const wg=b.createLinearGradient(LL,0,W,H);
   wg.addColorStop(0,'#3a8ec8');wg.addColorStop(.4,'#2878b5');wg.addColorStop(1,'#1a5a8a');
   b.fillStyle=wg;b.fillRect(0,0,W,H);
 
-  // ── TOP-RIGHT CORNER LAND (fills entire corner, straight edges) ──────
-  // Simple solid rectangle fills the corner, then a natural coast along bottom
   b.beginPath();
-  b.moveTo(TRX,0); // top of coast line
-  // Wavy coast line going right across bottom of island
+  b.moveTo(TRX,0);
   for(let x=TRX;x<=W;x+=8){
     const y=TRY+Math.sin(x*.04)*8+Math.cos(x*.022)*5;
     b.lineTo(x,y);
   }
   b.lineTo(W,TRY+10); b.lineTo(W,0); b.closePath();
-  // Grass gradient
   const ig=b.createLinearGradient(TRX,0,W,TRY);
   ig.addColorStop(0,'#2d5a2d');ig.addColorStop(.5,'#4a8a3a');ig.addColorStop(1,'#5a9a45');
   b.fillStyle=ig;b.fill();
 
-  // Sandy beach strip along island coast
   b.beginPath();b.moveTo(TRX,0);
   for(let x=TRX;x<=W;x+=8){
     const y=TRY+Math.sin(x*.04)*8+Math.cos(x*.022)*5-6;
@@ -407,7 +469,6 @@ function buildBackground(){
   b.lineTo(W,TRY); b.lineTo(W,0); b.closePath();
   b.fillStyle='#d4b87a';b.fill();
 
-  // Trees on island
   for(let i=0;i<28;i++){
     const tx=TRX+15+Math.random()*(W-TRX-20);
     const coastY=TRY+Math.sin(tx*.04)*8+Math.cos(tx*.022)*5;
@@ -417,36 +478,31 @@ function buildBackground(){
     b.fillStyle='#2a5a1a';b.beginPath();b.ellipse(tx-1,ty-2,2.5,4,0,0,Math.PI*2);b.fill();
   }
 
-  // Island coast line
   b.strokeStyle='#c8b468';b.lineWidth=2.5;
-  // Vertical left edge of island
   b.beginPath();b.moveTo(TRX,0);b.lineTo(TRX,TRY+Math.sin(TRX*.04)*8+Math.cos(TRX*.022)*5);b.stroke();
-  // Bottom wavy coast
   b.beginPath();b.moveTo(TRX,TRY+Math.sin(TRX*.04)*8+Math.cos(TRX*.022)*5);
   for(let x=TRX;x<=W;x+=6){
     const y=TRY+Math.sin(x*.04)*8+Math.cos(x*.022)*5;b.lineTo(x,y);
   }
   b.stroke();
 
-  // ── LEFT LAND ─────────────────────────────────────────────────────────
   b.beginPath();b.moveTo(0,0);
   for(let y=0;y<=H;y+=10){const x=LL+Math.sin(y*.03)*10+Math.cos(y*.018)*6;b.lineTo(x,y);}
   b.lineTo(0,H);
   const gl=b.createLinearGradient(0,0,LL,0);
   gl.addColorStop(0,'#2d5a2d');gl.addColorStop(.4,'#4a8a3a');gl.addColorStop(1,'#6aaa50');
   b.fillStyle=gl;b.fill();
-  // Sandy beach
+
   b.beginPath();b.moveTo(0,0);
   for(let y=0;y<=H;y+=10){const x=LL+Math.sin(y*.03)*10+Math.cos(y*.018)*6-5;b.lineTo(x,y);}
   b.lineTo(0,H);b.fillStyle='#e8d4a0';b.fill();
-  // Trees
+
   for(let i=0;i<50;i++){
     const tx=15+Math.random()*(LL-25),ty=25+Math.random()*(H-50);
     b.fillStyle='#3a7a2a';b.beginPath();b.ellipse(tx,ty,5,7,0,0,Math.PI*2);b.fill();
     b.fillStyle='#2a5a1a';b.beginPath();b.ellipse(tx-1,ty-2,3,5,0,0,Math.PI*2);b.fill();
   }
 
-  // ── DOCK BAYS ─────────────────────────────────────────────────────────
   const margin=28;
   HARBOURS.forEach(h=>{h.bays.forEach(bay=>{
     const{bx:x,by:y,bw:w,bh:hgt}=bay,col=HEX[h.color];
@@ -460,7 +516,6 @@ function buildBackground(){
     for(let i=0;i<3;i++){b.beginPath();b.arc(x+12+i*25,y+hgt-5,3,0,Math.PI*2);b.fill();b.beginPath();b.arc(x+12+i*25,y+5,3,0,Math.PI*2);b.fill();}
   });});
 
-  // ── LEFT COAST LINE (skip dock openings) ──────────────────────────────
   b.strokeStyle='#c8b468';b.lineWidth=2.5;
   const skip=[];HARBOURS.forEach(h=>h.bays.forEach(bay=>skip.push({s:bay.by-8,e:bay.by+bay.bh+8})));
   skip.sort((a,z)=>a.s-z.s);
@@ -476,7 +531,6 @@ function buildBackground(){
   if(drawing)b.stroke();
 }
 
-// ── Animated overlays ─────────────────────────────────────────────────
 function drawWaves(){
   const t=Date.now()*.0008 * speedFactor;
   ctx.save();
@@ -512,7 +566,6 @@ function drawSpawnArrow(){
   ctx.restore();
 }
 
-// ── Collision & warnings ──────────────────────────────────────────────
 function inAnyBay(ship){
   for(const h of HARBOURS) for(const b of h.bays)
     if(ship.x>=b.bx&&ship.x<=b.bx+b.bw&&ship.y>=b.by&&ship.y<=b.by+b.bh) return true;
@@ -544,7 +597,6 @@ function updateWarnings(){
   }
 }
 
-// ── Path validation ───────────────────────────────────────────────────
 function validateSegment(x1,y1,x2,y2){
   const steps=Math.ceil(Math.hypot(x2-x1,y2-y1)/8);
   for(let s=1;s<=steps;s++){
@@ -555,7 +607,6 @@ function validateSegment(x1,y1,x2,y2){
   return true;
 }
 
-// ── Input ─────────────────────────────────────────────────────────────
 function getPos(e,te){
   const r=canvas.getBoundingClientRect(),sx=W/r.width,sy=H/r.height;
   const src=te?e.changedTouches[0]:(e.touches?e.touches[0]:e);
@@ -603,7 +654,6 @@ function pointerUp(pos){
   dragShip=null;dragActive=false;livePath=[];liveValid=true;
 }
 
-// ── Game loop ─────────────────────────────────────────────────────────
 function gameLoop(){
   if(!running||paused)return;
   spawnTimer -= speedFactor;
@@ -622,7 +672,6 @@ function gameLoop(){
 
   ctx.drawImage(bgCanvas,0,0);drawWaves();drawHarbourGlows();
 
-  // White path lines
   const dashOff=-(Date.now()*.05%9);
   ships.forEach(s=>{
     if(s.state!=='path'||s.path.length<2||s.pathIdx>=s.path.length)return;
@@ -632,7 +681,6 @@ function gameLoop(){
     for(let i=s.pathIdx;i<s.path.length;i++)ctx.lineTo(s.path[i].x,s.path[i].y);
     ctx.stroke();ctx.setLineDash([]);ctx.restore();
   });
-  // Live drag line
   if(dragShip&&dragActive&&livePath.length>1){
     ctx.save();ctx.setLineDash([5,4]);ctx.lineDashOffset=-(Date.now()*.06%9);
     ctx.strokeStyle=liveValid?'rgba(255,255,255,.9)':'rgba(255,60,60,.9)';
@@ -642,9 +690,7 @@ function gameLoop(){
   }
 
   drawParticles();
-  // Schiffe zeichnen
   ships.forEach(s=>s.draw());
-  // Feuer im Vordergrund (über den Schiffen)
   drawFire();
   drawSpawnArrow();
 
@@ -652,27 +698,20 @@ function gameLoop(){
   requestAnimationFrame(gameLoop);
 }
 
-// ── UI / control ──────────────────────────────────────────────────────
 function doSpawn(){if(ships.filter(s=>s.state!=='done').length>=5+level)return;lastZone=nextZone;ships.push(new Ship(nextZone));}
 function updateUI(){
   document.getElementById('sv').textContent=score;
   document.getElementById('lv').textContent=level;
   document.getElementById('hv').textContent=highScore;
 }
+
 function togglePause(){
-  if(!running)return;
-  paused=!paused;
-  const btn=document.getElementById('pause-btn'),ov=document.getElementById('ov');
-  if(paused){
-    btn.innerHTML='▶';btn.title='Fortsetzen';
-    ov.innerHTML=`<div class="ob" style="padding:32px 52px;"><p style="color:#c8deff;font-size:16px;font-weight:900;letter-spacing:3px;margin-bottom:20px;">PAUSE</p><button class="btn" onclick="togglePause()">Fortsetzen</button></div>`;
-    ov.classList.add('on');
-  }else{
-    btn.innerHTML='⏸';btn.title='Pause';
-    ov.innerHTML='';ov.classList.remove('on');
-    requestAnimationFrame(gameLoop);
+  if(!running) return;
+  if (!paused) {
+    setPause(true);
   }
 }
+
 function triggerGameOver(){
   running=false;
   setTimeout(()=>{
@@ -683,26 +722,39 @@ function triggerGameOver(){
 }
 function startGame(){
   ships=[];particles=[];wakes=[];fireParticles=[];
-  score=0;level=1;flashTimer=0;paused=false;
+  score=0;level=1;flashTimer=0;
   dragShip=null;livePath=[];liveValid=true;dragActive=false;
   spawnDelay=300;spawnTimer=260;lastZone=-1;
   nextZone=Math.floor(Math.random()*SPAWNS.length);
   updateUI();
   const ov=document.getElementById('ov');ov.innerHTML='';ov.classList.remove('on');
-  const pb=document.getElementById('pause-btn');pb.innerHTML='⏸';pb.title='Pause';
+  running=true;
   setSpeed(1);
-  running=true;doSpawn();
+  setPause(false);
+  doSpawn();
   let nz2=Math.floor(Math.random()*SPAWNS.length);
   while(SPAWNS.length>1&&nz2===nextZone)nz2=Math.floor(Math.random()*SPAWNS.length);
   nextZone=nz2;
   requestAnimationFrame(gameLoop);
 }
 
+// Button-Event-Listener
+document.getElementById('play-btn').addEventListener('click', () => { 
+  setSpeed(1); 
+  if (paused) setPause(false);
+});
+document.getElementById('speed-btn').addEventListener('click', () => { 
+  setSpeed(2); 
+  if (paused) setPause(false);
+});
+document.getElementById('pause-btn').addEventListener('click', togglePause);
+
 buildBackground();
 startGame();
 </script>
 </body>
 </html>
+```
 
 <!-- HTML -->
 <div id="ui">
@@ -713,9 +765,11 @@ startGame();
   <div id="tt">CANAL MASTER</div>
   <div style="display:flex;align-items:center;gap:10px;">
     <div class="us"><div class="ul">Level</div><div class="uv" id="lv">1</div></div>
-    <button id="pause-btn" onclick="togglePause()" title="Pause">⏸</button>
-    <button id="speed1-btn" class="active" onclick="setSpeed(1)" title="Normalgeschwindigkeit">1x</button>
-    <button id="speed2-btn" onclick="setSpeed(2)" title="Doppelte Geschwindigkeit">2x</button>
+    <div class="control-bar">
+      <button id="pause-btn" class="ctrl-btn" title="Pause"><span class="pause-symbol">❚❚</span></button>
+      <button id="play-btn" class="ctrl-btn active" title="Normalgeschwindigkeit"><span class="play-symbol">▶</span></button>
+      <button id="speed-btn" class="ctrl-btn" title="Doppelte Geschwindigkeit"><span class="speed-symbol">▶▶</span></button>
+    </div>
   </div>
 </div>
 <canvas id="gc" width="660" height="540"></canvas>
@@ -731,6 +785,10 @@ startGame();
     <button class="btn" onclick="startGame()">Spielen</button>
   </div>
 </div>
+
+
+
+```
 
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
@@ -744,7 +802,8 @@ body {
 }
 #ui {
   width: 660px;
-  display: flex; justify-content: space-between; align-items: center;
+  display: flex; justify-content: space-between;
+  align-items: center;
   padding: 7px 20px;
   background: linear-gradient(180deg, #2a4a8a, #1e3670);
   border: 2px solid #5a8acc; border-bottom: none;
@@ -764,24 +823,55 @@ canvas { display: block; border-radius: 0 0 12px 12px; border: 2px solid #5a8acc
 .ob .fin { color: #ffd844; font-size: 44px; font-weight: 900; margin: 10px 0 20px; }
 .btn { background: linear-gradient(180deg, #4a9eff, #2266cc); color: #fff; border: 2px solid #6ab4ff; padding: 12px 44px; font-size: 15px; font-weight: 900; letter-spacing: 2px; border-radius: 8px; cursor: pointer; transition: all .15s; text-transform: uppercase; }
 .btn:hover { background: linear-gradient(180deg, #6ab4ff, #3377dd); transform: scale(1.05); }
-#pause-btn, #speed1-btn, #speed2-btn { 
-  background: rgba(255,255,255,0.12); 
-  color: #c8deff; 
-  border: 2px solid rgba(90,138,204,0.6); 
-  width: 40px; 
-  height: 40px; 
-  border-radius: 8px; 
-  cursor: pointer; 
-  font-size: 14px; 
-  font-weight: bold;
-  display: flex; 
-  align-items: center; 
-  justify-content: center; 
-  transition: all .15s; 
-  flex-shrink: 0; 
+
+/* Steuerungsleiste - durchgehender Balken, keine runden Hinterlegungen */
+.control-bar {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  background: rgba(0,0,0,0.35);
+  border-radius: 24px;
+  backdrop-filter: blur(4px);
 }
-#pause-btn:hover, #speed1-btn:hover, #speed2-btn:hover { background: rgba(255,255,255,0.22); border-color: #8ab4e8; }
-#speed1-btn.active, #speed2-btn.active { background: rgba(74,158,255,0.4); border-color: #4a9eff; color: white; }
+.ctrl-btn {
+  background: transparent;
+  border: none;
+  min-width: 48px;
+  height: 34px;
+  padding: 0 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+  color: #c8deff;
+  font-size: 18px;
+  font-weight: bold;
+  font-family: monospace;
+  position: relative;
+}
+/* Trennlinien zwischen den Buttons */
+.ctrl-btn:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 8px;
+  height: 18px;
+  width: 1px;
+  background: rgba(255,255,255,0.2);
+}
+.ctrl-btn:hover {
+  background: rgba(255,255,255,0.1);
+}
+/* Aktiver Button - verfärbt sich, kein extra Overlay */
+.ctrl-btn.active {
+  background: rgba(30,100,200,0.7);
+  color: white;
+  text-shadow: 0 0 2px rgba(0,0,0,0.3);
+}
+.pause-symbol { font-size: 18px; font-weight: bold; }
+.play-symbol { font-size: 16px; margin-left: 2px; }
+.speed-symbol { font-size: 13px; letter-spacing: 1px; font-weight: bold; }
 </style>
 
 <script>
@@ -819,13 +909,48 @@ const SPAWNS=[
 ];
 
 // ── Geschwindigkeitsfaktor ───────────────────────────────────────────
-let speedFactor = 1;  // 1 = normal, 2 = doppelt
+let speedFactor = 1;
+let paused = false;
+let running = false;
 
 function setSpeed(factor) {
+  if (!running) return;
   speedFactor = factor;
-  document.getElementById('speed1-btn').classList.toggle('active', factor === 1);
-  document.getElementById('speed2-btn').classList.toggle('active', factor === 2);
-  // Spawn-Delay und Timer anpassen (optional, wird in gameLoop dynamisch verwendet)
+  const playBtn = document.getElementById('play-btn');
+  const speedBtn = document.getElementById('speed-btn');
+  if (factor === 1) {
+    playBtn.classList.add('active');
+    speedBtn.classList.remove('active');
+  } else {
+    playBtn.classList.remove('active');
+    speedBtn.classList.add('active');
+  }
+}
+
+function setPause(isPaused) {
+  if (!running) return;
+  paused = isPaused;
+  const playBtn = document.getElementById('play-btn');
+  const speedBtn = document.getElementById('speed-btn');
+  const pauseBtn = document.getElementById('pause-btn');
+  
+  if (isPaused) {
+    // Pause aktiv: Alle Geschwindigkeits-Buttons inaktiv, Pause-Button dunkel
+    playBtn.classList.remove('active');
+    speedBtn.classList.remove('active');
+    pauseBtn.classList.add('active');
+  } else {
+    // Spiel läuft: Pause-Button normal, aktuellen Speed-Button aktivieren
+    pauseBtn.classList.remove('active');
+    if (speedFactor === 1) {
+      playBtn.classList.add('active');
+    } else {
+      speedBtn.classList.add('active');
+    }
+  }
+  if (!isPaused) {
+    requestAnimationFrame(gameLoop);
+  }
 }
 
 // ── Water / land tests ────────────────────────────────────────────────
@@ -853,7 +978,7 @@ function isAnyLand(x,y){
 }
 
 // ── State ─────────────────────────────────────────────────────────────
-let ships=[],score=0,level=1,running=false,paused=false,highScore=0;
+let ships=[],score=0,level=1,highScore=0;
 let spawnTimer=100,spawnDelay=300,nextZone=0,lastZone=-1;
 let dragShip=null,livePath=[],liveValid=true,dragActive=false;
 let particles=[],wakes=[],flashTimer=0,fireParticles=[];
@@ -908,7 +1033,6 @@ class Ship{
     const sizes=mx===1?[1]:mx===2?[1,2]:[1,2,4];
     this.maxCargo=sizes[Math.floor(Math.random()*sizes.length)];
     this.cargo=this.maxCargo;
-    // Basisgeschwindigkeit (kleine Schiffe schneller, große langsamer)
     this.baseSpd=this.maxCargo===1?1.4:this.maxCargo===2?1.0:0.7;
     this.state='enter';
     this.path=[];this.pathIdx=0;
@@ -1078,27 +1202,21 @@ function buildBackground(){
   bgCanvas=document.createElement('canvas');bgCanvas.width=W;bgCanvas.height=H;
   const b=bgCanvas.getContext('2d');
 
-  // Water
   const wg=b.createLinearGradient(LL,0,W,H);
   wg.addColorStop(0,'#3a8ec8');wg.addColorStop(.4,'#2878b5');wg.addColorStop(1,'#1a5a8a');
   b.fillStyle=wg;b.fillRect(0,0,W,H);
 
-  // ── TOP-RIGHT CORNER LAND (fills entire corner, straight edges) ──────
-  // Simple solid rectangle fills the corner, then a natural coast along bottom
   b.beginPath();
-  b.moveTo(TRX,0); // top of coast line
-  // Wavy coast line going right across bottom of island
+  b.moveTo(TRX,0);
   for(let x=TRX;x<=W;x+=8){
     const y=TRY+Math.sin(x*.04)*8+Math.cos(x*.022)*5;
     b.lineTo(x,y);
   }
   b.lineTo(W,TRY+10); b.lineTo(W,0); b.closePath();
-  // Grass gradient
   const ig=b.createLinearGradient(TRX,0,W,TRY);
   ig.addColorStop(0,'#2d5a2d');ig.addColorStop(.5,'#4a8a3a');ig.addColorStop(1,'#5a9a45');
   b.fillStyle=ig;b.fill();
 
-  // Sandy beach strip along island coast
   b.beginPath();b.moveTo(TRX,0);
   for(let x=TRX;x<=W;x+=8){
     const y=TRY+Math.sin(x*.04)*8+Math.cos(x*.022)*5-6;
@@ -1107,7 +1225,6 @@ function buildBackground(){
   b.lineTo(W,TRY); b.lineTo(W,0); b.closePath();
   b.fillStyle='#d4b87a';b.fill();
 
-  // Trees on island
   for(let i=0;i<28;i++){
     const tx=TRX+15+Math.random()*(W-TRX-20);
     const coastY=TRY+Math.sin(tx*.04)*8+Math.cos(tx*.022)*5;
@@ -1117,36 +1234,31 @@ function buildBackground(){
     b.fillStyle='#2a5a1a';b.beginPath();b.ellipse(tx-1,ty-2,2.5,4,0,0,Math.PI*2);b.fill();
   }
 
-  // Island coast line
   b.strokeStyle='#c8b468';b.lineWidth=2.5;
-  // Vertical left edge of island
   b.beginPath();b.moveTo(TRX,0);b.lineTo(TRX,TRY+Math.sin(TRX*.04)*8+Math.cos(TRX*.022)*5);b.stroke();
-  // Bottom wavy coast
   b.beginPath();b.moveTo(TRX,TRY+Math.sin(TRX*.04)*8+Math.cos(TRX*.022)*5);
   for(let x=TRX;x<=W;x+=6){
     const y=TRY+Math.sin(x*.04)*8+Math.cos(x*.022)*5;b.lineTo(x,y);
   }
   b.stroke();
 
-  // ── LEFT LAND ─────────────────────────────────────────────────────────
   b.beginPath();b.moveTo(0,0);
   for(let y=0;y<=H;y+=10){const x=LL+Math.sin(y*.03)*10+Math.cos(y*.018)*6;b.lineTo(x,y);}
   b.lineTo(0,H);
   const gl=b.createLinearGradient(0,0,LL,0);
   gl.addColorStop(0,'#2d5a2d');gl.addColorStop(.4,'#4a8a3a');gl.addColorStop(1,'#6aaa50');
   b.fillStyle=gl;b.fill();
-  // Sandy beach
+
   b.beginPath();b.moveTo(0,0);
   for(let y=0;y<=H;y+=10){const x=LL+Math.sin(y*.03)*10+Math.cos(y*.018)*6-5;b.lineTo(x,y);}
   b.lineTo(0,H);b.fillStyle='#e8d4a0';b.fill();
-  // Trees
+
   for(let i=0;i<50;i++){
     const tx=15+Math.random()*(LL-25),ty=25+Math.random()*(H-50);
     b.fillStyle='#3a7a2a';b.beginPath();b.ellipse(tx,ty,5,7,0,0,Math.PI*2);b.fill();
     b.fillStyle='#2a5a1a';b.beginPath();b.ellipse(tx-1,ty-2,3,5,0,0,Math.PI*2);b.fill();
   }
 
-  // ── DOCK BAYS ─────────────────────────────────────────────────────────
   const margin=28;
   HARBOURS.forEach(h=>{h.bays.forEach(bay=>{
     const{bx:x,by:y,bw:w,bh:hgt}=bay,col=HEX[h.color];
@@ -1160,7 +1272,6 @@ function buildBackground(){
     for(let i=0;i<3;i++){b.beginPath();b.arc(x+12+i*25,y+hgt-5,3,0,Math.PI*2);b.fill();b.beginPath();b.arc(x+12+i*25,y+5,3,0,Math.PI*2);b.fill();}
   });});
 
-  // ── LEFT COAST LINE (skip dock openings) ──────────────────────────────
   b.strokeStyle='#c8b468';b.lineWidth=2.5;
   const skip=[];HARBOURS.forEach(h=>h.bays.forEach(bay=>skip.push({s:bay.by-8,e:bay.by+bay.bh+8})));
   skip.sort((a,z)=>a.s-z.s);
@@ -1176,7 +1287,6 @@ function buildBackground(){
   if(drawing)b.stroke();
 }
 
-// ── Animated overlays ─────────────────────────────────────────────────
 function drawWaves(){
   const t=Date.now()*.0008 * speedFactor;
   ctx.save();
@@ -1212,7 +1322,6 @@ function drawSpawnArrow(){
   ctx.restore();
 }
 
-// ── Collision & warnings ──────────────────────────────────────────────
 function inAnyBay(ship){
   for(const h of HARBOURS) for(const b of h.bays)
     if(ship.x>=b.bx&&ship.x<=b.bx+b.bw&&ship.y>=b.by&&ship.y<=b.by+b.bh) return true;
@@ -1244,7 +1353,6 @@ function updateWarnings(){
   }
 }
 
-// ── Path validation ───────────────────────────────────────────────────
 function validateSegment(x1,y1,x2,y2){
   const steps=Math.ceil(Math.hypot(x2-x1,y2-y1)/8);
   for(let s=1;s<=steps;s++){
@@ -1255,7 +1363,6 @@ function validateSegment(x1,y1,x2,y2){
   return true;
 }
 
-// ── Input ─────────────────────────────────────────────────────────────
 function getPos(e,te){
   const r=canvas.getBoundingClientRect(),sx=W/r.width,sy=H/r.height;
   const src=te?e.changedTouches[0]:(e.touches?e.touches[0]:e);
@@ -1303,7 +1410,6 @@ function pointerUp(pos){
   dragShip=null;dragActive=false;livePath=[];liveValid=true;
 }
 
-// ── Game loop ─────────────────────────────────────────────────────────
 function gameLoop(){
   if(!running||paused)return;
   spawnTimer -= speedFactor;
@@ -1322,7 +1428,6 @@ function gameLoop(){
 
   ctx.drawImage(bgCanvas,0,0);drawWaves();drawHarbourGlows();
 
-  // White path lines
   const dashOff=-(Date.now()*.05%9);
   ships.forEach(s=>{
     if(s.state!=='path'||s.path.length<2||s.pathIdx>=s.path.length)return;
@@ -1332,7 +1437,6 @@ function gameLoop(){
     for(let i=s.pathIdx;i<s.path.length;i++)ctx.lineTo(s.path[i].x,s.path[i].y);
     ctx.stroke();ctx.setLineDash([]);ctx.restore();
   });
-  // Live drag line
   if(dragShip&&dragActive&&livePath.length>1){
     ctx.save();ctx.setLineDash([5,4]);ctx.lineDashOffset=-(Date.now()*.06%9);
     ctx.strokeStyle=liveValid?'rgba(255,255,255,.9)':'rgba(255,60,60,.9)';
@@ -1342,9 +1446,7 @@ function gameLoop(){
   }
 
   drawParticles();
-  // Schiffe zeichnen
   ships.forEach(s=>s.draw());
-  // Feuer im Vordergrund (über den Schiffen)
   drawFire();
   drawSpawnArrow();
 
@@ -1352,27 +1454,20 @@ function gameLoop(){
   requestAnimationFrame(gameLoop);
 }
 
-// ── UI / control ──────────────────────────────────────────────────────
 function doSpawn(){if(ships.filter(s=>s.state!=='done').length>=5+level)return;lastZone=nextZone;ships.push(new Ship(nextZone));}
 function updateUI(){
   document.getElementById('sv').textContent=score;
   document.getElementById('lv').textContent=level;
   document.getElementById('hv').textContent=highScore;
 }
+
 function togglePause(){
-  if(!running)return;
-  paused=!paused;
-  const btn=document.getElementById('pause-btn'),ov=document.getElementById('ov');
-  if(paused){
-    btn.innerHTML='▶';btn.title='Fortsetzen';
-    ov.innerHTML=`<div class="ob" style="padding:32px 52px;"><p style="color:#c8deff;font-size:16px;font-weight:900;letter-spacing:3px;margin-bottom:20px;">PAUSE</p><button class="btn" onclick="togglePause()">Fortsetzen</button></div>`;
-    ov.classList.add('on');
-  }else{
-    btn.innerHTML='⏸';btn.title='Pause';
-    ov.innerHTML='';ov.classList.remove('on');
-    requestAnimationFrame(gameLoop);
+  if(!running) return;
+  if (!paused) {
+    setPause(true);
   }
 }
+
 function triggerGameOver(){
   running=false;
   setTimeout(()=>{
@@ -1383,20 +1478,32 @@ function triggerGameOver(){
 }
 function startGame(){
   ships=[];particles=[];wakes=[];fireParticles=[];
-  score=0;level=1;flashTimer=0;paused=false;
+  score=0;level=1;flashTimer=0;
   dragShip=null;livePath=[];liveValid=true;dragActive=false;
   spawnDelay=300;spawnTimer=260;lastZone=-1;
   nextZone=Math.floor(Math.random()*SPAWNS.length);
   updateUI();
   const ov=document.getElementById('ov');ov.innerHTML='';ov.classList.remove('on');
-  const pb=document.getElementById('pause-btn');pb.innerHTML='⏸';pb.title='Pause';
+  running=true;
   setSpeed(1);
-  running=true;doSpawn();
+  setPause(false);
+  doSpawn();
   let nz2=Math.floor(Math.random()*SPAWNS.length);
   while(SPAWNS.length>1&&nz2===nextZone)nz2=Math.floor(Math.random()*SPAWNS.length);
   nextZone=nz2;
   requestAnimationFrame(gameLoop);
 }
+
+// Button-Event-Listener
+document.getElementById('play-btn').addEventListener('click', () => { 
+  setSpeed(1); 
+  if (paused) setPause(false);
+});
+document.getElementById('speed-btn').addEventListener('click', () => { 
+  setSpeed(2); 
+  if (paused) setPause(false);
+});
+document.getElementById('pause-btn').addEventListener('click', togglePause);
 
 buildBackground();
 startGame();
