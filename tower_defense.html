@@ -111,7 +111,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a0a;font-family:
 .hp-bar-wrap{padding:2px 4px;}
 .hp-bar-bg{background:#333;border-radius:3px;height:10px;width:100%;}
 .hp-bar-fill{height:10px;border-radius:3px;transition:width 0.2s;}
-.tbtn{width:100%;padding:8px 6px;border:none;border-radius:6px;cursor:pointer;font-size:11px;font-weight:bold;text-align:left;display:flex;flex-direction:row;align-items:center;gap:7px;margin-bottom:5px;transition:all 0.15s;background:#3a3a3a;color:#aaa;border:1px solid #555;}
+.tbtn{width:100%;min-height:62px;padding:8px 6px;border:none;border-radius:6px;cursor:pointer;font-size:11px;font-weight:bold;text-align:left;display:flex;flex-direction:row;align-items:center;gap:7px;margin-bottom:5px;transition:all 0.15s;background:#3a3a3a;color:#aaa;border:1px solid #555;}
 .tbtn:last-child{margin-bottom:0;}
 .tbtn:disabled{background:#2e2e2e;color:#777;border:1px solid #444;opacity:0.6;cursor:not-allowed;filter:none;}
 .tbtn:disabled canvas{opacity:1!important;filter:none!important;}
@@ -224,7 +224,7 @@ let discovered=JSON.parse(localStorage.getItem('td_discovered')||'["light"]');
 document.getElementById('hsWave').textContent=highscore||'—';
 
 // ── ALL 6 TOWER TYPES ──
-const ALL_TOWER_TYPES=['archer','cannon','mage','poison','tesla','inferno'];
+const ALL_TOWER_TYPES=['archer','cannon','mage','poison','tesla','inferno','wall','bomb'];
 
 let activeDeck=JSON.parse(localStorage.getItem('td_deck')||'[null,null,null,null]');
 // Reset old saved decks that had towers pre-filled
@@ -242,7 +242,9 @@ const TOWER_DEFS={
   mage:  {cost:120,range:100,cooldown:95, dmg:4, label:'Magierturm', splash:55},
   poison:{cost:140,range:100,cooldown:120,dmg:1, label:'Giftturm',   poisonDmg:1,poisonDur:300},
   tesla: {cost:160,range:100,cooldown:120,dmg:3, label:'Teslaturm',  chainCount:1},
-  inferno:{cost:160,range:100,cooldown:1,  dmg:1, label:'Infernoturm',rampDmg:0}
+  inferno:{cost:160,range:100,cooldown:1,  dmg:1, label:'Infernoturm',rampDmg:0},
+  wall:{cost:100,hp:50,label:'Mauer'},
+  bomb:{cost:20,dmg:20,radius:50,label:'Bombe'}
 };
 
 const UPGRADE_DEFS={
@@ -269,6 +271,14 @@ const UPGRADE_DEFS={
   inferno:[
     {cost:160,newDmg:2,newRange:120,newCd:1,  label:'Basis: 1→2<br>Reichweite: 100→120'},
     {cost:180,newDmg:3,newRange:140,newCd:1,  label:'Basis: 2→3<br>Reichweite: 120→140'}
+  ],
+  wall:[
+    {cost:200,newHp:60,label:'HP: 50→60'},
+    {cost:300,newHp:70,label:'HP: 60→70'}
+  ],
+  bomb:[
+    {cost:80, newDmg:40,label:'Schaden: 20→40'},
+    {cost:150,newDmg:60,label:'Schaden: 40→60'}
   ]
 };
 
@@ -295,9 +305,13 @@ const TOWER_CARD_DATA={
   tesla:{name:'Teslaturm',baseCost:160,special:'Kettenblitz — trifft mehrere Gegner',
     levels:[{lvl:1,dmg:3,range:100,tempo:'0.5/s',upgradeCost:160,kette:1},{lvl:2,dmg:4,range:110,tempo:'0.6/s',upgradeCost:160,kette:2},{lvl:3,dmg:6,range:130,tempo:'0.8/s',upgradeCost:180,kette:3}]},
   inferno:{name:'Infernoturm',baseCost:160,special:'Feuerstrahl — Schaden steigert sich',
-    levels:[{lvl:1,dmg:'1→8',range:100,tempo:'Strahl',upgradeCost:160},{lvl:2,dmg:'2→10',range:120,tempo:'Strahl',upgradeCost:160},{lvl:3,dmg:'3→10+',range:140,tempo:'Strahl',upgradeCost:180}]}
+    levels:[{lvl:1,dmg:'1→8',range:100,tempo:'Strahl',upgradeCost:160},{lvl:2,dmg:'2→10',range:120,tempo:'Strahl',upgradeCost:160},{lvl:3,dmg:'3→10+',range:140,tempo:'Strahl',upgradeCost:180}]},
+  wall:{name:'Mauer',baseCost:100,special:'Blockiert Gegner — kein Schaden, lenkt den Weg um',
+    levels:[{lvl:1,hp:50,upgradeCost:100},{lvl:2,hp:60,upgradeCost:200},{lvl:3,hp:70,upgradeCost:300}]},
+  bomb:{name:'Bombe',baseCost:20,special:'Einmal-Explosion bei Gegnerkontakt',
+    levels:[{lvl:1,dmg:20,upgradeCost:20},{lvl:2,dmg:40,upgradeCost:80},{lvl:3,dmg:60,upgradeCost:150}]}
 };
-const TOWER_COLORS={archer:'#a8f0a8',cannon:'#f0c898',mage:'#c898f0',poison:'#aaff44',tesla:'#44aaff',inferno:'#ff8844'};
+const TOWER_COLORS={archer:'#a8f0a8',cannon:'#f0c898',mage:'#c898f0',poison:'#aaff44',tesla:'#44aaff',inferno:'#ff8844',wall:'#cccccc',bomb:'#ff6666'};
 
 const ENEMY_CARD_DATA={
   light:{name:'Normaler Soldat',badge:'badge-light',badgeText:'Ab Welle 1', hp:10,  dmg:'1/s',       speed:'Normal',       gold:5,  schwaeche:'Alle Türme',     special:'Tritt in großen Gruppen auf', color:'#8B3a3a',S:0.85},
@@ -307,7 +321,7 @@ const ENEMY_CARD_DATA={
   boss2:{name:'Boss II',         badge:'badge-boss2',badgeText:'Welle 20',   hp:500, dmg:'20 alle 2s',speed:'Sehr langsam', gold:100,schwaeche:'Alle kombiniert',special:'Stärker als Boss I',           color:'#ff2200',S:1.4},
   boss3:{name:'Boss III',        badge:'badge-boss3',badgeText:'Welle 30+',  hp:1000,dmg:'30 alle 2s',speed:'Sehr langsam', gold:200,schwaeche:'Alle kombiniert',special:'Massiver Endgegner',           color:'#ff0000',S:1.5}
 };
-let infoTowerLevels={archer:1,cannon:1,mage:1,poison:1,tesla:1,inferno:1};
+let infoTowerLevels={archer:1,cannon:1,mage:1,poison:1,tesla:1,inferno:1,wall:1,bomb:1};
 
 // ── HOMESCREEN FUNCTIONS ──
 function hsTab(pageId,btn){
@@ -337,7 +351,8 @@ function renderDeckPage(){
   } else {clearDiv.style.display='none';clearDiv.innerHTML='';}
 
   const towersDiv=document.getElementById('deckPageTowers');towersDiv.innerHTML='';
-  ALL_TOWER_TYPES.forEach(type=>{
+  const DECK_TOWER_TYPES=['archer','cannon','mage','poison','tesla','inferno','wall','bomb'];
+  DECK_TOWER_TYPES.forEach(type=>{
     const d=TOWER_CARD_DATA[type];const opt=document.createElement('div');
     opt.className='deck-page-tower'+(deckSelectedTower===type?' selected':'');
     const c=document.createElement('canvas');c.width=56;c.height=56;
@@ -381,19 +396,30 @@ function renderDeckPage(){
     const d=TOWER_CARD_DATA[deckSelectedTower];
     infoDiv.style.display='block';
     const col=TOWER_COLORS[deckSelectedTower]||'#a8f0a8';
-    let lvlHtml='<div class="lvl-tabs-mini" style="margin-bottom:10px;">';
-    [1,2,3].forEach(l=>{lvlHtml+=`<button class="lvl-tab-mini${infoTowerLevels[deckSelectedTower]===l?' active':''}" onclick="infoTowerLevels['${deckSelectedTower}']=${l};renderDeckPage();">Lvl ${l}</button>`;});
-    lvlHtml+='</div>';
     const lvl=infoTowerLevels[deckSelectedTower];const info=d.levels[lvl-1];
-    const dmgStr=typeof info.dmg==='string'?info.dmg:info.dmg+(deckSelectedTower==='mage'?' (Fl.)':'');
+    const dmgStr=typeof info.dmg==='string'?info.dmg:(info.dmg!==undefined?info.dmg+(deckSelectedTower==='mage'?' (Fl.)':''):null);
     const ketteRow=info.kette?`<div><b>Kette:</b> ${info.kette}</div>`:'';
-    infoDiv.innerHTML=`<button class="dti-close" onclick="deckSelectedTower=null;renderDeckPage();">✕</button>
-      <h3 style="color:${col};">${d.name}</h3>${lvlHtml}
-      <div class="tower-stats">${lvlHtml.includes('active')?'':''}
-        <div><b>Kosten:</b> ${info.upgradeCost} 💰</div><div><b>Schaden:</b> ${dmgStr}</div>
-        <div><b>Reichweite:</b> ${info.range}</div><div><b>Tempo:</b> ${info.tempo}</div>${ketteRow}
-      </div>
-      <div class="tower-special" style="margin-top:8px;">⚡ ${d.special}</div>`;
+    const statRows=[];
+    statRows.push(`<div><b>Kosten:</b> ${info.upgradeCost} 💰</div>`);
+    if(dmgStr!==null)statRows.push(`<div><b>Schaden:</b> ${dmgStr}</div>`);
+    if(info.range!==undefined)statRows.push(`<div><b>Reichweite:</b> ${info.range}</div>`);
+    if(info.tempo!==undefined)statRows.push(`<div><b>Tempo:</b> ${info.tempo}</div>`);
+    if(info.hp!==undefined)statRows.push(`<div><b>HP:</b> ${info.hp}</div>`);
+
+    infoDiv.innerHTML='';
+    const closeBtn=document.createElement('button');closeBtn.className='dti-close';closeBtn.textContent='✕';
+    closeBtn.onclick=(e)=>{e.stopPropagation();deckSelectedTower=null;renderDeckPage();};
+    infoDiv.appendChild(closeBtn);
+    const h3=document.createElement('h3');h3.style.color=col;h3.textContent=d.name;infoDiv.appendChild(h3);
+    const tabs=document.createElement('div');tabs.className='lvl-tabs-mini';tabs.style.marginBottom='10px';
+    [1,2,3].forEach(l=>{
+      const t=document.createElement('button');t.className='lvl-tab-mini'+(infoTowerLevels[deckSelectedTower]===l?' active':'');t.textContent='Lvl '+l;
+      t.onclick=(e)=>{e.stopPropagation();infoTowerLevels[deckSelectedTower]=l;renderDeckPage();};
+      tabs.appendChild(t);
+    });
+    infoDiv.appendChild(tabs);
+    const statsDiv=document.createElement('div');statsDiv.className='tower-stats';statsDiv.innerHTML=statRows.join('')+ketteRow;infoDiv.appendChild(statsDiv);
+    const specDiv=document.createElement('div');specDiv.className='tower-special';specDiv.style.marginTop='8px';specDiv.innerHTML='⚡ '+d.special;infoDiv.appendChild(specDiv);
   } else if(infoDiv){infoDiv.style.display='none';}
 }
 function clearDeckSlot(){if(deckPageSelectedSlot!==null){activeDeck[deckPageSelectedSlot]=null;deckPageSelectedSlot=null;saveDeck();renderDeckPage();}}
@@ -408,7 +434,11 @@ function renderHsDeck(){
 }
 function drawTowerOnCanvas(canvas,type,lvl){
   const savedCtx=ctx;const x=canvas.getContext('2d');x.clearRect(0,0,canvas.width,canvas.height);
-  x.save();x.translate(canvas.width/2-20,canvas.height/2-20);ctx=x;
+  x.save();
+  // Per-type offset to center the tower sprite
+  const offsets={archer:[-22,-18],cannon:[-20,-20],mage:[-20,-20],poison:[-20,-20],tesla:[-20,-20],inferno:[-20,-20],wall:[-20,-20],bomb:[-20,-20]};
+  const [ox,oy]=offsets[type]||[-20,-20];
+  x.translate(canvas.width/2+ox,canvas.height/2+oy);ctx=x;
   drawTowerByType(type,0,0,lvl);
   ctx=savedCtx;x.restore();
 }
@@ -425,9 +455,14 @@ function renderTowerCards(){
     inf.appendChild(tabs);
     const h3=document.createElement('h3');h3.textContent=d.name+' (Level '+lvl+')';h3.style.color=TOWER_COLORS[type];inf.appendChild(h3);
     const statsDiv=document.createElement('div');statsDiv.className='tower-stats';
-    const dmgStr=typeof info.dmg==='string'?info.dmg:info.dmg+(type==='mage'?' (Fl.)':'');
+    const dmgStr=typeof info.dmg==='string'?info.dmg:(info.dmg!==undefined?info.dmg+(type==='mage'?' (Fl.)':''):null);
     const ketteRow=info.kette?`<div><b>Kette:</b> ${info.kette}</div>`:'';
-    statsDiv.innerHTML=`<div><b>Kosten:</b> ${info.upgradeCost} 💰</div><div><b>Schaden:</b> ${dmgStr}</div><div><b>Reichweite:</b> ${info.range}</div><div><b>Tempo:</b> ${info.tempo}</div>${ketteRow}`;
+    const statRows=[`<div><b>Kosten:</b> ${info.upgradeCost} 💰</div>`];
+    if(dmgStr!==null)statRows.push(`<div><b>Schaden:</b> ${dmgStr}</div>`);
+    if(info.range!==undefined)statRows.push(`<div><b>Reichweite:</b> ${info.range}</div>`);
+    if(info.tempo!==undefined)statRows.push(`<div><b>Tempo:</b> ${info.tempo}</div>`);
+    if(info.hp!==undefined)statRows.push(`<div><b>HP:</b> ${info.hp}</div>`);
+    statsDiv.innerHTML=statRows.join('')+ketteRow;
     inf.appendChild(statsDiv);
     const specDiv=document.createElement('div');specDiv.className='tower-special';specDiv.innerHTML='⚡ '+d.special;inf.appendChild(specDiv);
     div.appendChild(inf);c.appendChild(div);
@@ -481,7 +516,9 @@ function renderTowerButtons(){
     mage:  {name:'Magierturm',       cost:120,dmg:'4 (Fl.)',range:100,tempo:'0.63/s'},
     poison:{name:'Giftturm',         cost:140,dmg:'1/s',  range:100,tempo:'0.5/s'},
     tesla: {name:'Teslaturm',        cost:160,dmg:'3×Kette',range:100,tempo:'0.5/s'},
-    inferno:{name:'Infernoturm',     cost:160,dmg:'1→8',  range:100,tempo:'Strahl'}
+    inferno:{name:'Infernoturm',     cost:160,dmg:'1→8',  range:100,tempo:'Strahl'},
+    wall:{name:'Mauer',cost:100,dmg:'—',range:'50 HP',tempo:'Blockiert'},
+    bomb:{name:'Bombe',cost:20, dmg:20,range:'—',tempo:'Einmalig'}
   };
   for(let i=0;i<4;i++){
     const type=activeDeck[i];if(!type)continue;
@@ -529,52 +566,197 @@ function startWave(){
   window._spawnQ.sort(()=>Math.random()-0.5);enemiesToSpawn=window._spawnQ.length;updateUI();
   if(bt)showMsg('⚠️ BOSS WELLE '+wave+'!');
 }
+// ── PATHFINDING (BFS over 15x15 grid, walls block movement) ──
+function isWallBlocking(x,y){
+  if(x<0||x>=COLS||y<0||y>=ROWS)return false;
+  const tw=towers.find(t=>t.x===x&&t.y===y&&t.type==='wall');
+  return tw&&tw.hp>0; // ruins (hp<=0, ruinTimer>0) still block - handled separately
+}
+function isTileBlocked(x,y){
+  if(x<0||x>=COLS||y<0||y>=ROWS)return true;
+  const tw=towers.find(t=>t.x===x&&t.y===y&&t.type==='wall');
+  if(tw&&(tw.hp>0||tw.ruinTimer>0))return true; // wall or ruin blocks
+  return false;
+}
+// BFS from castle outward, returns distance map and prev map for path reconstruction
+function computeFlowField(){
+  const dist=Array.from({length:ROWS},()=>Array(COLS).fill(Infinity));
+  const prev=Array.from({length:ROWS},()=>Array(COLS).fill(null));
+  const queue=[{x:CX,y:CY}];dist[CY][CX]=0;
+  const dirs=[[0,-1],[0,1],[-1,0],[1,0]];
+  while(queue.length){
+    const cur=queue.shift();
+    for(const[dx,dy]of dirs){
+      const nx=cur.x+dx,ny=cur.y+dy;
+      if(nx<0||nx>=COLS||ny<0||ny>=ROWS)continue;
+      if(isTileBlocked(nx,ny))continue;
+      if(dist[ny][nx]>dist[cur.y][cur.x]+1){
+        dist[ny][nx]=dist[cur.y][cur.x]+1;prev[ny][nx]={x:cur.x,y:cur.y};
+        queue.push({x:nx,y:ny});
+      }
+    }
+  }
+  return{dist,prev};
+}
+// Compute a path of grid cells from (sx,sy) to castle. If unreachable, find nearest wall on most direct route.
+// Check if a straight line between two grid cell centers crosses any blocking wall tile
+function hasLineOfSight(x1,y1,x2,y2){
+  const steps=Math.max(Math.abs(x2-x1),Math.abs(y2-y1))*4;
+  if(steps===0)return true;
+  for(let i=0;i<=steps;i++){
+    const t=i/steps;
+    const cx=x1+(x2-x1)*t,cy=y1+(y2-y1)*t;
+    const gx=Math.floor(cx+0.5),gy=Math.floor(cy+0.5);
+    if(isTileBlocked(gx,gy))return false;
+  }
+  return true;
+}
+// Smooth a grid path: keep only waypoints that are necessary (skip ahead when line of sight is clear)
+function smoothPath(path){
+  if(path.length<=2)return path;
+  const result=[path[0]];
+  let i=0;
+  while(i<path.length-1){
+    let furthest=i+1;
+    for(let j=path.length-1;j>i+1;j--){
+      if(hasLineOfSight(path[i].x,path[i].y,path[j].x,path[j].y)){furthest=j;break;}
+    }
+    result.push(path[furthest]);
+    i=furthest;
+  }
+  return result;
+}
+function computePathForSpawn(sx,sy){
+  const{dist,prev}=computeFlowField();
+  if(dist[sy][sx]<Infinity){
+    // Reconstruct path from start to castle
+    const path=[];let cur={x:sx,y:sy};
+    while(cur){path.push({x:cur.x,y:cur.y});if(cur.x===CX&&cur.y===CY)break;cur=prev[cur.y][cur.x];}
+    return{path:smoothPath(path),targetWall:null};
+  }
+  // Unreachable: find the wall tile on the most direct route (closest to straight line to castle, and adjacent to a reachable tile)
+  let best=null,bestScore=Infinity;
+  for(const tw of towers){
+    if(tw.type!=='wall'||!(tw.hp>0||tw.ruinTimer>0))continue;
+    if(dist[tw.y][tw.x]===undefined)continue;
+    // Check if this wall tile is adjacent to a reachable tile (so it's "on the route")
+    const dirs=[[0,-1],[0,1],[-1,0],[1,0]];
+    let adjReachable=false;
+    for(const[dx,dy]of dirs){const ax=tw.x+dx,ay=tw.y+dy;if(ax>=0&&ax<COLS&&ay>=0&&ay<ROWS&&dist[ay][ax]<Infinity)adjReachable=true;}
+    if(!adjReachable)continue;
+    // Score: distance from spawn straight-line + distance from wall to castle straight-line
+    const dStart=Math.sqrt((tw.x-sx)**2+(tw.y-sy)**2);
+    const dCastle=Math.sqrt((tw.x-CX)**2+(tw.y-CY)**2);
+    const score=dStart+dCastle;
+    if(score<bestScore){bestScore=score;best=tw;}
+  }
+  if(best){
+    // Path: straight toward the wall tile (simple direct walk, just need a target)
+    return{path:[{x:sx,y:sy},{x:best.x,y:best.y}],targetWall:best};
+  }
+  // Fallback: walk straight to castle (shouldn't normally happen)
+  return{path:[{x:sx,y:sy},{x:CX,y:CY}],targetWall:null};
+}
+
 function spawnEnemy(){
   if(!window._spawnQ||!window._spawnQ.length)return;
   const type=window._spawnQ.shift();const side=Math.floor(Math.random()*4);let x,y;
   if(side===0){x=0;y=Math.floor(Math.random()*ROWS);}else if(side===1){x=COLS-1;y=Math.floor(Math.random()*ROWS);}else if(side===2){x=Math.floor(Math.random()*COLS);y=0;}else{x=Math.floor(Math.random()*COLS);y=ROWS-1;}
   const def=ENEMY_TYPES[type];let color=def.color;
   if(color==='random'){const cols=['#8B3a3a','#4a5a00','#1a3a3a','#2c2c5e','#5a3a1a'];color=cols[Math.floor(Math.random()*cols.length)];}
-  enemies.push({x,y,hp:def.hp,maxHp:def.hp,speed:def.speed,dmg:def.dmg,hitInterval:def.hitInterval,hitTimer:def.hitInterval,reward:def.reward,scale:def.scale,color,angle:0,type,atBase:false,burning:0});
+  const{path,targetWall}=computePathForSpawn(x,y);
+  enemies.push({x,y,hp:def.hp,maxHp:def.hp,speed:def.speed,dmg:def.dmg,hitInterval:def.hitInterval,hitTimer:def.hitInterval,reward:def.reward,scale:def.scale,color,angle:0,type,atBase:false,burning:0,path,pathIdx:0,targetWall,attackingWall:false});
 }
 function killEnemy(en){spawnFx(en.x*GS+GS/2,en.y*GS+GS/2,'#c0392b',10);money+=en.reward;enemies=enemies.filter(e=>e!==en);updateUI();}
 let msgTimeout=null;
 function showMsg(t){document.getElementById('msgBox').textContent=t;if(msgTimeout)clearTimeout(msgTimeout);msgTimeout=setTimeout(()=>{document.getElementById('msgBox').textContent='';},3000);}
 function spawnFx(px,py,col,n){for(let i=0;i<n;i++){const a=Math.random()*Math.PI*2,s=1+Math.random()*2;particles.push({x:px,y:py,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:30,col});}}
 function getMouse(e){const r=canvas.getBoundingClientRect();return{x:(e.clientX-r.left)*(600/r.width),y:(e.clientY-r.top)*(624/r.height)};}
-function getSellPrice(tw){const def=TOWER_DEFS[tw.type],u=UPGRADE_DEFS[tw.type];let t=Math.floor(def.cost/2);for(let i=0;i<tw.level-1;i++)t+=Math.floor(u[i].cost/2);return t;}
-function sellTower(tw){const r=getSellPrice(tw);money+=r;grid[tw.y][tw.x]=null;towers=towers.filter(t=>t!==tw);hideUpgPanel();showMsg('Turm verkauft! +'+r+' 💰');updateUI();}
+function getSellPrice(tw){
+  const def=TOWER_DEFS[tw.type],u=UPGRADE_DEFS[tw.type];
+  let t=Math.floor(def.cost/2);for(let i=0;i<tw.level-1;i++)t+=Math.floor(u[i].cost/2);
+  return t;
+}
+function sellTower(tw){const r=getSellPrice(tw);money+=r;grid[tw.y][tw.x]=null;towers=towers.filter(t=>t!==tw);hideUpgPanel();showMsg(tw.type==='wall'?'Mauer verkauft! +'+r+' 💰':tw.type==='bomb'?'Bombe verkauft! +'+r+' 💰':'Turm verkauft! +'+r+' 💰');updateUI();}
+function healWall(tw){
+  if(tw.type!=='wall')return;
+  const missing=tw.maxHp-tw.hp;
+  if(missing<=0)return;
+  const cost=missing; // 1 gold per missing HP
+  if(money<cost){showMsg('Nicht genug Gold zum Heilen!');return;}
+  money-=cost;tw.hp=tw.maxHp;showMsg('Mauer geheilt!');showUpgPanel(tw);updateUI();
+}
 function showUpgPanel(tw){
   selectedTower=tw;const def=TOWER_DEFS[tw.type],u=UPGRADE_DEFS[tw.type];
-  document.getElementById('upgTitle').textContent=def.label+' (Level '+tw.level+')';
-  let stats='Schaden: '+(tw.type==='inferno'?tw.dmg.toFixed?tw.dmg.toFixed(1):tw.dmg:tw.dmg)+'<br>Reichweite: '+Math.round(tw.range)+'<br>Tempo: '+cdToRate(tw.cd);
-  if(tw.type==='tesla')stats+='<br>Kette: '+tw.chain;
-  if(tw.type==='inferno')stats+='<br>Ramp: '+(tw.rampDmg||0).toFixed(1);
+  document.getElementById('upgTitle').textContent=def.label+' (Level '+tw.level+')'+(tw.type==='wall'&&tw.hp<=0?' - RUINE':'');
+  let stats='';
+  if(tw.type==='wall'){
+    stats='HP: '+Math.max(0,Math.round(tw.hp))+' / '+tw.maxHp;
+    if(tw.hp<=0)stats+='<br>Verschwindet in '+Math.ceil((tw.ruinTimer||0)/60)+'s';
+  } else if(tw.type==='bomb'){
+    stats='Schaden: '+tw.dmg+'<br>Radius: '+(tw.radius||50);
+  } else {
+    stats='Schaden: '+(tw.type==='inferno'?tw.dmg.toFixed?tw.dmg.toFixed(1):tw.dmg:tw.dmg)+'<br>Reichweite: '+Math.round(tw.range)+'<br>Tempo: '+cdToRate(tw.cd);
+    if(tw.type==='tesla')stats+='<br>Kette: '+tw.chain;
+    if(tw.type==='inferno')stats+='<br>Ramp: '+(tw.rampDmg||0).toFixed(1);
+  }
   document.getElementById('upgStats').innerHTML=stats;
   const bot=document.getElementById('upgBottom');const sp=getSellPrice(tw);const sb='<button class="sell-btn" id="doSellBtn">Verkaufen (+'+sp+' 💰)</button>';
-  if(tw.level<3){const upd=u[tw.level-1];bot.innerHTML='<div class="upg-info">'+upd.label+'</div><button class="upg-btn" id="doUpgBtn"'+(money<upd.cost?' disabled':'')+'>Upgrade ('+upd.cost+' 💰)</button>'+sb;document.getElementById('doUpgBtn').onclick=doUpgrade;}
-  else bot.innerHTML='<div class="upg-done">Max. Level erreicht ✓</div>'+sb;
+
+  if(tw.type==='wall'&&tw.hp<=0){
+    // Ruin - no actions except wait
+    bot.innerHTML='<div class="upg-done">Mauer ist zerstört - wartet auf Verschwinden</div>';
+  } else if(tw.type==='wall'&&tw.hp<tw.maxHp){
+    // Needs healing before upgrade
+    const healCost=tw.maxHp-tw.hp;
+    bot.innerHTML='<div class="upg-info">Heile die Mauer auf volle HP bevor du sie aufwertest.</div><button class="upg-btn" id="doHealBtn"'+(money<healCost?' disabled':'')+'>Heilen ('+healCost+' 💰)</button>'+sb;
+    document.getElementById('doHealBtn').onclick=()=>healWall(tw);
+  } else if(tw.level<3){
+    const upd=u[tw.level-1];
+    bot.innerHTML='<div class="upg-info">'+upd.label+'</div><button class="upg-btn" id="doUpgBtn"'+(money<upd.cost?' disabled':'')+'>Upgrade ('+upd.cost+' 💰)</button>'+sb;
+    document.getElementById('doUpgBtn').onclick=doUpgrade;
+  } else {
+    bot.innerHTML='<div class="upg-done">Max. Level erreicht ✓</div>'+sb;
+  }
   document.getElementById('doSellBtn').onclick=()=>sellTower(tw);
   document.getElementById('upgPanel').style.display='block';document.getElementById('noTowerMsg').style.display='none';
 }
 function hideUpgPanel(){selectedTower=null;document.getElementById('upgPanel').style.display='none';document.getElementById('noTowerMsg').style.display='block';}
 function doUpgrade(){
   if(!selectedTower)return;const tw=selectedTower,upd=UPGRADE_DEFS[tw.type][tw.level-1];
-  if(tw.level>=3||money<upd.cost)return;money-=upd.cost;
-  tw.dmg=upd.newDmg;tw.range=upd.newRange;tw.cd=upd.newCd;tw.level++;
-  if(upd.newChain!==undefined)tw.chain=upd.newChain;
-  if(upd.newPoisonDmg!==undefined)tw.poisonDmg=upd.newPoisonDmg;
-  showMsg('Turm auf Level '+tw.level+'!');showUpgPanel(tw);updateUI();
+  if(tw.level>=3||money<upd.cost)return;
+  if(tw.type==='wall'&&tw.hp<tw.maxHp)return; // must heal first
+  money-=upd.cost;tw.level++;
+  if(tw.type==='wall'){tw.maxHp=upd.newHp;tw.hp=upd.newHp;}
+  else if(tw.type==='bomb'){tw.dmg=upd.newDmg;}
+  else{
+    tw.dmg=upd.newDmg;tw.range=upd.newRange;tw.cd=upd.newCd;
+    if(upd.newChain!==undefined)tw.chain=upd.newChain;
+    if(upd.newPoisonDmg!==undefined)tw.poisonDmg=upd.newPoisonDmg;
+  }
+  showMsg((tw.type==='wall'?'Mauer':tw.type==='bomb'?'Bombe':'Turm')+' auf Level '+tw.level+'!');showUpgPanel(tw);updateUI();
 }
 function updateUI(){
-  renderTowerButtons();
-  document.querySelectorAll('.tbtn').forEach(b=>{const type=b.id.replace('btn_','');b.classList.toggle('active',buildMode===type);});
+  const phaseKey=phase+'|'+buildMode+'|'+activeDeck.join(',');
+  if(updateUI._phaseKey!==phaseKey){updateUI._phaseKey=phaseKey;renderTowerButtons();}
+  else{
+    // Only update disabled/active/can-afford without re-rendering canvases
+    const costs={archer:60,cannon:100,mage:120,poison:140,tesla:160,inferno:160,wall:100,bomb:20};
+    document.querySelectorAll('.tbtn').forEach(b=>{
+      const type=b.id.replace('btn_','');const cost=costs[type]||999;
+      const canAfford=money>=cost&&phase!=='wave';
+      b.disabled=money<cost||phase==='wave';
+      b.classList.toggle('can-afford',canAfford);
+      b.classList.toggle('active',buildMode===type);
+    });
+  }
   const wb=document.getElementById('waveBtn');wb.disabled=phase==='wave';
   const bt=getBossType(wave+1);
   wb.textContent=wave===0?'Welle 1 starten':bt?'⚠️ Boss Welle '+(wave+1):'Nächste Welle ('+(wave+1)+')';
   document.getElementById('goldText').textContent=money;document.getElementById('waveText').textContent=wave||'—';
   const ratio=Math.max(0,baseHP/100);document.getElementById('hpBar').style.width=(ratio*100)+'%';document.getElementById('hpBar').style.background=ratio>0.5?'#27ae60':ratio>0.25?'#e67e22':'#e74c3c';document.getElementById('hpText').textContent=baseHP+' / 100';
   const btn=document.getElementById('doUpgBtn');if(btn&&selectedTower&&selectedTower.level<3)btn.disabled=money<UPGRADE_DEFS[selectedTower.type][selectedTower.level-1].cost;
+  const healBtn=document.getElementById('doHealBtn');if(healBtn&&selectedTower&&selectedTower.type==='wall')healBtn.disabled=money<(selectedTower.maxHp-selectedTower.hp);
 }
 function handleClick(e){
   const{x:mx,y:my}=getMouse(e);
@@ -587,11 +769,18 @@ function handleClick(e){
     if(gx===CX&&gy===CY||terrain[gy][gx]!==0||grid[gy][gx]!==null){showMsg('Feld besetzt!');return;}
     const def=TOWER_DEFS[buildMode];if(money<def.cost){showMsg('Nicht genug Gold!');return;}
     money-=def.cost;grid[gy][gx]=true;
-    const tw={x:gx,y:gy,cooldown:0,type:buildMode,level:1,range:def.range,dmg:def.dmg,cd:def.cooldown};
-    if(buildMode==='tesla')tw.chain=def.chainCount||1;
-    if(buildMode==='poison'){tw.poisonDmg=def.poisonDmg||1;tw.poisonDur=def.poisonDur||300;}
-    if(buildMode==='inferno')tw.rampDmg=0;
-    towers.push(tw);buildMode=null;showMsg('Turm gebaut!');updateUI();
+    let tw;
+    if(buildMode==='wall'){
+      tw={x:gx,y:gy,type:'wall',level:1,hp:def.hp,maxHp:def.hp,ruinTimer:undefined};
+    } else if(buildMode==='bomb'){
+      tw={x:gx,y:gy,type:'bomb',level:1,dmg:def.dmg,radius:def.radius};
+    } else {
+      tw={x:gx,y:gy,cooldown:0,type:buildMode,level:1,range:def.range,dmg:def.dmg,cd:def.cooldown};
+      if(buildMode==='tesla')tw.chain=def.chainCount||1;
+      if(buildMode==='poison'){tw.poisonDmg=def.poisonDmg||1;tw.poisonDur=def.poisonDur||300;}
+      if(buildMode==='inferno')tw.rampDmg=0;
+    }
+    towers.push(tw);buildMode=null;showMsg('Gebaut!');updateUI();
   }
 }
 
@@ -610,16 +799,83 @@ function update(){
   }
   // Enemies
   for(let i=enemies.length-1;i>=0;i--){
-    const en=enemies[i];const ex=en.x*GS+GS/2,ey=en.y*GS+GS/2;
-    const bx=CX*GS+GS/2,by=CY*GS+GS/2;const dx=bx-ex,dy=by-ey,d=Math.sqrt(dx*dx+dy*dy);
-    if(d>18){en.x+=(dx/d)*en.speed;en.y+=(dy/d)*en.speed;en.angle=Math.atan2(dy,dx);en.atBase=false;}
-    else{en.atBase=true;en.hitTimer--;if(en.hitTimer<=0){baseHP-=en.dmg;en.hitTimer=en.hitInterval;spawnFx(ex,ey,'#e74c3c',4);updateUI();if(baseHP<=0){gameOver=true;return;}}}
+    const en=enemies[i];
+    let targetX,targetY,isCastleTarget=false,isWallTarget=false,wallRef=null;
+    if(en.targetWall&&(en.targetWall.hp>0||en.targetWall.ruinTimer>0)){
+      // Attack the wall directly
+      targetX=en.targetWall.x*GS+GS/2;targetY=en.targetWall.y*GS+GS/2;
+      isWallTarget=true;wallRef=en.targetWall;
+    } else if(en.path&&en.pathIdx<en.path.length){
+      const wp=en.path[en.pathIdx];
+      targetX=wp.x*GS+GS/2;targetY=wp.y*GS+GS/2;
+      if(wp.x===CX&&wp.y===CY)isCastleTarget=true;
+    } else {
+      targetX=CX*GS+GS/2;targetY=CY*GS+GS/2;isCastleTarget=true;
+    }
+    const ex=en.x*GS+GS/2,ey=en.y*GS+GS/2;
+    const dx=targetX-ex,dy=targetY-ey,d=Math.sqrt(dx*dx+dy*dy);
+    const arriveDist=isWallTarget?GS*0.65:18;
+    if(d>arriveDist){
+      en.x+=(dx/d)*en.speed;en.y+=(dy/d)*en.speed;en.angle=Math.atan2(dy,dx);en.atBase=false;en.attackingWall=false;
+    } else {
+      if(isWallTarget&&wallRef){
+        // Attack the wall
+        en.attackingWall=true;en.atBase=false;
+        en.hitTimer--;if(en.hitTimer<=0){
+          en.hitTimer=en.hitInterval;
+          if(wallRef.hp>0){
+            wallRef.hp-=en.dmg;spawnFx(wallRef.x*GS+GS/2,wallRef.y*GS+GS/2,'#999',4);
+            if(wallRef.hp<=0){wallRef.hp=0;wallRef.ruinTimer=300;showMsg('Mauer zerstört!');}
+          }
+        }
+      } else if(isCastleTarget){
+        en.atBase=true;en.hitTimer--;if(en.hitTimer<=0){baseHP-=en.dmg;en.hitTimer=en.hitInterval;spawnFx(ex,ey,'#e74c3c',4);updateUI();if(baseHP<=0){gameOver=true;return;}}
+      } else {
+        // Reached waypoint, advance to next
+        en.pathIdx++;
+      }
+    }
     if(en.burning>0){en.burning--;en.hp-=0.3;if(en.hp<=0&&enemies.includes(en)){killEnemy(en);continue;}}
+  }
+  // Wall ruin timers
+  for(const tw of towers){
+    if(tw.type==='wall'&&tw.hp<=0&&tw.ruinTimer!==undefined){
+      tw.ruinTimer--;
+      if(tw.ruinTimer<=0){
+        grid[tw.y][tw.x]=null;
+        towers=towers.filter(t=>t!==tw);
+        showMsg('Mauerruine verschwunden - Feld frei!');
+        if(selectedTower===tw)hideUpgPanel();
+        break;
+      }
+    }
+  }
+  // Bombs - explode on enemy contact
+  for(let bi=towers.length-1;bi>=0;bi--){
+    const bomb=towers[bi];if(bomb.type!=='bomb')continue;
+    const bx=bomb.x*GS+GS/2,by=bomb.y*GS+GS/2;
+    for(const en of enemies){
+      const d=Math.sqrt((en.x*GS+GS/2-bx)**2+(en.y*GS+GS/2-by)**2);
+      if(d<GS*0.6){
+        // Explode!
+        explosions.push({x:bx,y:by,r:0,maxR:60,life:18,type:'cannon'});
+        spawnFx(bx,by,'#ff8800',16);
+        const radius=TOWER_DEFS.bomb.radius||50;
+        for(let j=enemies.length-1;j>=0;j--){
+          const e2=enemies[j];const d2=Math.sqrt((e2.x*GS+GS/2-bx)**2+(e2.y*GS+GS/2-by)**2);
+          if(d2<radius){e2.hp-=bomb.dmg;if(e2.hp<=0&&enemies.includes(e2))killEnemy(e2);}
+        }
+        grid[bomb.y][bomb.x]=null;towers.splice(bi,1);
+        if(selectedTower===bomb)hideUpgPanel();
+        break;
+      }
+    }
   }
   // Clear last frame inferno beams
   infernoBeams=[];
   // Towers
   towers.forEach(tw=>{
+    if(tw.type==='wall'||tw.type==='bomb')return;
     if(tw.cooldown>0){tw.cooldown--;return;}
     const tx=tw.x*GS+GS/2,ty=tw.y*GS+GS/2;
     if(tw.type==='inferno'){
@@ -692,6 +948,100 @@ function drawTowerByType(type,px,py,lvl){
   else if(type==='poison')drawTowerPoison(px,py,lvl);
   else if(type==='tesla')drawTowerTesla(px,py,lvl);
   else if(type==='inferno')drawTowerInferno(px,py,lvl);
+  else if(type==='wall')drawTowerWall(px,py,lvl);
+  else if(type==='bomb')drawTowerBomb(px,py,lvl);
+}
+
+function isWallAt(gx,gy){
+  const tw=towers.find(t=>t.x===gx&&t.y===gy&&t.type==='wall');
+  return tw&&(tw.hp>0||tw.ruinTimer>0);
+}
+function drawTowerWall(px,py,lvl,isRuin,gx,gy){
+  const hasLeft=gx!==undefined&&isWallAt(gx-1,gy);
+  const hasRight=gx!==undefined&&isWallAt(gx+1,gy);
+  const hasUp=gy!==undefined&&isWallAt(gx,gy-1);
+  const hasDown=gy!==undefined&&isWallAt(gx,gy+1);
+  if(isRuin){
+    // Ruined wall - rubble pile
+    ctx.fillStyle='#3a3a3a';ctx.fillRect(px+8,py+26,24,12);
+    ctx.fillStyle='#555';
+    [[px+11,py+22],[px+20,py+20],[px+27,py+24],[px+14,py+30],[px+24,py+30]].forEach(([x,y])=>{ctx.beginPath();ctx.arc(x,y,4,0,Math.PI*2);ctx.fill();});
+    ctx.fillStyle='#444';[[px+16,py+25],[px+22,py+27]].forEach(([x,y])=>{ctx.beginPath();ctx.arc(x,y,3,0,Math.PI*2);ctx.fill();});
+    return;
+  }
+  // Extend fill bounds into neighbor tiles when connected, so segments merge visually
+  const exL=hasLeft?6:0,exR=hasRight?6:0,exU=hasUp?6:0,exD=hasDown?6:0;
+  if(lvl===1){
+    // Palisade - wooden stakes. Horizontal beam connects left/right. Vertical neighbors get connecting stakes top/bottom.
+    ctx.fillStyle='#5d4037';
+    const beamY=py+20;
+    ctx.fillRect(px+4-exL,beamY-4,32+exL+exR,8);
+    for(let i=0;i<5;i++){
+      const x=px+5+i*7;
+      ctx.fillStyle='#4e342e';ctx.fillRect(x,py+10-exU,5,28+exU+exD);
+      if(!hasUp){ctx.fillStyle='#6d4c41';ctx.beginPath();ctx.moveTo(x,py+10);ctx.lineTo(x+2.5,py+4);ctx.lineTo(x+5,py+10);ctx.closePath();ctx.fill();}
+      ctx.fillStyle='#6d4c41';ctx.fillRect(x+1,py+10-exU,1.5,28+exU+exD);
+    }
+    if(hasLeft){ctx.fillStyle='#4e342e';ctx.fillRect(px-5,py+10-exU,5,28+exU+exD);if(!hasUp){ctx.fillStyle='#6d4c41';ctx.beginPath();ctx.moveTo(px-5,py+10);ctx.lineTo(px-2.5,py+4);ctx.lineTo(px,py+10);ctx.closePath();ctx.fill();}}
+    if(hasRight){ctx.fillStyle='#4e342e';ctx.fillRect(px+40,py+10-exU,5,28+exU+exD);if(!hasUp){ctx.fillStyle='#6d4c41';ctx.beginPath();ctx.moveTo(px+40,py+10);ctx.lineTo(px+42.5,py+4);ctx.lineTo(px+45,py+10);ctx.closePath();ctx.fill();}}
+    ctx.strokeStyle='#3e2723';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(px+4-exL,py+20);ctx.lineTo(px+36+exR,py+20);ctx.stroke();
+    if(hasUp||hasDown){ctx.fillStyle='#5d4037';ctx.fillRect(px+15,py+10-exU,10,28+exU+exD);ctx.fillStyle='#4e342e';ctx.fillRect(px+16,py+10-exU,1.5,28+exU+exD);}
+  } else if(lvl===2){
+    // Stone wall - extend base fill into connected neighbors on all sides
+    ctx.fillStyle='#8d8d8d';ctx.fillRect(px+4-exL,py+8-exU,32+exL+exR,30+exU+exD);
+    ctx.fillStyle='#7a7a7a';
+    for(let row=0;row<4;row++){
+      for(let col=0;col<3;col++){
+        const offset=(row%2===0)?0:5;
+        ctx.strokeStyle='#666';ctx.lineWidth=1;
+        ctx.strokeRect(px+4+offset+col*10-((row%2)*5),py+8+row*7,10,7);
+      }
+    }
+    // Top highlight line only where no wall above (open edge)
+    if(!hasUp)ctx.fillStyle='#999';else ctx.fillStyle='#8d8d8d';
+    ctx.fillRect(px+4-exL,py+8,32+exL+exR,3);
+  } else {
+    // Stronger stone - extend base fill into connected neighbors on all sides
+    ctx.fillStyle='#6a6a6a';ctx.fillRect(px+4-exL,py+6-exU,32+exL+exR,32+exU+exD);
+    ctx.fillStyle='#5a5a5a';
+    for(let row=0;row<5;row++){
+      for(let col=0;col<3;col++){
+        const offset=(row%2===0)?0:5;
+        ctx.strokeStyle='#4a4a4a';ctx.lineWidth=1;
+        ctx.strokeRect(px+4+offset+col*10-((row%2)*5),py+6+row*6.5,10,6.5);
+      }
+    }
+    // Metal reinforcement bands extend into connected neighbors (horizontal bands always shown, extended)
+    ctx.fillStyle='#8a7340';ctx.fillRect(px+4-exL,py+14,32+exL+exR,3);ctx.fillRect(px+4-exL,py+28,32+exL+exR,3);
+    // Vertical reinforcement bands when connected up/down
+    if(hasUp||hasDown){ctx.fillRect(px+10,py+6-exU,3,32+exU+exD);ctx.fillRect(px+27,py+6-exU,3,32+exU+exD);}
+    ctx.fillStyle='#c8a020';
+    [[px+8,py+15],[px+20,py+15],[px+32,py+15],[px+8,py+29],[px+20,py+29],[px+32,py+29]].forEach(([x,y])=>{ctx.beginPath();ctx.arc(x,y,1.5,0,Math.PI*2);ctx.fill();});
+    if(!hasUp)ctx.fillStyle='#7a7a7a';else ctx.fillStyle='#6a6a6a';
+    ctx.fillRect(px+4-exL,py+6,32+exL+exR,3);
+  }
+}
+
+function drawTowerBomb(px,py,lvl){
+  // Round bomb with fuse - color/size grows with level
+  const r=lvl===3?13:lvl===2?11:9;
+  const col=lvl===3?'#1a1a1a':lvl===2?'#222':'#2a2a2a';
+  ctx.fillStyle=col;ctx.beginPath();ctx.arc(px+20,py+24,r,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='rgba(255,255,255,0.1)';ctx.beginPath();ctx.arc(px+17,py+20,r*0.4,0,Math.PI*2);ctx.fill();
+  // Fuse
+  ctx.strokeStyle='#8B4513';ctx.lineWidth=2;
+  ctx.beginPath();ctx.moveTo(px+20,py+24-r);ctx.quadraticCurveTo(px+24,py+24-r-6,px+22,py+24-r-10);ctx.stroke();
+  // Spark
+  const sparkCol=lvl===3?'#ff4400':lvl===2?'#ff8800':'#ffaa00';
+  ctx.fillStyle=sparkCol;ctx.beginPath();ctx.arc(px+22,py+24-r-10,lvl===3?3:lvl===2?2.5:2,0,Math.PI*2);ctx.fill();
+  ctx.globalAlpha=0.5;ctx.fillStyle='#ffdd00';ctx.beginPath();ctx.arc(px+22,py+24-r-10,lvl===3?6:lvl===2?5:4,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;
+  if(lvl>=2){
+    // Skull/warning marking
+    ctx.fillStyle='#ff4444';ctx.beginPath();ctx.arc(px+20,py+24,r*0.35,0,Math.PI*2);ctx.fill();
+  }
+  if(lvl===3){
+    ctx.strokeStyle='#ff8800';ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(px+20,py+24,r+3,0,Math.PI*2);ctx.stroke();
+  }
 }
 function drawTowerArcher(px,py,lvl){const bc=lvl===3?'#5a5a5a':lvl===2?'#7a7a7a':'#6d4c41';const wc=lvl===3?'#4a4a4a':lvl===2?'#6a6a6a':'#5d4037';const mc=lvl===3?'#3a3a3a':lvl===2?'#585858':'#4e342e';const md=lvl===3?'#2a2a2a':lvl===2?'#484848':'#3e2723';const bb=lvl===3?'#4a4a4a':lvl===2?'#666666':'#795548';ctx.fillStyle=bc;ctx.fillRect(px+11,py+20,18,18);ctx.fillStyle=wc;ctx.fillRect(px+9,py+12,22,12);ctx.fillStyle=mc;ctx.fillRect(px+9,py+7,6,9);ctx.fillRect(px+17,py+7,6,9);ctx.fillRect(px+25,py+7,6,9);ctx.fillStyle=md;ctx.fillRect(px+11,py+7,4,6);ctx.fillRect(px+19,py+7,4,6);ctx.fillRect(px+27,py+7,4,6);ctx.fillStyle=bb;ctx.fillRect(px+9,py+35,22,4);if(lvl>=2){ctx.strokeStyle='rgba(0,0,0,0.25)';ctx.lineWidth=0.5;ctx.beginPath();ctx.moveTo(px+9,py+24);ctx.lineTo(px+29,py+24);ctx.stroke();ctx.beginPath();ctx.moveTo(px+9,py+30);ctx.lineTo(px+29,py+30);ctx.stroke();ctx.beginPath();ctx.moveTo(px+16,py+20);ctx.lineTo(px+16,py+38);ctx.stroke();ctx.beginPath();ctx.moveTo(px+23,py+20);ctx.lineTo(px+23,py+38);ctx.stroke();}if(lvl===3){ctx.fillStyle='rgba(60,120,60,0.4)';ctx.fillRect(px+9,py+7,6,3);ctx.fillRect(px+17,py+7,4,2);ctx.fillRect(px+25,py+7,6,3);ctx.fillRect(px+9,py+12,4,3);ctx.fillRect(px+24,py+12,4,3);}const cx=px+20,cy=py+11;ctx.fillStyle='#d4a96e';ctx.beginPath();ctx.arc(cx,cy-5,3.5,0,Math.PI*2);ctx.fill();ctx.fillStyle=lvl===3?'#2a2a2a':lvl===2?'#484848':'#4a4a4a';ctx.beginPath();ctx.arc(cx,cy-8,4,Math.PI,0);ctx.fill();ctx.fillStyle=lvl===3?'#555':lvl===2?'#666':'#546e7a';ctx.fillRect(cx-3.5,cy-2,7,6);ctx.strokeStyle='#5d4037';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(cx-7,cy-3);ctx.lineTo(cx-7,cy+4);ctx.stroke();ctx.strokeStyle=lvl===3?'#ddd':lvl===2?'#ccc':'#e8d5b0';ctx.lineWidth=0.8;ctx.beginPath();ctx.moveTo(cx-7,cy-3);ctx.quadraticCurveTo(cx-1,cy+1,cx-7,cy+4);ctx.stroke();}
 function drawTowerCannon(px,py,lvl){const bc=lvl===3?'#2a2a2a':lvl===2?'#3a3a3a':'#5a4a3a';const wc=lvl===3?'#1a1a1a':lvl===2?'#2a2a2a':'#7a6a58';const mc=lvl===3?'#222':lvl===2?'#333':'#6a5a48';const md=lvl===3?'#111':lvl===2?'#222':'#5a4a38';const bC=lvl===3?'#c8a020':'#888';const bT=lvl===3?'#e0c040':'#aaa';ctx.fillStyle=bc;ctx.fillRect(px+8,py+18,24,20);ctx.fillStyle=wc;ctx.fillRect(px+6,py+10,28,12);ctx.fillStyle=mc;ctx.fillRect(px+6,py+4,8,10);ctx.fillRect(px+18,py+4,8,10);ctx.fillStyle=md;ctx.fillRect(px+8,py+4,4,7);ctx.fillRect(px+20,py+4,4,7);ctx.fillStyle=bC;ctx.fillRect(px+16,py+14,8,5);ctx.fillStyle=bT;ctx.fillRect(px+23,py+15,6,3);ctx.fillStyle=lvl===3?'#c8a020':lvl===2?'#555':'#333';ctx.beginPath();ctx.arc(px+13,py+30,3,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(px+19,py+30,3,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(px+16,py+26,3,0,Math.PI*2);ctx.fill();if(lvl>=2){ctx.fillStyle=lvl===3?'#c8a020':'#aaa';[[px+8,py+11],[px+27,py+11],[px+8,py+20],[px+27,py+20],[px+8,py+30],[px+27,py+30]].forEach(([rx,ry])=>{ctx.beginPath();ctx.arc(rx,ry,1.5,0,Math.PI*2);ctx.fill();});}if(lvl===3){ctx.strokeStyle='#c8a020';ctx.lineWidth=1.5;ctx.strokeRect(px+8,py+18,24,20);ctx.strokeRect(px+6,py+10,28,12);ctx.beginPath();ctx.moveTo(px+6,py+22);ctx.lineTo(px+32,py+22);ctx.stroke();}}
@@ -843,8 +1193,24 @@ function drawTowerInferno(px,py,lvl){
 }
 
 function drawTower(tw){
-  const px=tw.x*GS,py=tw.y*GS;drawTowerByType(tw.type,px,py,tw.level);
-  if(selectedTower&&selectedTower.x===tw.x&&selectedTower.y===tw.y){ctx.strokeStyle='rgba(255,255,255,0.7)';ctx.lineWidth=1.5;ctx.setLineDash([4,4]);ctx.beginPath();ctx.arc(px+GS/2,py+GS/2,tw.range,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.strokeRect(px+1,py+1,GS-2,GS-2);}
+  const px=tw.x*GS,py=tw.y*GS;
+  if(tw.type==='wall'){
+    const isRuin=tw.hp<=0;
+    drawTowerWall(px,py,tw.level,isRuin,tw.x,tw.y);
+    if(!isRuin){
+      // HP bar
+      const ratio=tw.hp/tw.maxHp;
+      ctx.fillStyle='#222';rrect(px+4,py+1,32,4,2);ctx.fill();
+      ctx.fillStyle=ratio>0.5?'#27ae60':ratio>0.25?'#e67e22':'#e74c3c';
+      rrect(px+4,py+1,Math.round(32*ratio),4,2);ctx.fill();
+    }
+  } else {
+    drawTowerByType(tw.type,px,py,tw.level);
+  }
+  if(selectedTower&&selectedTower.x===tw.x&&selectedTower.y===tw.y){
+    if(tw.range){ctx.strokeStyle='rgba(255,255,255,0.7)';ctx.lineWidth=1.5;ctx.setLineDash([4,4]);ctx.beginPath();ctx.arc(px+GS/2,py+GS/2,tw.range,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);}
+    ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.strokeRect(px+1,py+1,GS-2,GS-2);
+  }
 }
 
 function drawEnemyStatic(en){
