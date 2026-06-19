@@ -75,6 +75,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a0a;font-family:
 .badge-light{background:#1a3a1a;color:#a8f0a8;}
 .badge-fast{background:#001a3a;color:#88ccff;}
 .badge-heavy{background:#3a0000;color:#ff8888;}
+.badge-saboteur{background:#2a1a4a;color:#caa8ff;}
 .badge-boss1{background:#3a1000;color:#ff8844;}
 .badge-boss2{background:#4a0800;color:#ff5500;}
 .badge-boss3{background:#5a0000;color:#ff2200;}
@@ -112,6 +113,16 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a0a;font-family:
 #sidebar{width:180px;min-width:180px;height:624px;background:#1a1a1a;border-right:2px solid #333;display:flex;flex-direction:column;padding:10px 8px;gap:10px;overflow-y:auto;}
 #gamearea{position:relative;width:600px;height:624px;flex-shrink:0;}
 #gamearea canvas{display:block;width:600px;height:624px;}
+#gameOverOverlay{display:none;position:absolute;top:0;left:0;width:600px;height:624px;background:rgba(0,0,0,0.85);align-items:center;justify-content:center;z-index:50;}
+#gameOverBox{text-align:center;color:#fff;}
+#goTitle{color:#e74c3c;font-size:36px;font-weight:bold;margin-bottom:14px;}
+#goWave{color:#ccc;font-size:18px;margin-bottom:8px;}
+#goHighscore{color:#f1c40f;font-size:15px;font-weight:bold;margin-bottom:20px;min-height:20px;}
+.go-btn{display:block;width:260px;margin:0 auto 12px auto;padding:14px;border:none;border-radius:8px;font-size:16px;font-weight:bold;cursor:pointer;font-family:'Segoe UI',sans-serif;}
+.go-btn.restart{background:#27ae60;color:#fff;}
+.go-btn.restart:hover{background:#2ecc71;}
+.go-btn.menu{background:#922b21;color:#fff;}
+.go-btn.menu:hover{background:#e74c3c;}
 #rightpanel{width:180px;min-width:180px;height:624px;background:#1a1a1a;border-left:2px solid #333;display:flex;flex-direction:column;padding:10px 8px;gap:7px;overflow-y:auto;}
 .s-title{color:#aaa;font-size:10px;text-transform:uppercase;letter-spacing:1px;padding:2px 4px;border-bottom:1px solid #333;margin-bottom:1px;}
 .stat-row{display:flex;justify-content:space-between;align-items:center;padding:2px 4px;}
@@ -202,7 +213,15 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a0a;font-family:
 <div class="s-title">Türme bauen</div>
 <div id="towerBtnsContainer"></div>
 </div>
-<div id="gamearea"><canvas id="game" width="600" height="624"></canvas></div>
+<div id="gamearea"><canvas id="game" width="600" height="624"></canvas>
+<div id="gameOverOverlay"><div id="gameOverBox">
+  <div id="goTitle">GAME OVER</div>
+  <div id="goWave"></div>
+  <div id="goHighscore"></div>
+  <button class="go-btn restart" id="goRestartBtn">🔄 Neu starten</button>
+  <button class="go-btn menu" id="goMenuBtn">🏠 Zum Hauptmenü</button>
+</div></div>
+</div>
 <div id="rightpanel">
 <button class="wave-btn" id="waveBtn">Welle 1 starten</button>
 <div class="speed-bar">
@@ -248,40 +267,40 @@ let deckPageSelectedSlot=null;
 
 // ── TOWER DEFS (game logic) ──
 const TOWER_DEFS={
-  archer:{cost:60, range:150,cooldown:48, dmg:2, label:'Bogenschützenturm'},
-  cannon:{cost:100,range:120,cooldown:100,dmg:5, label:'Kanonenturm'},
-  mage:  {cost:120,range:100,cooldown:95, dmg:4, label:'Magierturm', splash:55},
-  poison:{cost:140,range:100,cooldown:120,dmg:1, label:'Giftturm',   poisonDmg:1,poisonDur:300},
-  tesla: {cost:160,range:100,cooldown:120,dmg:3, label:'Teslaturm',  chainCount:1},
-  inferno:{cost:160,range:100,cooldown:1,  dmg:1, label:'Infernoturm',rampDmg:0},
+  archer:{cost:60, range:150,cooldown:48, dmg:2, label:'Bogenschützenturm',hp:30},
+  cannon:{cost:100,range:120,cooldown:100,dmg:5, label:'Kanonenturm',      hp:35},
+  mage:  {cost:120,range:100,cooldown:95, dmg:4, label:'Magierturm', splash:55,hp:30},
+  poison:{cost:140,range:100,cooldown:120,dmg:1, label:'Giftturm',   poisonDmg:1,poisonDur:300,hp:40},
+  tesla: {cost:160,range:100,cooldown:120,dmg:3, label:'Teslaturm',  chainCount:1,hp:45},
+  inferno:{cost:160,range:100,cooldown:1,  dmg:1, label:'Infernoturm',rampDmg:0,hp:50},
   wall:{cost:100,hp:50,label:'Mauer'},
   bomb:{cost:20,dmg:20,radius:50,label:'Bombe'}
 };
 
 const UPGRADE_DEFS={
   archer:[
-    {cost:70, newDmg:4,newRange:160,newCd:48, label:'Schaden: 2→4<br>Reichweite: 150→160'},
-    {cost:80, newDmg:6,newRange:170,newCd:40, label:'Schaden: 4→6<br>Reichweite: 160→170'}
+    {cost:70, newDmg:4,newRange:160,newCd:48, label:'Schaden: 2→4<br>Reichweite: 150→160',newHp:40},
+    {cost:80, newDmg:6,newRange:170,newCd:40, label:'Schaden: 4→6<br>Reichweite: 160→170',newHp:50}
   ],
   cannon:[
-    {cost:90, newDmg:7,newRange:150,newCd:80, label:'Schaden: 5→7<br>Reichweite: 120→150'},
-    {cost:100,newDmg:10,newRange:160,newCd:60,label:'Schaden: 7→10<br>Reichweite: 150→160'}
+    {cost:90, newDmg:7,newRange:150,newCd:80, label:'Schaden: 5→7<br>Reichweite: 120→150',newHp:50},
+    {cost:100,newDmg:10,newRange:160,newCd:60,label:'Schaden: 7→10<br>Reichweite: 150→160',newHp:55}
   ],
   mage:[
-    {cost:90, newDmg:6,newRange:120,newCd:80, label:'Schaden: 4→6<br>Reichweite: 100→120'},
-    {cost:120,newDmg:8,newRange:150,newCd:60, label:'Schaden: 6→8<br>Reichweite: 120→150'}
+    {cost:90, newDmg:6,newRange:120,newCd:80, label:'Schaden: 4→6<br>Reichweite: 100→120',newHp:45},
+    {cost:120,newDmg:8,newRange:150,newCd:60, label:'Schaden: 6→8<br>Reichweite: 120→150',newHp:50}
   ],
   poison:[
-    {cost:100,newDmg:2,newRange:110,newCd:100,label:'Giftschaden: 1→2<br>Reichweite: 100→110',newPoisonDmg:2},
-    {cost:120,newDmg:3,newRange:140,newCd:80, label:'Giftschaden: 2→3<br>Reichweite: 110→140',newPoisonDmg:3}
+    {cost:100,newDmg:2,newRange:110,newCd:100,label:'Giftschaden: 1→2<br>Reichweite: 100→110',newPoisonDmg:2,newHp:50},
+    {cost:120,newDmg:3,newRange:140,newCd:80, label:'Giftschaden: 2→3<br>Reichweite: 110→140',newPoisonDmg:3,newHp:60}
   ],
   tesla:[
-    {cost:160,newDmg:4,newRange:110,newCd:100,label:'Schaden: 3→4<br>Kette: 1→2',newChain:2},
-    {cost:180,newDmg:6,newRange:130,newCd:75, label:'Schaden: 4→6<br>Kette: 2→3',newChain:3}
+    {cost:160,newDmg:4,newRange:110,newCd:100,label:'Schaden: 3→4<br>Kette: 1→2',newChain:2,newHp:50},
+    {cost:180,newDmg:6,newRange:130,newCd:75, label:'Schaden: 4→6<br>Kette: 2→3',newChain:3,newHp:65}
   ],
   inferno:[
-    {cost:160,newDmg:2,newRange:120,newCd:1,  label:'Basis: 1→2<br>Reichweite: 100→120'},
-    {cost:180,newDmg:3,newRange:140,newCd:1,  label:'Basis: 2→3<br>Reichweite: 120→140'}
+    {cost:160,newDmg:2,newRange:120,newCd:1,  label:'Basis: 1→2<br>Reichweite: 100→120',newHp:60},
+    {cost:180,newDmg:3,newRange:140,newCd:1,  label:'Basis: 2→3<br>Reichweite: 120→140',newHp:65}
   ],
   wall:[
     {cost:200,newHp:60,label:'HP: 50→60'},
@@ -296,8 +315,9 @@ const UPGRADE_DEFS={
 // ── ENEMY TYPES (6 types, 3 boss tiers) ──
 const ENEMY_TYPES={
   light:{hp:10,  maxHp:10,  speed:0.015,dmg:1, hitInterval:60, reward:4,  scale:0.52,color:'random'},
-  fast: {hp:5,   maxHp:5,   speed:0.028,dmg:2, hitInterval:60, reward:4,  scale:0.45,color:'#00aaff'},
+  fast: {hp:5,   maxHp:5,   speed:0.028,dmg:2, hitInterval:60, reward:2,  scale:0.45,color:'#00aaff'},
   heavy:{hp:50,  maxHp:50,  speed:0.009,dmg:5, hitInterval:180,reward:10, scale:0.75,color:'#8a0000'},
+  saboteur:{hp:20,maxHp:20, speed:0.015,dmg:2, hitInterval:60, reward:5,  scale:0.55,color:'#5a3a8a'},
   boss1:{hp:400, maxHp:400, speed:0.005,dmg:15,hitInterval:120,reward:50, scale:1.1, color:'#ff4400'},
   boss2:{hp:600, maxHp:600, speed:0.005,dmg:20,hitInterval:120,reward:100,scale:1.15,color:'#ff2200'},
   boss3:{hp:1000,maxHp:1000,speed:0.004,dmg:30,hitInterval:120,reward:100,scale:1.2, color:'#ff0000'},
@@ -307,17 +327,17 @@ const ENEMY_TYPES={
 // ── HOMESCREEN CARD DATA ──
 const TOWER_CARD_DATA={
   archer:{name:'Bogenschützenturm',baseCost:60,special:'Einzelschuss — schnell & präzise',
-    levels:[{lvl:1,dmg:2,range:150,tempo:'1.25/s',upgradeCost:60},{lvl:2,dmg:4,range:160,tempo:'1.25/s',upgradeCost:70},{lvl:3,dmg:6,range:170,tempo:'1.5/s',upgradeCost:80}]},
+    levels:[{lvl:1,dmg:2,range:150,tempo:'1.25/s',upgradeCost:60,hp:30},{lvl:2,dmg:4,range:160,tempo:'1.25/s',upgradeCost:70,hp:40},{lvl:3,dmg:6,range:170,tempo:'1.5/s',upgradeCost:80,hp:50}]},
   cannon:{name:'Kanonenturm',baseCost:100,special:'Hoher Einzelschaden',
-    levels:[{lvl:1,dmg:5,range:120,tempo:'0.6/s',upgradeCost:100},{lvl:2,dmg:7,range:150,tempo:'0.75/s',upgradeCost:90},{lvl:3,dmg:10,range:160,tempo:'1/s',upgradeCost:100}]},
+    levels:[{lvl:1,dmg:5,range:120,tempo:'0.6/s',upgradeCost:100,hp:35},{lvl:2,dmg:7,range:150,tempo:'0.75/s',upgradeCost:90,hp:50},{lvl:3,dmg:10,range:160,tempo:'1/s',upgradeCost:100,hp:55}]},
   mage:{name:'Magierturm',baseCost:120,special:'Flächenschaden — trifft alle Gegner im Radius',
-    levels:[{lvl:1,dmg:4,range:100,tempo:'0.63/s',upgradeCost:120},{lvl:2,dmg:6,range:120,tempo:'0.75/s',upgradeCost:90},{lvl:3,dmg:8,range:150,tempo:'1/s',upgradeCost:120}]},
+    levels:[{lvl:1,dmg:4,range:100,tempo:'0.63/s',upgradeCost:120,hp:30},{lvl:2,dmg:6,range:120,tempo:'0.75/s',upgradeCost:90,hp:45},{lvl:3,dmg:8,range:150,tempo:'1/s',upgradeCost:120,hp:50}]},
   poison:{name:'Giftturm',baseCost:140,special:'Legt Giftpfütze — Schaden über Zeit',
-    levels:[{lvl:1,dmg:'1/s',range:100,tempo:'0.5/s',upgradeCost:140},{lvl:2,dmg:'2/s',range:110,tempo:'0.6/s',upgradeCost:100},{lvl:3,dmg:'3/s',range:140,tempo:'0.75/s',upgradeCost:120}]},
+    levels:[{lvl:1,dmg:'1/s',range:100,tempo:'0.5/s',upgradeCost:140,hp:40},{lvl:2,dmg:'2/s',range:110,tempo:'0.6/s',upgradeCost:100,hp:50},{lvl:3,dmg:'3/s',range:140,tempo:'0.75/s',upgradeCost:120,hp:60}]},
   tesla:{name:'Teslaturm',baseCost:160,special:'Kettenblitz — trifft mehrere Gegner',
-    levels:[{lvl:1,dmg:3,range:100,tempo:'0.5/s',upgradeCost:160,kette:1},{lvl:2,dmg:4,range:110,tempo:'0.6/s',upgradeCost:160,kette:2},{lvl:3,dmg:6,range:130,tempo:'0.8/s',upgradeCost:180,kette:3}]},
+    levels:[{lvl:1,dmg:3,range:100,tempo:'0.5/s',upgradeCost:160,kette:1,hp:45},{lvl:2,dmg:4,range:110,tempo:'0.6/s',upgradeCost:160,kette:2,hp:50},{lvl:3,dmg:6,range:130,tempo:'0.8/s',upgradeCost:180,kette:3,hp:65}]},
   inferno:{name:'Infernoturm',baseCost:160,special:'Feuerstrahl — Schaden steigert sich',
-    levels:[{lvl:1,dmg:'1→8',range:100,tempo:'Strahl',upgradeCost:160},{lvl:2,dmg:'2→10',range:120,tempo:'Strahl',upgradeCost:160},{lvl:3,dmg:'3→10+',range:140,tempo:'Strahl',upgradeCost:180}]},
+    levels:[{lvl:1,dmg:'1→8',range:100,tempo:'Strahl',upgradeCost:160,hp:50},{lvl:2,dmg:'2→10',range:120,tempo:'Strahl',upgradeCost:160,hp:60},{lvl:3,dmg:'3→10+',range:140,tempo:'Strahl',upgradeCost:180,hp:65}]},
   wall:{name:'Mauer',baseCost:100,special:'Blockiert Gegner — kein Schaden, lenkt den Weg um',
     levels:[{lvl:1,hp:50,upgradeCost:100},{lvl:2,hp:60,upgradeCost:200},{lvl:3,hp:70,upgradeCost:300}]},
   bomb:{name:'Bombe',baseCost:20,special:'Einmal-Explosion bei Gegnerkontakt',
@@ -327,8 +347,9 @@ const TOWER_COLORS={archer:'#a8f0a8',cannon:'#f0c898',mage:'#c898f0',poison:'#aa
 
 const ENEMY_CARD_DATA={
   light:{name:'Normaler Soldat',badge:'badge-light',badgeText:'Ab Welle 1', hp:10,  dmg:'1/s',       speed:'Normal',       gold:4,  schwaeche:'Alle Türme',     special:'Tritt in großen Gruppen auf', color:'#8B3a3a',S:0.85},
-  fast: {name:'Schneller Scout', badge:'badge-fast', badgeText:'Ab Welle 11',hp:5,   dmg:'2 / 0.5s',  speed:'Sehr hoch',    gold:4,  schwaeche:'Bogen / Tesla',  special:'Überholt langsamere Gruppen', color:'#00aaff',S:0.7},
+  fast: {name:'Schneller Scout', badge:'badge-fast', badgeText:'Ab Welle 11',hp:5,   dmg:'2 / 0.5s',  speed:'Sehr hoch',    gold:2,  schwaeche:'Bogen / Tesla',  special:'Überholt langsamere Gruppen', color:'#00aaff',S:0.7},
   heavy:{name:'Schwerer Krieger',badge:'badge-heavy',badgeText:'Ab Welle 21',hp:50,  dmg:'5 alle 3s', speed:'Langsam',      gold:10, schwaeche:'Kanone / Gift',  special:'Sehr zäh, schwer zu stoppen', color:'#8a0000',S:1.1},
+  saboteur:{name:'Saboteur',     badge:'badge-saboteur',badgeText:'Ab Welle 31',hp:20,dmg:'2 alle 1s', speed:'Normal',       gold:5,  schwaeche:'Alle Türme',     special:'Greift gezielt Türme an statt zum Rathaus zu laufen', color:'#5a3a8a',S:0.85},
   boss1:{name:'Boss I',          badge:'badge-boss1',badgeText:'Welle 10',   hp:400, dmg:'15 alle 2s',speed:'Sehr langsam', gold:50, schwaeche:'Alle kombiniert',special:'Erscheint mit Begleitern',    color:'#ff4400',S:1.3},
   boss2:{name:'Boss II',         badge:'badge-boss2',badgeText:'Welle 20',   hp:600, dmg:'20 alle 2s',speed:'Sehr langsam', gold:100,schwaeche:'Alle kombiniert',special:'Stärker als Boss I',           color:'#ff2200',S:1.4},
   boss3:{name:'Boss III',        badge:'badge-boss3',badgeText:'Welle 30',   hp:1000,dmg:'30 alle 2s',speed:'Sehr langsam', gold:100,schwaeche:'Alle kombiniert',special:'Massiver Gegner',              color:'#ff0000',S:1.5},
@@ -491,7 +512,7 @@ function renderTowerCards(){
 }
 function renderEnemyCards(){
   const c=document.getElementById('enemyCardsContainer');if(!c)return;c.innerHTML='';
-  ['light','fast','heavy','boss1','boss2','boss3','boss4'].forEach(type=>{
+  ['light','fast','heavy','saboteur','boss1','boss2','boss3','boss4'].forEach(type=>{
     const d=ENEMY_CARD_DATA[type];const isD=discovered.includes(type);
     const div=document.createElement('div');div.className='enemy-card'+(isD?'':' locked');
     const wrap=document.createElement('div');wrap.className='enemy-card-canvas';wrap.style.width='100px';wrap.style.height='100px';
@@ -553,12 +574,12 @@ function cdToRate(cd){return cd<=1?'Strahl':Math.round((60/cd)*100)/100+'/s';}
 function renderTowerButtons(){
   const container=document.getElementById('towerBtnsContainer');if(!container)return;container.innerHTML='';
   const INFO={
-    archer:{name:'Bogenschützenturm',cost:60, dmg:2, range:150,tempo:'1.25/s'},
-    cannon:{name:'Kanonenturm',      cost:100,dmg:5, range:120,tempo:'0.6/s'},
-    mage:  {name:'Magierturm',       cost:120,dmg:'4 (Fl.)',range:100,tempo:'0.63/s'},
-    poison:{name:'Giftturm',         cost:140,dmg:'1/s',  range:100,tempo:'0.5/s'},
-    tesla: {name:'Teslaturm',        cost:160,dmg:'3×Kette',range:100,tempo:'0.5/s'},
-    inferno:{name:'Infernoturm',     cost:160,dmg:'1→8',  range:100,tempo:'Strahl'},
+    archer:{name:'Bogenschützenturm',cost:60, dmg:2, range:150,tempo:'1.25/s',hp:30},
+    cannon:{name:'Kanonenturm',      cost:100,dmg:5, range:120,tempo:'0.6/s',hp:35},
+    mage:  {name:'Magierturm',       cost:120,dmg:'4 (Fl.)',range:100,tempo:'0.63/s',hp:30},
+    poison:{name:'Giftturm',         cost:140,dmg:'1/s',  range:100,tempo:'0.5/s',hp:40},
+    tesla: {name:'Teslaturm',        cost:160,dmg:'3×Kette',range:100,tempo:'0.5/s',hp:45},
+    inferno:{name:'Infernoturm',     cost:160,dmg:'1→8',  range:100,tempo:'Strahl',hp:50},
     wall:{name:'Mauer',cost:100,dmg:'—',range:'50 HP',tempo:'Blockiert'},
     bomb:{name:'Bombe',cost:20, dmg:20,range:'—',tempo:'Einmalig'}
   };
@@ -570,7 +591,7 @@ function renderTowerButtons(){
     if(canAfford)btn.classList.add('can-afford');
     if(buildMode===type)btn.classList.add('active');
     btn.disabled=money<def.cost||phase==='wave';
-    btn.innerHTML=`<div class="tbtn-text"><span class="btn-name">${def.name}</span><span class="btn-cost">${def.cost} 💰</span><span class="btn-desc">Schaden: ${def.dmg}</span><span class="btn-desc">Reichweite: ${def.range}</span><span class="btn-desc">Tempo: ${def.tempo}</span></div>`;
+    btn.innerHTML=`<div class="tbtn-text"><span class="btn-name">${def.name}</span><span class="btn-cost">${def.cost} 💰</span><span class="btn-desc">Schaden: ${def.dmg}</span><span class="btn-desc">Reichweite: ${def.range}</span><span class="btn-desc">Tempo: ${def.tempo}</span>${def.hp!==undefined?`<span class="btn-desc">HP: ${def.hp}</span>`:''}</div>`;
     const c=document.createElement('canvas');c.width=44;c.height=44;
     setTimeout(()=>{drawTowerOnCanvas(c,type,1);},0);
     btn.appendChild(c);
@@ -588,11 +609,25 @@ function initGame(){
   wave=0;enemiesToSpawn=0;spawnTimer=0;phase='prep';terrain=[];
   for(let y=0;y<ROWS;y++){terrain[y]=[];for(let x=0;x<COLS;x++){if(x===CX&&y===CY){terrain[y][x]=0;continue;}const r=Math.random();terrain[y][x]=r<0.55?0:r<0.70?1:r<0.88?2:3;}}
   grid=Array.from({length:ROWS},()=>Array(COLS).fill(null));
+  document.getElementById('gameOverOverlay').style.display='none';
   renderTowerButtons();renderSpeedCanvases();updateUI();
   canvas.addEventListener('click',handleClick);
   document.getElementById('waveBtn').onclick=()=>{if(phase==='prep')startWave();};
   document.getElementById('upgClose').onclick=hideUpgPanel;
+  document.getElementById('goRestartBtn').onclick=()=>{document.getElementById('gameOverOverlay').style.display='none';initGame();};
+  document.getElementById('goMenuBtn').onclick=()=>{
+    document.getElementById('gameOverOverlay').style.display='none';
+    document.getElementById('hsWave').textContent=highscore||'—';
+    document.getElementById('wrapper').style.display='none';
+    document.getElementById('homescreen').style.display='flex';
+    renderHsDeck();
+  };
   loop();
+}
+function showGameOver(){
+  document.getElementById('goWave').textContent='Welle '+wave+' erreicht';
+  document.getElementById('goHighscore').textContent=(wave>=highscore)?'🏆 Neuer Highscore!':'';
+  document.getElementById('gameOverOverlay').style.display='flex';
 }
 
 function getBossType(w){if(w%10===0&&w>0){const b=w/10;if(b===1)return'boss1';if(b===2)return'boss2';if(b===3)return'boss3';if(b>=4)return'boss4';}return null;}
@@ -601,7 +636,7 @@ function waveEnemyCount(w){return w<=9?4+w*2:10+w*4;}
 
 function startWave(){
   wave++;spawnTimer=45;phase='wave';buildMode=null;selectedTower=null;hideUpgPanel();
-  if(wave>=1)discoverEnemy('light');if(wave>=11)discoverEnemy('fast');if(wave>=21)discoverEnemy('heavy');
+  if(wave>=1)discoverEnemy('light');if(wave>=11)discoverEnemy('fast');if(wave>=21)discoverEnemy('heavy');if(wave>=31)discoverEnemy('saboteur');
   const bt=getBossType(wave);if(bt)discoverEnemy(bt);
   window._spawnQ=[];
   if(bt){
@@ -609,7 +644,8 @@ function startWave(){
     const escortCount=Math.floor(wave/10)*4;
     for(let i=0;i<escortCount;i++){
       const r=Math.random();
-      if(wave>=21&&r<0.3)window._spawnQ.push('heavy');
+      if(wave>=31&&r<0.15)window._spawnQ.push('saboteur');
+      else if(wave>=21&&r<0.3)window._spawnQ.push('heavy');
       else if(wave>=11&&r<0.35)window._spawnQ.push('fast');
       else window._spawnQ.push('light');
     }
@@ -618,7 +654,8 @@ function startWave(){
     for(let i=0;i<total;i++){
       const r=Math.random();
       // Weighted pool: all unlocked types remain available forever, weights shift with wave progress
-      if(wave>=21&&r<0.25)window._spawnQ.push('heavy');
+      if(wave>=31&&r<0.15)window._spawnQ.push('saboteur');
+      else if(wave>=21&&r<0.25)window._spawnQ.push('heavy');
       else if(wave>=11&&r<0.55)window._spawnQ.push('fast');
       else window._spawnQ.push('light');
     }
@@ -725,7 +762,17 @@ function spawnEnemy(){
   const def=ENEMY_TYPES[type];let color=def.color;
   if(color==='random'){const cols=['#8B3a3a','#4a5a00','#1a3a3a','#2c2c5e','#5a3a1a'];color=cols[Math.floor(Math.random()*cols.length)];}
   const{path,targetWall}=computePathForSpawn(x,y);
-  enemies.push({x,y,hp:def.hp,maxHp:def.hp,speed:def.speed,dmg:def.dmg,hitInterval:def.hitInterval,hitTimer:def.hitInterval,reward:def.reward,scale:def.scale,color,angle:0,type,atBase:false,burning:0,path,pathIdx:0,targetWall,attackingWall:false});
+  const enemyObj={x,y,hp:def.hp,maxHp:def.hp,speed:def.speed,dmg:def.dmg,hitInterval:def.hitInterval,hitTimer:def.hitInterval,reward:def.reward,scale:def.scale,color,angle:0,type,atBase:false,burning:0,path,pathIdx:0,targetWall,attackingWall:false,targetTower:null};
+  if(type==='saboteur'){
+    // Saboteurs seek out the nearest combat tower to attack directly, ignoring the castle path
+    const combatTowers=towers.filter(t=>t.type!=='wall'&&t.type!=='bomb'&&t.hp>0);
+    if(combatTowers.length){
+      let best=null,bestD=Infinity;
+      combatTowers.forEach(t=>{const d=Math.sqrt((t.x-x)**2+(t.y-y)**2);if(d<bestD){bestD=d;best=t;}});
+      enemyObj.targetTower=best;
+    }
+  }
+  enemies.push(enemyObj);
 }
 function killEnemy(en){spawnFx(en.x*GS+GS/2,en.y*GS+GS/2,'#c0392b',10);money+=en.reward;enemies=enemies.filter(e=>e!==en);updateUI();}
 let msgTimeout=null;
@@ -739,12 +786,12 @@ function getSellPrice(tw){
 }
 function sellTower(tw){const r=getSellPrice(tw);money+=r;grid[tw.y][tw.x]=null;towers=towers.filter(t=>t!==tw);hideUpgPanel();showMsg(tw.type==='wall'?'Mauer verkauft! +'+r+' 💰':tw.type==='bomb'?'Bombe verkauft! +'+r+' 💰':'Turm verkauft! +'+r+' 💰');updateUI();}
 function healWall(tw){
-  if(tw.type!=='wall')return;
+  if(tw.hp===undefined||tw.maxHp===undefined)return;
   const missing=tw.maxHp-tw.hp;
   if(missing<=0)return;
   const cost=missing; // 1 gold per missing HP
   if(money<cost){showMsg('Nicht genug Gold zum Heilen!');return;}
-  money-=cost;tw.hp=tw.maxHp;showMsg('Mauer geheilt!');showUpgPanel(tw);updateUI();
+  money-=cost;tw.hp=tw.maxHp;showMsg((tw.type==='wall'?'Mauer':TOWER_DEFS[tw.type].label)+' geheilt!');showUpgPanel(tw);updateUI();
 }
 function showUpgPanel(tw){
   selectedTower=tw;const def=TOWER_DEFS[tw.type],u=UPGRADE_DEFS[tw.type];
@@ -759,6 +806,7 @@ function showUpgPanel(tw){
     stats='Schaden: '+(tw.type==='inferno'?tw.dmg.toFixed?tw.dmg.toFixed(1):tw.dmg:tw.dmg)+'<br>Reichweite: '+Math.round(tw.range)+'<br>Tempo: '+cdToRate(tw.cd);
     if(tw.type==='tesla')stats+='<br>Kette: '+tw.chain;
     if(tw.type==='inferno')stats+='<br>Ramp: '+(tw.rampDmg||0).toFixed(1);
+    if(tw.hp!==undefined)stats+='<br>HP: '+Math.max(0,Math.round(tw.hp))+' / '+tw.maxHp;
   }
   document.getElementById('upgStats').innerHTML=stats;
   const bot=document.getElementById('upgBottom');const sp=getSellPrice(tw);const sb='<button class="sell-btn" id="doSellBtn">Verkaufen (+'+sp+' 💰)</button>';
@@ -766,10 +814,11 @@ function showUpgPanel(tw){
   if(tw.type==='wall'&&tw.hp<=0){
     // Ruin - no actions except wait
     bot.innerHTML='<div class="upg-done">Mauer ist zerstört - wartet auf Verschwinden</div>';
-  } else if(tw.type==='wall'&&tw.hp<tw.maxHp){
-    // Needs healing before upgrade
+  } else if(tw.hp!==undefined&&tw.hp<tw.maxHp){
+    // Needs healing before upgrade (applies to walls and combat towers)
     const healCost=tw.maxHp-tw.hp;
-    bot.innerHTML='<div class="upg-info">Heile die Mauer auf volle HP bevor du sie aufwertest.</div><button class="upg-btn" id="doHealBtn"'+(money<healCost?' disabled':'')+'>Heilen ('+healCost+' 💰)</button>'+sb;
+    const label=tw.type==='wall'?'Mauer':TOWER_DEFS[tw.type].label;
+    bot.innerHTML='<div class="upg-info">Heile den Turm auf volle HP bevor du ihn aufwertest.</div><button class="upg-btn" id="doHealBtn"'+(money<healCost?' disabled':'')+'>Heilen ('+healCost+' 💰)</button>'+sb;
     document.getElementById('doHealBtn').onclick=()=>healWall(tw);
   } else if(tw.level<3){
     const upd=u[tw.level-1];
@@ -785,7 +834,7 @@ function hideUpgPanel(){selectedTower=null;document.getElementById('upgPanel').s
 function doUpgrade(){
   if(!selectedTower)return;const tw=selectedTower,upd=UPGRADE_DEFS[tw.type][tw.level-1];
   if(tw.level>=3||money<upd.cost)return;
-  if(tw.type==='wall'&&tw.hp<tw.maxHp)return; // must heal first
+  if(tw.hp!==undefined&&tw.hp<tw.maxHp)return; // must heal first (walls and combat towers)
   money-=upd.cost;tw.level++;
   if(tw.type==='wall'){tw.maxHp=upd.newHp;tw.hp=upd.newHp;}
   else if(tw.type==='bomb'){tw.dmg=upd.newDmg;}
@@ -793,6 +842,7 @@ function doUpgrade(){
     tw.dmg=upd.newDmg;tw.range=upd.newRange;tw.cd=upd.newCd;
     if(upd.newChain!==undefined)tw.chain=upd.newChain;
     if(upd.newPoisonDmg!==undefined)tw.poisonDmg=upd.newPoisonDmg;
+    if(upd.newHp!==undefined){tw.maxHp=upd.newHp;tw.hp=upd.newHp;}
   }
   showMsg((tw.type==='wall'?'Mauer':tw.type==='bomb'?'Bombe':'Turm')+' auf Level '+tw.level+'!');showUpgPanel(tw);updateUI();
 }
@@ -816,15 +866,15 @@ function updateUI(){
   document.getElementById('goldText').textContent=money;document.getElementById('waveText').textContent=wave||'—';
   const ratio=Math.max(0,baseHP/100);document.getElementById('hpBar').style.width=(ratio*100)+'%';document.getElementById('hpBar').style.background=ratio>0.5?'#27ae60':ratio>0.25?'#e67e22':'#e74c3c';document.getElementById('hpText').textContent=baseHP+' / 100';
   const btn=document.getElementById('doUpgBtn');if(btn&&selectedTower&&selectedTower.level<3)btn.disabled=money<UPGRADE_DEFS[selectedTower.type][selectedTower.level-1].cost;
-  const healBtn=document.getElementById('doHealBtn');if(healBtn&&selectedTower&&selectedTower.type==='wall')healBtn.disabled=money<(selectedTower.maxHp-selectedTower.hp);
+  const healBtn=document.getElementById('doHealBtn');if(healBtn&&selectedTower&&selectedTower.hp!==undefined)healBtn.disabled=money<(selectedTower.maxHp-selectedTower.hp);
 }
 function handleClick(e){
   const{x:mx,y:my}=getMouse(e);
-  if(gameOver){if(mx>150&&mx<450&&my>270&&my<330){if(wave>highscore){highscore=wave;localStorage.setItem('td_highscore',wave);}document.getElementById('hsWave').textContent=highscore||'—';document.getElementById('wrapper').style.display='none';document.getElementById('homescreen').style.display='flex';renderHsDeck();}return;}
-  if(popup){const{bx,by}=popup;if(mx>bx&&mx<bx+192&&my>by&&my<by+40){const cost=popup.type===2?40:20;if(money>=cost){money-=cost;terrain[popup.gy][popup.gx]=0;showMsg('Entfernt!');}else showMsg('Nicht genug Gold!');}popup=null;updateUI();return;}
+  if(gameOver)return;
+  if(popup){const{bx,by}=popup;if(mx>bx&&mx<bx+192&&my>by&&my<by+40){const cost=popup.type===3?100:popup.type===2?40:20;if(money>=cost){money-=cost;terrain[popup.gy][popup.gx]=0;showMsg('Entfernt!');}else showMsg('Nicht genug Gold!');}popup=null;updateUI();return;}
   const gx=Math.floor(mx/GS),gy=Math.floor(my/GS);if(gx<0||gx>=COLS||gy<0||gy>=ROWS){buildMode=null;hideUpgPanel();updateUI();return;}
   const et=towers.find(t=>t.x===gx&&t.y===gy);if(et&&!buildMode){showUpgPanel(et);return;}
-  const t=terrain[gy][gx];if(!buildMode&&(t===1||t===2)){let bx=mx+6,by=my-46;if(bx+192>600)bx=600-194;if(by<4)by=my+8;popup={gx,gy,type:t,bx,by};return;}
+  const t=terrain[gy][gx];if(!buildMode&&(t===1||t===2||t===3)){let bx=mx+6,by=my-46;if(bx+192>600)bx=600-194;if(by<4)by=my+8;popup={gx,gy,type:t,bx,by};return;}
   if(buildMode){
     if(gx===CX&&gy===CY||terrain[gy][gx]!==0||grid[gy][gx]!==null){showMsg('Feld besetzt!');return;}
     const def=TOWER_DEFS[buildMode];if(money<def.cost){showMsg('Nicht genug Gold!');return;}
@@ -835,7 +885,7 @@ function handleClick(e){
     } else if(buildMode==='bomb'){
       tw={x:gx,y:gy,type:'bomb',level:1,dmg:def.dmg,radius:def.radius};
     } else {
-      tw={x:gx,y:gy,cooldown:0,type:buildMode,level:1,range:def.range,dmg:def.dmg,cd:def.cooldown};
+      tw={x:gx,y:gy,cooldown:0,type:buildMode,level:1,range:def.range,dmg:def.dmg,cd:def.cooldown,hp:def.hp,maxHp:def.hp};
       if(buildMode==='tesla')tw.chain=def.chainCount||1;
       if(buildMode==='poison'){tw.poisonDmg=def.poisonDmg||1;tw.poisonDur=def.poisonDur||300;}
       if(buildMode==='inferno')tw.rampDmg=0;
@@ -846,7 +896,7 @@ function handleClick(e){
 
 function update(){
   if(gameOver)return;
-  if(baseHP<=0){gameOver=true;if(wave>highscore){highscore=wave;localStorage.setItem('td_highscore',wave);document.getElementById('hsWave').textContent=highscore;}return;}
+  if(baseHP<=0){gameOver=true;if(wave>highscore){highscore=wave;localStorage.setItem('td_highscore',wave);document.getElementById('hsWave').textContent=highscore;}showGameOver();return;}
   if(phase==='wave'){
     if(enemiesToSpawn>0){spawnTimer--;if(spawnTimer<=0){spawnEnemy();enemiesToSpawn--;spawnTimer=Math.max(15,45-wave);}}
     else if(enemies.length===0){phase='prep';updateUI();}
@@ -860,8 +910,12 @@ function update(){
   // Enemies
   for(let i=enemies.length-1;i>=0;i--){
     const en=enemies[i];
-    let targetX,targetY,isCastleTarget=false,isWallTarget=false,wallRef=null;
-    if(en.targetWall&&(en.targetWall.hp>0||en.targetWall.ruinTimer>0)){
+    let targetX,targetY,isCastleTarget=false,isWallTarget=false,wallRef=null,isTowerTarget=false,towerRef=null;
+    if(en.targetTower&&en.targetTower.hp>0&&towers.includes(en.targetTower)){
+      // Saboteur attacking a combat tower directly
+      targetX=en.targetTower.x*GS+GS/2;targetY=en.targetTower.y*GS+GS/2;
+      isTowerTarget=true;towerRef=en.targetTower;
+    } else if(en.targetWall&&(en.targetWall.hp>0||en.targetWall.ruinTimer>0)){
       // Attack the wall directly
       targetX=en.targetWall.x*GS+GS/2;targetY=en.targetWall.y*GS+GS/2;
       isWallTarget=true;wallRef=en.targetWall;
@@ -874,11 +928,30 @@ function update(){
     }
     const ex=en.x*GS+GS/2,ey=en.y*GS+GS/2;
     const dx=targetX-ex,dy=targetY-ey,d=Math.sqrt(dx*dx+dy*dy);
-    const arriveDist=isWallTarget?GS*0.65:18;
+    const arriveDist=(isWallTarget||isTowerTarget)?GS*0.65:18;
     if(d>arriveDist){
       en.x+=(dx/d)*en.speed;en.y+=(dy/d)*en.speed;en.angle=Math.atan2(dy,dx);en.atBase=false;en.attackingWall=false;
     } else {
-      if(isWallTarget&&wallRef){
+      if(isTowerTarget&&towerRef){
+        // Attack the tower
+        en.attackingWall=true;en.atBase=false;
+        en.hitTimer--;if(en.hitTimer<=0){
+          en.hitTimer=en.hitInterval;
+          if(towerRef.hp>0){
+            towerRef.hp-=en.dmg;spawnFx(towerRef.x*GS+GS/2,towerRef.y*GS+GS/2,'#aa66ff',4);
+            if(towerRef.hp<=0){
+              grid[towerRef.y][towerRef.x]=null;towers=towers.filter(t=>t!==towerRef);
+              if(selectedTower===towerRef)hideUpgPanel();
+              showMsg(TOWER_DEFS[towerRef.type].label+' zerstört!');
+              en.targetTower=null;
+              // Recompute path to castle now that the tower is gone
+              const cgx=Math.max(0,Math.min(COLS-1,Math.round(en.x))),cgy=Math.max(0,Math.min(ROWS-1,Math.round(en.y)));
+              const{path,targetWall}=computePathForSpawn(cgx,cgy);
+              en.path=path;en.pathIdx=0;en.targetWall=targetWall;
+            }
+          }
+        }
+      } else if(isWallTarget&&wallRef){
         // Attack the wall
         en.attackingWall=true;en.atBase=false;
         en.hitTimer--;if(en.hitTimer<=0){
@@ -889,7 +962,7 @@ function update(){
           }
         }
       } else if(isCastleTarget){
-        en.atBase=true;en.hitTimer--;if(en.hitTimer<=0){baseHP-=en.dmg;en.hitTimer=en.hitInterval;spawnFx(ex,ey,'#e74c3c',4);updateUI();if(baseHP<=0){gameOver=true;return;}}
+        en.atBase=true;en.hitTimer--;if(en.hitTimer<=0){baseHP-=en.dmg;en.hitTimer=en.hitInterval;spawnFx(ex,ey,'#e74c3c',4);updateUI();if(baseHP<=0){gameOver=true;if(wave>highscore){highscore=wave;localStorage.setItem('td_highscore',wave);document.getElementById('hsWave').textContent=highscore;}showGameOver();return;}}
       } else {
         // Reached waypoint, advance to next
         en.pathIdx++;
@@ -942,7 +1015,8 @@ function update(){
       let best=null,bestD=tw.range;
       for(const en of enemies){const d=Math.sqrt((en.x*GS+GS/2-tx)**2+(en.y*GS+GS/2-ty)**2);if(d<bestD){bestD=d;best=en;}}
       if(best){
-        tw.rampDmg=Math.min((tw.rampDmg||0)+0.06,7);
+        const rampRate=tw.level===1?0.018:tw.level===2?0.028:0.04;
+        tw.rampDmg=Math.min((tw.rampDmg||0)+rampRate,7);
         const totalDmg=(tw.dmg+tw.rampDmg)/60;
         best.hp-=totalDmg;best.burning=8;
         infernoBeams.push({x1:tx,y1:ty,x2:best.x*GS+GS/2,y2:best.y*GS+GS/2,t:tw.rampDmg/7});
@@ -1257,8 +1331,8 @@ function drawTower(tw){
   if(tw.type==='wall'){
     const isRuin=tw.hp<=0;
     drawTowerWall(px,py,tw.level,isRuin,tw.x,tw.y);
-    if(!isRuin){
-      // HP bar
+    if(!isRuin&&tw.hp<tw.maxHp){
+      // HP bar - only shown once damaged
       const ratio=tw.hp/tw.maxHp;
       ctx.fillStyle='#222';rrect(px+4,py+1,32,4,2);ctx.fill();
       ctx.fillStyle=ratio>0.5?'#27ae60':ratio>0.25?'#e67e22':'#e74c3c';
@@ -1266,6 +1340,13 @@ function drawTower(tw){
     }
   } else {
     drawTowerByType(tw.type,px,py,tw.level);
+    if(tw.hp!==undefined&&tw.hp<tw.maxHp){
+      // Combat tower HP bar - only shown once damaged
+      const ratio=Math.max(0,tw.hp/tw.maxHp);
+      ctx.fillStyle='#222';rrect(px+4,py+1,32,4,2);ctx.fill();
+      ctx.fillStyle=ratio>0.5?'#27ae60':ratio>0.25?'#e67e22':'#e74c3c';
+      rrect(px+4,py+1,Math.round(32*ratio),4,2);ctx.fill();
+    }
   }
   if(selectedTower&&selectedTower.x===tw.x&&selectedTower.y===tw.y){
     if(tw.range){ctx.strokeStyle='rgba(255,255,255,0.7)';ctx.lineWidth=1.5;ctx.setLineDash([4,4]);ctx.beginPath();ctx.arc(px+GS/2,py+GS/2,tw.range,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);}
@@ -1280,6 +1361,12 @@ function drawEnemyStatic(en){
     ctx.fillStyle='#220000';ctx.fillRect(-5,12,8,14);ctx.fillRect(5,11,8,14);ctx.fillStyle=bc;ctx.fillRect(-12,-2,6,14);ctx.fillRect(6,-2,6,14);ctx.fillStyle='#880000';ctx.fillRect(-12,-14,24,24);ctx.fillStyle=bc;ctx.fillRect(-10,-12,20,20);ctx.fillStyle='rgba(255,80,0,0.2)';ctx.fillRect(-10,-12,20,8);ctx.fillStyle='#440000';ctx.fillRect(-14,-14,8,8);ctx.fillRect(6,-14,8,8);ctx.fillStyle='#111';ctx.fillRect(-8,6,16,4);ctx.fillStyle=bc;for(let si=0;si<4;si++)ctx.fillRect(-6+si*4,6,2,4);ctx.fillStyle='#cc6600';ctx.fillRect(-3,-16,6,6);ctx.beginPath();ctx.arc(0,-22,8,0,Math.PI*2);ctx.fill();ctx.fillStyle='#880000';ctx.beginPath();ctx.arc(0,-26,10,Math.PI,0);ctx.fill();ctx.fillStyle=bc;ctx.fillRect(-10,-26,20,6);ctx.fillStyle='#440000';ctx.fillRect(-7,-22,14,7);ctx.fillStyle=bc;ctx.beginPath();ctx.moveTo(-10,-28);ctx.lineTo(-7,-38);ctx.lineTo(-4,-28);ctx.fill();ctx.beginPath();ctx.moveTo(4,-28);ctx.lineTo(7,-38);ctx.lineTo(10,-28);ctx.fill();
   } else if(en.type==='fast'){ctx.fillStyle='#003366';ctx.fillRect(-2,6,3,7);ctx.fillRect(2,6,3,7);ctx.fillStyle='#0066cc';ctx.fillRect(-4,-6,8,11);ctx.fillStyle='#0088ff';ctx.fillRect(-3,-5,6,9);ctx.fillStyle='#005599';ctx.fillRect(-5,-6,3,3);ctx.fillRect(2,-6,3,3);ctx.fillStyle='#aaddff';ctx.fillRect(-2,-8,2,3);ctx.fillRect(0,-8,2,3);ctx.fillStyle='#d4a96e';ctx.beginPath();ctx.arc(0,-12,4,0,Math.PI*2);ctx.fill();ctx.fillStyle='#003366';ctx.beginPath();ctx.arc(0,-14,4.5,Math.PI,0);ctx.fill();ctx.fillStyle='rgba(0,150,255,0.4)';ctx.beginPath();ctx.arc(0,-10,7,0,Math.PI*2);ctx.fill();}
   else if(en.type==='heavy'){ctx.fillStyle='#4a0000';ctx.fillRect(-4,10,6,11);ctx.fillRect(4,10,6,11);ctx.fillStyle='#660000';ctx.fillRect(-8,-2,4,10);ctx.fillRect(8,-2,4,10);ctx.fillStyle='#8a0000';ctx.fillRect(-12,-4,5,10);ctx.fillStyle='#cc0000';ctx.fillRect(-11,-3,3,8);ctx.fillStyle='#550000';ctx.fillRect(-7,-10,14,18);ctx.fillStyle='#880000';ctx.fillRect(-6,-9,12,16);ctx.fillStyle='#770000';ctx.fillRect(-10,-10,6,6);ctx.fillRect(4,-10,6,6);ctx.fillStyle='#222';ctx.fillRect(-7,6,14,3);ctx.fillStyle='#c08060';ctx.fillRect(-2,-12,4,4);ctx.beginPath();ctx.arc(0,-17,6,0,Math.PI*2);ctx.fill();ctx.fillStyle='#660000';ctx.beginPath();ctx.arc(0,-20,7,Math.PI,0);ctx.fill();ctx.fillStyle='#880000';ctx.fillRect(-7,-20,14,5);ctx.fillStyle='#333';ctx.beginPath();ctx.moveTo(-7,-22);ctx.lineTo(-5,-28);ctx.lineTo(-3,-22);ctx.fill();ctx.beginPath();ctx.moveTo(3,-22);ctx.lineTo(5,-28);ctx.lineTo(7,-22);ctx.fill();}
+  else if(en.type==='saboteur'){ctx.fillStyle='#1a0f2e';ctx.fillRect(-3,8,4,9);ctx.fillRect(3,8,4,9);ctx.fillStyle='#3a2566';ctx.fillRect(-6,-2,3,9);ctx.fillRect(6,-2,3,9);ctx.fillStyle='#5a3a8a';ctx.fillRect(-5,-8,10,14);ctx.fillStyle='#6a48a0';ctx.fillRect(-4,-7,8,12);ctx.fillStyle='rgba(255,255,255,0.08)';ctx.fillRect(-4,-7,8,5);
+    // Hooded head
+    ctx.fillStyle='#2a1850';ctx.beginPath();ctx.arc(0,-15,5.5,0,Math.PI*2);ctx.fill();ctx.fillStyle='#1a0f2e';ctx.beginPath();ctx.arc(0,-17,6,Math.PI,0);ctx.fill();ctx.fillStyle='#caa8ff';ctx.fillRect(-3,-16,2,2);ctx.fillRect(1,-16,2,2);
+    // Pickaxe/tool in hand
+    ctx.strokeStyle='#8a7050';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(7,-4);ctx.lineTo(12,-12);ctx.stroke();ctx.fillStyle='#aaa';ctx.beginPath();ctx.moveTo(12,-12);ctx.lineTo(17,-15);ctx.lineTo(15,-9);ctx.closePath();ctx.fill();
+  }
   else{ctx.fillStyle='#444';ctx.fillRect(-2,8,4,9);ctx.fillRect(2,8,4,9);ctx.fillStyle='#6a6a6a';ctx.fillRect(-6,-1,3,8);ctx.fillRect(6,-1,3,8);ctx.fillStyle='#666';ctx.fillRect(-5,-8,10,14);ctx.fillStyle=c;ctx.fillRect(-4,-7,8,12);ctx.fillStyle='rgba(255,255,255,0.1)';ctx.fillRect(-4,-7,8,5);ctx.fillStyle='#888';ctx.fillRect(-7,-8,4,4);ctx.fillRect(3,-8,4,4);ctx.fillStyle='#c9a070';ctx.fillRect(-2,-10,4,4);ctx.fillStyle='#d4a96e';ctx.beginPath();ctx.arc(0,-15,5,0,Math.PI*2);ctx.fill();ctx.fillStyle='#555';ctx.beginPath();ctx.arc(0,-17,5.5,Math.PI,0);ctx.fill();ctx.fillStyle='#444';ctx.fillRect(-5.5,-17,11,3);}
 }
 
@@ -1293,6 +1380,18 @@ function drawEnemy(en){
     if(en.type==='boss2'||en.type==='boss3'||en.type==='boss4'){ctx.fillStyle=en.type==='boss4'?'rgba(255,0,200,0.12)':'rgba(255,30,0,0.1)';ctx.beginPath();ctx.arc(0,0,en.type==='boss4'?34:30,0,Math.PI*2);ctx.fill();}
   } else if(en.type==='fast'){ctx.fillStyle='#003366';ctx.save();ctx.translate(-2,6);ctx.rotate(ls*Math.PI/180*1.5);ctx.fillRect(-1.5,0,3,7);ctx.restore();ctx.save();ctx.translate(2,6);ctx.rotate(-ls*Math.PI/180*1.5);ctx.fillRect(-1.5,0,3,7);ctx.restore();ctx.fillStyle='#0055aa';ctx.save();ctx.translate(-4,0);ctx.rotate(-ls*Math.PI/180);ctx.fillRect(-1,0,2,6);ctx.restore();ctx.save();ctx.translate(4,0);ctx.rotate(ls*Math.PI/180);ctx.fillRect(-1,0,2,6);ctx.restore();ctx.fillStyle='#0066cc';ctx.fillRect(-4,-6,8,11);ctx.fillStyle='#0088ff';ctx.fillRect(-3,-5,6,9);ctx.fillStyle='rgba(100,200,255,0.15)';ctx.fillRect(-3,-5,6,4);ctx.fillStyle='#005599';ctx.fillRect(-5,-6,3,3);ctx.fillRect(2,-6,3,3);ctx.fillStyle='#aaddff';ctx.fillRect(-2,-8,2,3);ctx.fillRect(0,-8,2,3);ctx.fillStyle='#b8956a';ctx.fillRect(-1.5,-9,3,3);ctx.fillStyle='#d4a96e';ctx.beginPath();ctx.arc(0,-12,4,0,Math.PI*2);ctx.fill();ctx.fillStyle='#003366';ctx.beginPath();ctx.arc(0,-14,4.5,Math.PI,0);ctx.fill();ctx.fillStyle='#002244';ctx.fillRect(-4.5,-14,9,2);ctx.fillStyle='rgba(0,150,255,0.5)';ctx.beginPath();ctx.arc(0,-10,7,0,Math.PI*2);ctx.fill();}
   else if(en.type==='heavy'){ctx.fillStyle='#4a0000';ctx.save();ctx.translate(-4,10);ctx.rotate(ls*Math.PI/180);ctx.fillRect(-3,0,6,11);ctx.fillStyle='#220000';ctx.fillRect(-3,10,6,4);ctx.restore();ctx.save();ctx.translate(4,10);ctx.rotate(-ls*Math.PI/180);ctx.fillStyle='#4a0000';ctx.fillRect(-3,0,6,11);ctx.fillStyle='#220000';ctx.fillRect(-3,10,6,4);ctx.restore();ctx.fillStyle='#660000';ctx.save();ctx.translate(-8,0);ctx.rotate(-ls*Math.PI/180*0.6);ctx.fillRect(-2,-2,4,10);ctx.restore();ctx.save();ctx.translate(8,0);ctx.rotate(ls*Math.PI/180*0.6);ctx.fillRect(-2,-2,4,10);ctx.restore();ctx.fillStyle='#8a0000';ctx.fillRect(-12,-4,5,10);ctx.fillStyle='#cc0000';ctx.fillRect(-11,-3,3,8);ctx.fillStyle='#ffcc00';ctx.fillRect(-10,0,1,2);ctx.fillStyle='#550000';ctx.fillRect(-7,-10,14,18);ctx.fillStyle='#880000';ctx.fillRect(-6,-9,12,16);ctx.fillStyle='rgba(255,0,0,0.1)';ctx.fillRect(-6,-9,12,7);ctx.fillStyle='#770000';ctx.fillRect(-10,-10,6,6);ctx.fillRect(4,-10,6,6);ctx.fillStyle='#aa0000';ctx.fillRect(-9,-9,4,4);ctx.fillRect(5,-9,4,4);ctx.fillStyle='#222';ctx.fillRect(-7,6,14,3);ctx.fillStyle='#888';for(let si=0;si<3;si++)ctx.fillRect(-5+si*4,6,2,3);ctx.fillStyle='#c08060';ctx.fillRect(-2,-12,4,4);ctx.beginPath();ctx.arc(0,-17,6,0,Math.PI*2);ctx.fill();ctx.fillStyle='#660000';ctx.beginPath();ctx.arc(0,-20,7,Math.PI,0);ctx.fill();ctx.fillStyle='#880000';ctx.fillRect(-7,-20,14,5);ctx.fillStyle='#550000';ctx.fillRect(-5,-17,10,5);ctx.fillStyle='#ff2200';ctx.fillRect(-4,-16,3,1.5);ctx.fillRect(1,-16,3,1.5);ctx.fillStyle='#333';ctx.beginPath();ctx.moveTo(-7,-22);ctx.lineTo(-5,-30);ctx.lineTo(-3,-22);ctx.fill();ctx.beginPath();ctx.moveTo(3,-22);ctx.lineTo(5,-30);ctx.lineTo(7,-22);ctx.fill();ctx.strokeStyle='#777';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(9,8);ctx.lineTo(14,-10);ctx.stroke();ctx.fillStyle='#aaa';ctx.beginPath();ctx.moveTo(13,-10);ctx.lineTo(18,-14);ctx.lineTo(17,-8);ctx.closePath();ctx.fill();ctx.beginPath();ctx.moveTo(13,-10);ctx.lineTo(18,-6);ctx.lineTo(15,-4);ctx.closePath();ctx.fill();}
+  else if(en.type==='saboteur'){
+    ctx.save();ctx.translate(-3,8);ctx.rotate(ls*Math.PI/180);ctx.fillStyle='#1a0f2e';ctx.fillRect(-2,0,4,9);ctx.restore();
+    ctx.save();ctx.translate(3,8);ctx.rotate(-ls*Math.PI/180);ctx.fillStyle='#1a0f2e';ctx.fillRect(-2,0,4,9);ctx.restore();
+    ctx.fillStyle='#3a2566';ctx.save();ctx.translate(-6,0);ctx.rotate(-ls*Math.PI/180*0.6);ctx.fillRect(-1.5,-1,3,8);ctx.restore();
+    ctx.save();ctx.translate(6,0);ctx.rotate(ls*Math.PI/180*0.6);ctx.fillRect(-1.5,-1,3,8);ctx.restore();
+    ctx.fillStyle='#5a3a8a';ctx.fillRect(-5,-8,10,14);ctx.fillStyle='#6a48a0';ctx.fillRect(-4,-7,8,12);ctx.fillStyle='rgba(255,255,255,0.08)';ctx.fillRect(-4,-7,8,5);
+    ctx.fillStyle='#2a1850';ctx.beginPath();ctx.arc(0,-15,5.5,0,Math.PI*2);ctx.fill();ctx.fillStyle='#1a0f2e';ctx.beginPath();ctx.arc(0,-17,6,Math.PI,0);ctx.fill();
+    ctx.fillStyle='#caa8ff';ctx.fillRect(-3,-16,2,2);ctx.fillRect(1,-16,2,2);
+    ctx.strokeStyle='#8a7050';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(7,-4);ctx.lineTo(12,-12);ctx.stroke();
+    ctx.fillStyle='#aaa';ctx.beginPath();ctx.moveTo(12,-12);ctx.lineTo(17,-15);ctx.lineTo(15,-9);ctx.closePath();ctx.fill();
+    if(en.attackingWall){ctx.strokeStyle='rgba(170,120,255,0.5)';ctx.lineWidth=2;ctx.beginPath();ctx.arc(0,0,18,0,Math.PI*2);ctx.stroke();}
+  }
   else{ctx.fillStyle='#444';ctx.save();ctx.translate(-3,8);ctx.rotate(ls*Math.PI/180);ctx.fillRect(-2,0,4,9);ctx.fillStyle='#222';ctx.fillRect(-2,8,4,3);ctx.restore();ctx.save();ctx.translate(3,8);ctx.rotate(-ls*Math.PI/180);ctx.fillStyle='#444';ctx.fillRect(-2,0,4,9);ctx.fillStyle='#222';ctx.fillRect(-2,8,4,3);ctx.restore();ctx.fillStyle='#6a6a6a';ctx.save();ctx.translate(-6,0);ctx.rotate(-ls*Math.PI/180*0.6);ctx.fillRect(-1.5,-1,3,8);ctx.restore();ctx.save();ctx.translate(6,0);ctx.rotate(ls*Math.PI/180*0.6);ctx.fillRect(-1.5,-1,3,8);ctx.restore();ctx.fillStyle='#666';ctx.fillRect(-5,-8,10,14);ctx.fillStyle=en.color;ctx.fillRect(-4,-7,8,12);ctx.fillStyle='rgba(255,255,255,0.1)';ctx.fillRect(-4,-7,8,5);ctx.fillStyle='#888';ctx.fillRect(-7,-8,4,4);ctx.fillRect(3,-8,4,4);ctx.fillStyle='#333';ctx.fillRect(-5,4,10,2);ctx.fillStyle='#c9a070';ctx.fillRect(-2,-10,4,4);ctx.fillStyle='#d4a96e';ctx.beginPath();ctx.arc(0,-15,5,0,Math.PI*2);ctx.fill();ctx.fillStyle='#555';ctx.beginPath();ctx.arc(0,-17,5.5,Math.PI,0);ctx.fill();ctx.fillStyle='#444';ctx.fillRect(-5.5,-17,11,3);ctx.fillStyle='#333';ctx.fillRect(-4,-15,8,1.5);ctx.fillStyle='#4a4a4a';ctx.fillRect(-5.5,-17,2.5,6);ctx.fillRect(3,-17,2.5,6);ctx.strokeStyle='#999';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(7,2);ctx.lineTo(12,-8);ctx.stroke();ctx.fillStyle='#aaa';ctx.beginPath();ctx.moveTo(12,-8);ctx.lineTo(10.5,-11);ctx.lineTo(13.5,-11);ctx.closePath();ctx.fill();ctx.strokeStyle='#5d4037';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(9.5,-2);ctx.lineTo(14,-2);ctx.stroke();}
   if(en.burning>0){ctx.fillStyle='rgba(255,100,0,0.2)';ctx.beginPath();ctx.arc(0,0,16,0,Math.PI*2);ctx.fill();}
   ctx.restore();
@@ -1346,8 +1445,8 @@ function draw(){
   explosions.forEach(ex=>{ctx.globalAlpha=ex.life/20*0.45;ctx.fillStyle=ex.type==='mage'?'#aa44ff':'#e67e22';ctx.beginPath();ctx.arc(ex.x,ex.y,ex.r,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;});
   enemies.forEach(en=>drawEnemy(en));arrows.forEach(a=>drawProjectile(a));
   particles.forEach(p=>{ctx.globalAlpha=Math.max(0,p.life/30);ctx.fillStyle=p.col;ctx.beginPath();ctx.arc(p.x,p.y,2,0,Math.PI*2);ctx.fill();});ctx.globalAlpha=1;
-  if(popup){const label=popup.type===2?'Baum entfernen (40 💰)':'Busch entfernen (20 💰)';const{bx,by}=popup;ctx.fillStyle='rgba(0,0,0,0.88)';rrect(bx-1,by-1,194,42,7);ctx.fill();ctx.fillStyle='#c0392b';rrect(bx,by,192,40,6);ctx.fill();ctx.fillStyle='#fff';ctx.font='bold 12px sans-serif';ctx.textAlign='left';ctx.fillText(label,bx+12,by+25);}
-  if(gameOver){ctx.fillStyle='rgba(0,0,0,0.85)';ctx.fillRect(0,0,600,624);ctx.fillStyle='#e74c3c';ctx.font='bold 36px sans-serif';ctx.textAlign='center';ctx.fillText('GAME OVER',300,220);ctx.fillStyle='#ccc';ctx.font='18px sans-serif';ctx.fillText('Welle '+wave+' erreicht',300,260);if(wave>=highscore){ctx.fillStyle='#f1c40f';ctx.font='bold 15px sans-serif';ctx.fillText('🏆 Neuer Highscore!',300,290);}ctx.fillStyle='#922b21';rrect(150,310,300,50,8);ctx.fill();ctx.fillStyle='#e74c3c';rrect(151,311,298,48,7);ctx.fill();ctx.fillStyle='#fff';ctx.font='bold 16px sans-serif';ctx.fillText('🏠 Zum Hauptmenü',300,341);ctx.textAlign='left';}
+  if(popup){const label=popup.type===3?'Stein entfernen (100 💰)':popup.type===2?'Baum entfernen (40 💰)':'Busch entfernen (20 💰)';const{bx,by}=popup;ctx.fillStyle='rgba(0,0,0,0.88)';rrect(bx-1,by-1,194,42,7);ctx.fill();ctx.fillStyle='#c0392b';rrect(bx,by,192,40,6);ctx.fill();ctx.fillStyle='#fff';ctx.font='bold 12px sans-serif';ctx.textAlign='left';ctx.fillText(label,bx+12,by+25);}
+  // Game over is now shown via real DOM overlay (#gameOverOverlay), not drawn on canvas
 }
 function loop(){for(let i=0;i<gameSpeed;i++)update();draw();requestAnimationFrame(loop);}
 renderHsDeck();
