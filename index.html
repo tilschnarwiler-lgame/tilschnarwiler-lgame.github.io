@@ -529,6 +529,10 @@ iframe {
                 <span class="card-icon">♦️</span>
                 <span class="card-title">Poker</span>
             </div>
+            <div class="game-card" onclick="showGame('towerclash')">
+                <span class="card-icon">🏰</span>
+                <span class="card-title">Tower Clash</span>
+            </div>
         </div>
     </div>
 </div>
@@ -685,6 +689,17 @@ iframe {
     </div>
     <div class="iframe-wrap" style="--iframe-h:600px;">
         <iframe src="poker.html" width="600" height="600" scrolling="no"></iframe>
+    </div>
+</div>
+
+<!-- TOWER CLASH -->
+<div id="towerclash" class="game">
+    <div class="game-header">
+        <button class="backBtn" onclick="showGame('menu')">⬅ Zurück</button>
+        <span class="game-title">🏰 Tower Clash</span>
+    </div>
+    <div class="iframe-wrap" style="--iframe-h:600px;">
+        <iframe src="tower_clash.html" width="600" height="400" scrolling="no"></iframe>
     </div>
 </div>
     
