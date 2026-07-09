@@ -18,51 +18,41 @@
     --border-glow: rgba(0, 212, 255, 0.2);
 }
 
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
+* { margin: 0; padding: 0; box-sizing: border-box; }
 
-html, body {
+html {
     height: 100%;
-    overflow: hidden;
+    height: -webkit-fill-available;
 }
-
 body {
     font-family: 'Rajdhani', sans-serif;
     background: var(--dark-bg);
     color: white;
     height: 100vh;
+    height: 100dvh;
     overflow: hidden;
+    min-height: -webkit-fill-available;
 }
 
 /* ── BACKGROUND ── */
 .bg-grid {
-    position: fixed;
-    inset: 0;
+    position: fixed; inset: 0;
     background-image:
         linear-gradient(rgba(0,212,255,0.09) 1px, transparent 1px),
         linear-gradient(90deg, rgba(0,212,255,0.09) 1px, transparent 1px);
     background-size: 40px 40px;
-    pointer-events: none;
-    z-index: 0;
+    pointer-events: none; z-index: 0;
     animation: gridPulse 4s ease-in-out infinite;
 }
-
 @keyframes gridPulse {
     0%, 100% { opacity: 0.5; }
     50%       { opacity: 1; }
 }
 
 .bg-glow {
-    position: fixed;
-    inset: 0;
-    pointer-events: none;
-    z-index: 0;
-    overflow: hidden;
+    position: fixed; inset: 0;
+    pointer-events: none; z-index: 0; overflow: hidden;
 }
-
 .bg-glow::before {
     content: '';
     position: absolute;
@@ -73,7 +63,6 @@ body {
     animation: blobA 9s ease-in-out infinite alternate;
     filter: blur(50px);
 }
-
 .bg-glow::after {
     content: '';
     position: absolute;
@@ -84,7 +73,6 @@ body {
     animation: blobB 11s ease-in-out infinite alternate;
     filter: blur(50px);
 }
-
 .bg-blob3 {
     position: fixed;
     width: 55vw; height: 55vw;
@@ -93,10 +81,8 @@ body {
     background: radial-gradient(circle, rgba(255,45,120,0.35) 0%, transparent 70%);
     animation: blobC 13s ease-in-out infinite alternate;
     filter: blur(60px);
-    pointer-events: none;
-    z-index: 0;
+    pointer-events: none; z-index: 0;
 }
-
 @keyframes blobA {
     0%   { transform: translate(0,0) scale(1); }
     50%  { transform: translate(12vw,10vh) scale(1.2); }
@@ -113,37 +99,28 @@ body {
 }
 
 #particles {
-    position: fixed;
-    inset: 0;
-    z-index: 0;
-    pointer-events: none;
+    position: fixed; inset: 0;
+    z-index: 0; pointer-events: none;
 }
 
 /* ── WRAPPER ── */
 .wrapper {
-    position: relative;
-    z-index: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+    position: relative; z-index: 1;
+    display: flex; flex-direction: column; align-items: center;
     height: 100vh;
+    height: 100dvh;
     overflow: hidden;
     padding: 0 16px;
 }
 
 /* ── HEADER ── */
 header {
-    width: 100%;
-    max-width: 900px;
+    width: 100%; max-width: 900px;
     text-align: center;
     padding: 16px 16px 8px;
     flex-shrink: 0;
 }
-
-.logo-wrap {
-    position: relative;
-    display: inline-block;
-}
+.logo-wrap { position: relative; display: inline-block; }
 
 h1 {
     font-family: 'Orbitron', sans-serif;
@@ -158,7 +135,6 @@ h1 {
     animation: flicker 6s infinite;
     line-height: 1.1;
 }
-
 .subtitle {
     font-family: 'Rajdhani', sans-serif;
     font-size: clamp(11px, 2.5vw, 15px);
@@ -168,12 +144,9 @@ h1 {
     margin-top: 4px;
     opacity: 0.85;
 }
-
 .divider {
-    width: 100%;
-    max-width: 600px;
-    height: 1px;
-    margin: 10px auto;
+    width: 100%; max-width: 600px;
+    height: 1px; margin: 10px auto;
     background: linear-gradient(90deg, transparent, var(--neon-blue), var(--neon-pink), transparent);
     box-shadow: 0 0 8px var(--neon-blue);
 }
@@ -187,18 +160,12 @@ h1 {
     flex: 1;
     overflow: hidden;
 }
-
-#menu.active {
-    display: flex;
-}
+#menu.active { display: flex; }
 
 #menuScroll {
-    width: 100%;
-    max-width: 860px;
-    overflow-y: auto;
-    flex: 1;
+    width: 100%; max-width: 860px;
+    overflow-y: auto; flex: 1;
     padding: 4px 4px 20px;
-    /* hide scrollbar visually */
     scrollbar-width: none;
     -ms-overflow-style: none;
 }
@@ -232,20 +199,16 @@ h1 {
     -webkit-tap-highlight-color: transparent;
     animation: cardIn 0.4s ease both;
 }
-
 .game-card::before {
     content: '';
-    position: absolute;
-    inset: 0;
+    position: absolute; inset: 0;
     background: linear-gradient(135deg, rgba(0,212,255,0.08) 0%, transparent 60%);
     pointer-events: none;
 }
-
 .game-card:hover,
 .game-card:active {
     transform: translateY(-4px) scale(1.02);
 }
-
 .game-card:hover {
     border-color: var(--accent);
     box-shadow: 0 0 24px color-mix(in srgb, var(--accent) 50%, transparent);
@@ -257,11 +220,11 @@ h1 {
     filter: drop-shadow(0 0 8px var(--accent));
     transition: transform 0.3s ease;
 }
-
 .game-card:hover .card-icon {
     transform: scale(1.15) rotate(-5deg);
 }
 
+/* Fixed 2-line height, always centered */
 .card-title {
     font-family: 'Orbitron', sans-serif;
     font-size: clamp(9px, 2.5vw, 13px);
@@ -271,6 +234,11 @@ h1 {
     color: var(--accent);
     text-shadow: 0 0 8px var(--accent);
     text-align: center;
+    min-height: 2.6em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1.3;
 }
 
 .game-card::after {
@@ -289,65 +257,50 @@ h1 {
 /* ── GAME AREAS ── */
 .game {
     display: none;
-    width: 100%;
-    max-width: 900px;
+    width: 100%; max-width: 900px;
     animation: fadeSlide 0.3s ease;
     padding: 0 4px;
 }
-
-.game.active {
-    display: block;
-}
+.game.active { display: block; }
 
 body.game-open .game.active {
-    position: fixed;
-    inset: 0;
-    max-width: 100%;
-    padding: 0;
+    position: fixed; inset: 0;
+    max-width: 100%; padding: 0;
     z-index: 10;
-    display: flex;
-    flex-direction: column;
+    display: flex; flex-direction: column;
     background: var(--dark-bg);
     overflow: hidden;
 }
-
 body.game-open .game.active .game-header {
     padding: 10px 14px;
     flex-shrink: 0;
 }
-
 body.game-open .game.active .iframe-wrap {
     flex: 1;
-    border-radius: 0;
-    border: none;
+    border-radius: 0; border: none;
     display: flex;
-    align-items: center;
-    justify-content: center;
+    align-items: center; justify-content: center;
     overflow: hidden;
     position: relative;
     height: 0;
 }
-
 body.game-open .game.active .iframe-wrap iframe {
     position: absolute;
     transform-origin: top left;
 }
 
 .game-header {
-    display: flex;
-    align-items: center;
+    display: flex; align-items: center;
     gap: 14px;
     padding: 20px 0 16px;
 }
-
 .backBtn {
     background: rgba(0,0,0,0.5);
     border: 1px solid rgba(255,255,255,0.15);
     border-radius: 10px;
     color: white;
     font-family: 'Rajdhani', sans-serif;
-    font-size: 14px;
-    font-weight: 600;
+    font-size: 14px; font-weight: 600;
     letter-spacing: 1px;
     padding: 10px 16px;
     cursor: pointer;
@@ -355,13 +308,11 @@ body.game-open .game.active .iframe-wrap iframe {
     flex-shrink: 0;
     -webkit-tap-highlight-color: transparent;
 }
-
 .backBtn:hover {
     background: rgba(0,212,255,0.15);
     border-color: var(--neon-blue);
     box-shadow: 0 0 12px rgba(0,212,255,0.2);
 }
-
 .game-title {
     font-family: 'Orbitron', sans-serif;
     font-size: clamp(16px, 4vw, 26px);
@@ -377,19 +328,15 @@ body.game-open .game.active .iframe-wrap iframe {
     border-radius: 16px;
     overflow: hidden;
     border: 1px solid var(--border-glow);
-    box-shadow:
-        0 0 40px rgba(0,212,255,0.12),
-        0 20px 60px rgba(0,0,0,0.6);
+    box-shadow: 0 0 40px rgba(0,212,255,0.12), 0 20px 60px rgba(0,0,0,0.6);
     background: #000;
 }
-
 .iframe-wrap::before,
 .iframe-wrap::after {
     content: '';
     position: absolute;
     width: 20px; height: 20px;
-    z-index: 2;
-    pointer-events: none;
+    z-index: 2; pointer-events: none;
 }
 .iframe-wrap::before {
     top: 0; left: 0;
@@ -403,11 +350,8 @@ body.game-open .game.active .iframe-wrap iframe {
     border-right: 2px solid var(--neon-pink);
     border-radius: 0 0 16px 0;
 }
-
 iframe {
-    display: block;
-    width: 100%;
-    border: none;
+    display: block; width: 100%; border: none;
 }
 
 /* ── ANIMATIONS ── */
@@ -420,12 +364,10 @@ iframe {
     }
     20%, 24%, 55% { text-shadow: none; }
 }
-
 @keyframes fadeSlide {
     from { opacity: 0; transform: translateY(10px); }
     to   { opacity: 1; transform: translateY(0); }
 }
-
 @keyframes cardIn {
     from { opacity: 0; transform: translateY(20px) scale(0.95); }
     to   { opacity: 1; transform: translateY(0) scale(1); }
@@ -433,23 +375,14 @@ iframe {
 
 /* ── RESPONSIVE ── */
 @media (max-width: 699px) {
-    #menuButtons {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 12px;
-    }
-    .game-card {
-        padding: 18px 10px 14px;
-    }
+    #menuButtons { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+    .game-card { padding: 18px 10px 14px; }
 }
-
 @media (max-width: 400px) {
     h1 { letter-spacing: 2px; }
-    #menuButtons {
-        grid-template-columns: repeat(2, 1fr);
-    }
+    #menuButtons { grid-template-columns: repeat(2, 1fr); }
 }
 </style>
-
 </head>
 <body>
 
@@ -460,250 +393,246 @@ iframe {
 
 <div class="wrapper">
 
-```
-<!-- HEADER + MENU -->
-<div id="menu" class="game active">
-    <header>
-        <div class="logo-wrap">
-            <h1>LGAME</h1>
-            <div class="subtitle">Select Your Game</div>
+    <!-- HEADER + MENU -->
+    <div id="menu" class="game active">
+        <header>
+            <div class="logo-wrap">
+                <h1>LGAME</h1>
+                <div class="subtitle">Select Your Game</div>
+            </div>
+            <div class="divider"></div>
+        </header>
+
+        <div id="menuScroll">
+            <div id="menuButtons">
+                <div class="game-card" onclick="showGame('snake')">
+                    <span class="card-icon">🐍</span>
+                    <span class="card-title">Snake</span>
+                </div>
+                <div class="game-card" onclick="showGame('flappy')">
+                    <span class="card-icon">🐦</span>
+                    <span class="card-title">Flappy Bird</span>
+                </div>
+                <div class="game-card" onclick="showGame('nova')">
+                    <span class="card-icon">🚀</span>
+                    <span class="card-title">Nova Blaster</span>
+                </div>
+                <div class="game-card" onclick="showGame('tetris')">
+                    <span class="card-icon">🟦</span>
+                    <span class="card-title">Tetris</span>
+                </div>
+                <div class="game-card" onclick="showGame('auto')">
+                    <span class="card-icon">🚗</span>
+                    <span class="card-title">Auto</span>
+                </div>
+                <div class="game-card" onclick="showGame('tower')">
+                    <span class="card-icon">🏰</span>
+                    <span class="card-title">Tower Defense</span>
+                </div>
+                <div class="game-card" onclick="showGame('jump')">
+                    <span class="card-icon">👨‍🚀</span>
+                    <span class="card-title">Space Dash</span>
+                </div>
+                <div class="game-card" onclick="showGame('stickman')">
+                    <span class="card-icon">🥷</span>
+                    <span class="card-title">Stickman Fight</span>
+                </div>
+                <div class="game-card" onclick="showGame('geodash')">
+                    <span class="card-icon">🟩</span>
+                    <span class="card-title">Cube Dash</span>
+                </div>
+                <div class="game-card" onclick="showGame('blockblast')">
+                    <span class="card-icon">🟥</span>
+                    <span class="card-title">Block Blast</span>
+                </div>
+                <div class="game-card" onclick="showGame('pong')">
+                    <span class="card-icon">⚪️</span>
+                    <span class="card-title">Pong</span>
+                </div>
+                <div class="game-card" onclick="showGame('harbor')">
+                    <span class="card-icon">⚓️</span>
+                    <span class="card-title">Harbor Master</span>
+                </div>
+                <div class="game-card" onclick="showGame('schach')">
+                    <span class="card-icon">♟️</span>
+                    <span class="card-title">Schach</span>
+                </div>
+                <div class="game-card" onclick="showGame('poker')">
+                    <span class="card-icon">♦️</span>
+                    <span class="card-title">Poker</span>
+                </div>
+                <div class="game-card" onclick="showGame('towerclash')">
+                    <span class="card-icon">🏰</span>
+                    <span class="card-title">Tower Clash</span>
+                </div>
+            </div>
         </div>
-        <div class="divider"></div>
-    </header>
+    </div>
 
-    <div id="menuScroll">
-        <div id="menuButtons">
-            <div class="game-card" onclick="showGame('snake')">
-                <span class="card-icon">🐍</span>
-                <span class="card-title">Snake</span>
-            </div>
-            <div class="game-card" onclick="showGame('flappy')">
-                <span class="card-icon">🐦</span>
-                <span class="card-title">Flappy Bird</span>
-            </div>
-            <div class="game-card" onclick="showGame('nova')">
-                <span class="card-icon">🚀</span>
-                <span class="card-title">Nova Blaster</span>
-            </div>
-            <div class="game-card" onclick="showGame('tetris')">
-                <span class="card-icon">🟦</span>
-                <span class="card-title">Tetris</span>
-            </div>
-            <div class="game-card" onclick="showGame('auto')">
-                <span class="card-icon">🚗</span>
-                <span class="card-title">Auto</span>
-            </div>
-            <div class="game-card" onclick="showGame('tower')">
-                <span class="card-icon">🏰</span>
-                <span class="card-title">Tower Defense</span>
-            </div>
-            <div class="game-card" onclick="showGame('jump')">
-                <span class="card-icon">👨‍🚀</span>
-                <span class="card-title">Space Dash</span>
-            </div>
-            <div class="game-card" onclick="showGame('stickman')">
-                <span class="card-icon">🥷</span>
-                <span class="card-title">Stickman Fight</span>
-            </div>
-            <div class="game-card" onclick="showGame('geodash')">
-                <span class="card-icon">🟩</span>
-                <span class="card-title">Cube Dash</span>
-            </div>
-            <div class="game-card" onclick="showGame('blockblast')">
-                <span class="card-icon">🟥</span>
-                <span class="card-title">Block Blast</span>
-            </div>
-            <div class="game-card" onclick="showGame('pong')">
-                <span class="card-icon">⚪️</span>
-                <span class="card-title">Pong</span>
-            </div>
-            <div class="game-card" onclick="showGame('harbor')">
-                <span class="card-icon">⚓️</span>
-                <span class="card-title">Harbor Master</span>
-            </div>
-            <div class="game-card" onclick="showGame('schach')">
-                <span class="card-icon">♟️</span>
-                <span class="card-title">Schach</span>
-            </div>
-            <div class="game-card" onclick="showGame('poker')">
-                <span class="card-icon">♦️</span>
-                <span class="card-title">Poker</span>
-            </div>
-            <div class="game-card" onclick="showGame('towerclash')">
-                <span class="card-icon">🏰</span>
-                <span class="card-title">Tower Clash</span>
-            </div>
+    <!-- SNAKE -->
+    <div id="snake" class="game">
+        <div class="game-header">
+            <button class="backBtn" onclick="showGame('menu')">⬅ Zurück</button>
+            <span class="game-title">🐍 Snake</span>
+        </div>
+        <div class="iframe-wrap">
+            <iframe src="snake.html" width="600" height="500" scrolling="no"></iframe>
         </div>
     </div>
-</div>
 
-<!-- SNAKE -->
-<div id="snake" class="game">
-    <div class="game-header">
-        <button class="backBtn" onclick="showGame('menu')">⬅ Zurück</button>
-        <span class="game-title">🐍 Snake</span>
+    <!-- FLAPPY -->
+    <div id="flappy" class="game">
+        <div class="game-header">
+            <button class="backBtn" onclick="showGame('menu')">⬅ Zurück</button>
+            <span class="game-title">🐦 Flappy Bird</span>
+        </div>
+        <div class="iframe-wrap">
+            <iframe src="flappybird.html" width="420" height="640" scrolling="no"></iframe>
+        </div>
     </div>
-    <div class="iframe-wrap" style="--iframe-h:500px;">
-        <iframe src="snake.html" width="600" height="500" scrolling="no"></iframe>
-    </div>
-</div>
 
-<!-- FLAPPY -->
-<div id="flappy" class="game">
-    <div class="game-header">
-        <button class="backBtn" onclick="showGame('menu')">⬅ Zurück</button>
-        <span class="game-title">🐦 Flappy Bird</span>
+    <!-- NOVA -->
+    <div id="nova" class="game">
+        <div class="game-header">
+            <button class="backBtn" onclick="showGame('menu')">⬅ Zurück</button>
+            <span class="game-title">🚀 Nova Blaster</span>
+        </div>
+        <div class="iframe-wrap">
+            <iframe src="novablaster.html" width="600" height="600" scrolling="no"></iframe>
+        </div>
     </div>
-    <div class="iframe-wrap" style="--iframe-h:640px;">
-        <iframe src="flappybird.html" width="420" height="640" scrolling="no"></iframe>
-    </div>
-</div>
 
-<!-- NOVA -->
-<div id="nova" class="game">
-    <div class="game-header">
-        <button class="backBtn" onclick="showGame('menu')">⬅ Zurück</button>
-        <span class="game-title">🚀 Nova Blaster</span>
+    <!-- TETRIS -->
+    <div id="tetris" class="game">
+        <div class="game-header">
+            <button class="backBtn" onclick="showGame('menu')">⬅ Zurück</button>
+            <span class="game-title">🟦 Tetris</span>
+        </div>
+        <div class="iframe-wrap">
+            <iframe src="tetris.html" width="420" height="600" scrolling="no"></iframe>
+        </div>
     </div>
-    <div class="iframe-wrap" style="--iframe-h:600px;">
-        <iframe src="novablaster.html" width="600" height="600" scrolling="no"></iframe>
-    </div>
-</div>
 
-<!-- TETRIS -->
-<div id="tetris" class="game">
-    <div class="game-header">
-        <button class="backBtn" onclick="showGame('menu')">⬅ Zurück</button>
-        <span class="game-title">🟦 Tetris</span>
+    <!-- AUTO -->
+    <div id="auto" class="game">
+        <div class="game-header">
+            <button class="backBtn" onclick="showGame('menu')">⬅ Zurück</button>
+            <span class="game-title">🚗 Auto</span>
+        </div>
+        <div class="iframe-wrap">
+            <iframe src="auto.html" width="600" height="700" scrolling="no"></iframe>
+        </div>
     </div>
-    <div class="iframe-wrap" style="--iframe-h:600px;">
-        <iframe src="tetris.html" width="420" height="600" scrolling="no"></iframe>
-    </div>
-</div>
 
-<!-- AUTO -->
-<div id="auto" class="game">
-    <div class="game-header">
-        <button class="backBtn" onclick="showGame('menu')">⬅ Zurück</button>
-        <span class="game-title">🚗 Auto</span>
+    <!-- TOWER DEFENSE -->
+    <div id="tower" class="game">
+        <div class="game-header">
+            <button class="backBtn" onclick="showGame('menu')">⬅ Zurück</button>
+            <span class="game-title">🏰 Tower Defense</span>
+        </div>
+        <div class="iframe-wrap">
+            <iframe src="tower_defense.html" width="600" height="400" scrolling="no"></iframe>
+        </div>
     </div>
-    <div class="iframe-wrap" style="--iframe-h:700px;">
-        <iframe src="auto.html" width="600" height="700" scrolling="no"></iframe>
-    </div>
-</div>
 
-<!-- TOWER DEFENSE -->
-<div id="tower" class="game">
-    <div class="game-header">
-        <button class="backBtn" onclick="showGame('menu')">⬅ Zurück</button>
-        <span class="game-title">🏰 Tower Defense</span>
+    <!-- STICKMAN FIGHT -->
+    <div id="stickman" class="game">
+        <div class="game-header">
+            <button class="backBtn" onclick="showGame('menu')">⬅ Zurück</button>
+            <span class="game-title">🥷 Stickman Fight</span>
+        </div>
+        <div class="iframe-wrap">
+            <iframe src="stickman_fight.html" width="800" height="600" scrolling="no"></iframe>
+        </div>
     </div>
-    <div class="iframe-wrap" style="--iframe-h:600px;">
-        <iframe src="tower_defense.html" width="600" height="400" scrolling="no"></iframe>
-    </div>
-</div>
 
-<!-- STICKMAN FIGHT -->
-<div id="stickman" class="game">
-    <div class="game-header">
-        <button class="backBtn" onclick="showGame('menu')">⬅ Zurück</button>
-        <span class="game-title">🥷 Stickman Fight</span>
+    <!-- JUMP AND RUN -->
+    <div id="jump" class="game">
+        <div class="game-header">
+            <button class="backBtn" onclick="showGame('menu')">⬅ Zurück</button>
+            <span class="game-title">👨‍🚀 Space Dash</span>
+        </div>
+        <div class="iframe-wrap">
+            <iframe src="jump_run.html" width="800" height="600" scrolling="no"></iframe>
+        </div>
     </div>
-    <div class="iframe-wrap" style="--iframe-h:600px;">
-        <iframe src="stickman_fight.html" width="800" height="600" scrolling="no"></iframe>
-    </div>
-</div>
 
-<!-- JUMP AND RUN -->
-<div id="jump" class="game">
-    <div class="game-header">
-        <button class="backBtn" onclick="showGame('menu')">⬅ Zurück</button>
-        <span class="game-title">👨‍🚀 Space Dash</span>
+    <!-- GEOMETRY DASH -->
+    <div id="geodash" class="game">
+        <div class="game-header">
+            <button class="backBtn" onclick="showGame('menu')">⬅ Zurück</button>
+            <span class="game-title">🟩 Cube Dash</span>
+        </div>
+        <div class="iframe-wrap">
+            <iframe src="geo_dash.html" width="800" height="600" scrolling="no"></iframe>
+        </div>
     </div>
-    <div class="iframe-wrap" style="--iframe-h:600px;">
-        <iframe src="jump_run.html" width="800" height="600" scrolling="no"></iframe>
-    </div>
-</div>
 
-<!-- GEOMETRY DASH -->
-<div id="geodash" class="game">
-    <div class="game-header">
-        <button class="backBtn" onclick="showGame('menu')">⬅ Zurück</button>
-        <span class="game-title">🟩 Cube Dash</span>
+    <!-- BLOCK BLAST -->
+    <div id="blockblast" class="game">
+        <div class="game-header">
+            <button class="backBtn" onclick="showGame('menu')">⬅ Zurück</button>
+            <span class="game-title">🟥 Block Blast</span>
+        </div>
+        <div class="iframe-wrap">
+            <iframe src="block_blast.html" width="600" height="600" scrolling="no"></iframe>
+        </div>
     </div>
-    <div class="iframe-wrap" style="--iframe-h:600px;">
-        <iframe src="geo_dash.html" width="800" height="600" scrolling="no"></iframe>
-    </div>
-</div>
 
-<!-- BLOCK BLAST -->
-<div id="blockblast" class="game">
-    <div class="game-header">
-        <button class="backBtn" onclick="showGame('menu')">⬅ Zurück</button>
-        <span class="game-title">🟥 Block Blast</span>
+    <!-- PONG -->
+    <div id="pong" class="game">
+        <div class="game-header">
+            <button class="backBtn" onclick="showGame('menu')">⬅ Zurück</button>
+            <span class="game-title">⚪️ Pong</span>
+        </div>
+        <div class="iframe-wrap">
+            <iframe src="pong.html" width="800" height="600" scrolling="no"></iframe>
+        </div>
     </div>
-    <div class="iframe-wrap" style="--iframe-h:600px;">
-        <iframe src="block_blast.html" width="600" height="600" scrolling="no"></iframe>
-    </div>
-</div>
 
-<!-- PONG -->
-<div id="pong" class="game">
-    <div class="game-header">
-        <button class="backBtn" onclick="showGame('menu')">⬅ Zurück</button>
-        <span class="game-title">⚪️ Pong</span>
+    <!-- HARBOR MASTER -->
+    <div id="harbor" class="game">
+        <div class="game-header">
+            <button class="backBtn" onclick="showGame('menu')">⬅ Zurück</button>
+            <span class="game-title">⚓️ Harbor Master</span>
+        </div>
+        <div class="iframe-wrap">
+            <iframe src="harbor_master.html" width="700" height="600" scrolling="no"></iframe>
+        </div>
     </div>
-    <div class="iframe-wrap" style="--iframe-h:600px;">
-        <iframe src="pong.html" width="800" height="600" scrolling="no"></iframe>
-    </div>
-</div>
 
+    <!-- SCHACH -->
+    <div id="schach" class="game">
+        <div class="game-header">
+            <button class="backBtn" onclick="showGame('menu')">⬅ Zurück</button>
+            <span class="game-title">♟️ Schach</span>
+        </div>
+        <div class="iframe-wrap">
+            <iframe src="schach.html" width="1000" height="600" scrolling="no"></iframe>
+        </div>
+    </div>
 
-<!-- HARBOR MASTER -->
-<div id="harbor" class="game">
-    <div class="game-header">
-        <button class="backBtn" onclick="showGame('menu')">⬅ Zurück</button>
-        <span class="game-title">⚓️ Harbor Master</span>
+    <!-- POKER -->
+    <div id="poker" class="game">
+        <div class="game-header">
+            <button class="backBtn" onclick="showGame('menu')">⬅ Zurück</button>
+            <span class="game-title">♦️ Poker</span>
+        </div>
+        <div class="iframe-wrap">
+            <iframe src="poker.html" width="600" height="600" scrolling="no"></iframe>
+        </div>
     </div>
-    <div class="iframe-wrap" style="--iframe-h:600px;">
-        <iframe src="harbor_master.html" width="700" height="600" scrolling="no"></iframe>
-    </div>
-</div>
 
-<!-- Schach -->
-<div id="schach" class="game">
-    <div class="game-header">
-        <button class="backBtn" onclick="showGame('menu')">⬅ Zurück</button>
-        <span class="game-title">♟️ Schach</span>
+    <!-- TOWER CLASH -->
+    <div id="towerclash" class="game">
+        <div class="game-header">
+            <button class="backBtn" onclick="showGame('menu')">⬅ Zurück</button>
+            <span class="game-title">🏰 Tower Clash</span>
+        </div>
+        <div class="iframe-wrap">
+            <iframe src="tower_clash.html" width="600" height="400" scrolling="no"></iframe>
+        </div>
     </div>
-    <div class="iframe-wrap" style="--iframe-h:600px;">
-        <iframe src="schach.html" width="1000" height="600" scrolling="no"></iframe>
-    </div>
-</div>
-
-<!-- POKER -->
-<div id="poker" class="game">
-    <div class="game-header">
-        <button class="backBtn" onclick="showGame('menu')">⬅ Zurück</button>
-        <span class="game-title">♦️ Poker</span>
-    </div>
-    <div class="iframe-wrap" style="--iframe-h:600px;">
-        <iframe src="poker.html" width="600" height="600" scrolling="no"></iframe>
-    </div>
-</div>
-
-<!-- TOWER CLASH -->
-<div id="towerclash" class="game">
-    <div class="game-header">
-        <button class="backBtn" onclick="showGame('menu')">⬅ Zurück</button>
-        <span class="game-title">🏰 Tower Clash</span>
-    </div>
-    <div class="iframe-wrap" style="--iframe-h:600px;">
-        <iframe src="tower_clash.html" width="600" height="400" scrolling="no"></iframe>
-    </div>
-</div>
-    
-```
 
 </div>
 
@@ -711,7 +640,6 @@ iframe {
 function showGame(id) {
     document.querySelectorAll(".game").forEach(g => g.classList.remove("active"));
     document.getElementById(id).classList.add("active");
-
     if (id === "menu") {
         document.body.classList.remove("game-open");
     } else {
@@ -737,17 +665,16 @@ function fitIframe(gameId) {
     const scale   = Math.min(availW / origW, availH / origH);
     const scaledW = origW * scale;
     const scaledH = origH * scale;
-    const offsetX = (availW  - scaledW) / 2;
-    const offsetY = (availH  - scaledH) / 2;
+    const offsetX = (availW - scaledW) / 2;
+    const offsetY = (availH - scaledH) / 2;
 
     wrap.style.height = availH + "px";
-
-    iframe.style.width          = origW + "px";
-    iframe.style.height         = origH + "px";
-    iframe.style.position       = "absolute";
-    iframe.style.left           = offsetX + "px";
-    iframe.style.top            = offsetY + "px";
-    iframe.style.transform      = `scale(${scale})`;
+    iframe.style.width           = origW + "px";
+    iframe.style.height          = origH + "px";
+    iframe.style.position        = "absolute";
+    iframe.style.left            = offsetX + "px";
+    iframe.style.top             = offsetY + "px";
+    iframe.style.transform       = `scale(${scale})`;
     iframe.style.transformOrigin = "top left";
 }
 
@@ -762,7 +689,7 @@ document.addEventListener("keydown", function(e) {
     }
 }, true);
 
-// Auto-assign accent colors and animation delays to game cards
+// Auto-assign accent colors and animation delays
 (function(){
     const colors = ["#00ff88","#ffcc00","#00d4ff","#ff2d78","#ff7700","#b44eff","#00ffcc","#ff9900","#00ffee","#ff4488"];
     document.querySelectorAll(".game-card").forEach((card, i) => {
@@ -792,11 +719,9 @@ document.addEventListener("keydown", function(e) {
             this.y     = init ? Math.random() * H : H + 10;
             this.r     = Math.random() * 2.5 + 0.5;
             this.color = colors[Math.floor(Math.random() * colors.length)];
-            // faster upward speed so they travel the full height
             this.vy    = -(Math.random() * 1.2 + 0.5);
             this.vx    = (Math.random() - 0.5) * 0.4;
             this.alpha = Math.random() * 0.7 + 0.3;
-            // longer life so they reach the top before fading
             this.life  = Math.random() * 350 + 200;
             this.age   = init ? Math.floor(Math.random() * this.life) : 0;
         }
