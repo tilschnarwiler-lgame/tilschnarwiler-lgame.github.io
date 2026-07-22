@@ -465,6 +465,10 @@ iframe {
                     <span class="card-icon">🏰</span>
                     <span class="card-title">Tower Clash</span>
                 </div>
+                <div class="game-card" onclick="showGame('fruit')">
+                    <span class="card-icon">🍉</span>
+                    <span class="card-title">Fruit Merge</span>
+                </div>
             </div>
         </div>
     </div>
@@ -586,7 +590,7 @@ iframe {
             <span class="game-title">⚪️ Pong</span>
         </div>
         <div class="iframe-wrap">
-            <iframe src="pong.html" width="800" height="600" scrolling="no"></iframe>
+            <iframe src="pong.html" width="850" height="600" scrolling="no"></iframe>
         </div>
     </div>
 
@@ -633,7 +637,16 @@ iframe {
             <iframe src="tower_clash.html" width="600" height="400" scrolling="no"></iframe>
         </div>
     </div>
-
+    <!-- FRUIT MERGE -->
+    <div id="fruit" class="game">
+        <div class="game-header">
+            <button class="backBtn" onclick="showGame('menu')">⬅ Zurück</button>
+            <span class="game-title">🍉 Fruit Merge</span>
+        </div>
+        <div class="iframe-wrap">
+            <iframe src="fruit_merge.html" width="600" height="800" scrolling="no"></iframe>
+        </div>
+    </div>
 </div>
 
 <script>
