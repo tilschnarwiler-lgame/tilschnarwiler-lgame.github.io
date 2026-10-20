@@ -7,83 +7,93 @@
 *{box-sizing:border-box;margin:0;padding:0;}
 html,body{width:100%;height:100%;overflow:hidden;background:#0a0a0a;font-family:'Segoe UI',sans-serif;display:flex;align-items:center;justify-content:center;}
 #scaleRoot{width:960px;height:660px;transform-origin:center center;position:relative;flex-shrink:0;}
-#homescreen{position:absolute;top:0;left:0;width:960px;height:660px;background:#0a0f0a;display:flex;flex-direction:column;z-index:100;}
-.hs-page{display:none;flex:1;overflow-y:auto;padding:28px 48px;}
+#homescreen{position:absolute;top:0;left:0;width:960px;height:660px;background:linear-gradient(170deg,#071525 0%,#0a1e3a 40%,#071018 100%);display:flex;flex-direction:column;z-index:100;overflow:hidden;}
+/* Animated background particles */
+#homescreen::before{content:'';position:absolute;top:0;left:0;right:0;bottom:0;background:radial-gradient(ellipse at 20% 20%,rgba(30,100,200,0.15) 0%,transparent 60%),radial-gradient(ellipse at 80% 70%,rgba(30,111,168,0.15) 0%,transparent 60%);pointer-events:none;z-index:0;}
+.hs-page{display:none;flex:1;overflow-y:auto;position:relative;z-index:1;}
 .hs-page.active{display:flex;flex-direction:column;}
-#hsHome{align-items:center;justify-content:center;gap:28px;}
-#hsHome h1{color:#3dba3d;font-size:48px;letter-spacing:6px;text-shadow:0 0 30px #3dba3d66;font-weight:900;}
-#hsHome .hs-sub{color:#556655;font-size:13px;letter-spacing:3px;text-transform:uppercase;margin-top:-16px;}
-.hs-stats-row{display:flex;gap:20px;}
-.hs-stat-card{background:#111a11;border:1px solid #1e3a1e;border-radius:10px;padding:14px 28px;text-align:center;min-width:130px;}
-.hs-xp-bar-wrap{background:#0f1f2e;border:1px solid #1e4a6a;border-radius:10px;padding:14px 20px;width:340px;cursor:default;transition:all 0.15s;}
-.hs-xp-bar-wrap.xp-ready{cursor:pointer;border-color:#f1c40f;box-shadow:0 0 14px #f1c40f55;}
-.hs-xp-bar-wrap.xp-ready:hover{box-shadow:0 0 20px #f1c40f88;}
-.hs-xp-bar-bg{background:#1a2c3d;border-radius:5px;height:14px;width:100%;overflow:hidden;}
-.hs-xp-bar-fill{height:14px;border-radius:5px;transition:width 0.3s;background:linear-gradient(90deg,#1e6fa8,#5dade2);}
-.hs-stat-card .sc-label{color:#4a7a4a;font-size:11px;text-transform:uppercase;letter-spacing:1px;}
-.hs-stat-card .sc-val{color:#f1c40f;font-size:26px;font-weight:bold;margin-top:4px;}
-.hs-play-btn{background:linear-gradient(135deg,#27ae60,#1e8449);color:#fff;border:none;border-radius:14px;padding:18px 72px;font-size:22px;font-weight:900;cursor:pointer;letter-spacing:2px;box-shadow:0 4px 24px #27ae6055;transition:all 0.15s;}
-.hs-play-btn:hover{transform:scale(1.04);box-shadow:0 6px 32px #27ae6088;}
-.hs-deck-row{display:flex;gap:12px;align-items:center;}
-.hs-deck-slot{width:56px;height:56px;background:#0d150d;border:2px solid #1e3a1e;border-radius:8px;display:flex;align-items:center;justify-content:center;}
+/* ── HOME TAB ── */
+#hsHome{align-items:center;justify-content:center;gap:16px;padding:16px;}
+#hsHome h1{color:#f5d76e;font-size:44px;letter-spacing:4px;font-weight:900;text-shadow:0 2px 0 #7a3a00,0 0 30px #f5a62388,0 4px 8px rgba(0,0,0,0.8);font-family:'Segoe UI Black','Arial Black',sans-serif;}
+#hsHome .hs-sub{color:#a8904a;font-size:11px;letter-spacing:3px;text-transform:uppercase;margin-top:-12px;text-shadow:0 1px 2px rgba(0,0,0,0.8);}
+.hs-stats-row{display:flex;gap:16px;}
+.hs-stat-card{background:linear-gradient(135deg,#0e2035,#122845);border:2px solid #1e5a8a;border-radius:12px;padding:12px 28px;text-align:center;min-width:130px;box-shadow:0 4px 15px rgba(0,0,0,0.5),inset 0 1px 0 rgba(255,255,255,0.05);}
+.hs-stat-card .sc-label{color:#5aaacc;font-size:10px;text-transform:uppercase;letter-spacing:1px;}
+.hs-stat-card .sc-val{color:#f5d76e;font-size:26px;font-weight:bold;margin-top:4px;text-shadow:0 1px 3px rgba(0,0,0,0.5);}
+/* XP Bar */
+.hs-xp-bar-wrap{background:linear-gradient(135deg,#0d1e30,#0f2840);border:2px solid #1a5080;border-radius:12px;padding:12px 18px;width:360px;cursor:default;transition:all 0.2s;box-shadow:0 4px 15px rgba(0,0,0,0.5);}
+.hs-xp-bar-wrap.xp-ready{cursor:pointer;border-color:#f5d76e;box-shadow:0 0 20px #f5d76e55,0 4px 15px rgba(0,0,0,0.5);animation:xp-glow 1.5s infinite;}
+@keyframes xp-glow{0%,100%{box-shadow:0 0 14px #f5d76e44,0 4px 15px rgba(0,0,0,0.5);}50%{box-shadow:0 0 28px #f5d76e99,0 4px 15px rgba(0,0,0,0.5);}}
+.hs-xp-bar-bg{background:#060e18;border-radius:6px;height:16px;width:100%;overflow:hidden;border:1px solid #0e2a44;}
+.hs-xp-bar-fill{height:16px;border-radius:6px;transition:width 0.3s;background:linear-gradient(90deg,#0e7acc,#1eaaff,#88ddff);box-shadow:0 0 8px #1eaaff66;}
+/* Play button */
+.hs-play-btn{background:linear-gradient(135deg,#f5a623,#e8831a);color:#fff;border:none;border-radius:16px;padding:16px 80px;font-size:22px;font-weight:900;cursor:pointer;letter-spacing:2px;box-shadow:0 6px 0 #8b4a00,0 8px 20px rgba(0,0,0,0.5);transition:all 0.1s;text-shadow:0 1px 2px rgba(0,0,0,0.4);border:1px solid #ffcc66;}
+.hs-play-btn:hover{transform:translateY(-2px);box-shadow:0 8px 0 #8b4a00,0 10px 24px rgba(0,0,0,0.5);}
+.hs-play-btn:active{transform:translateY(3px);box-shadow:0 3px 0 #8b4a00,0 5px 12px rgba(0,0,0,0.5);}
+/* Deck slots on home */
+.hs-deck-row{display:flex;gap:10px;align-items:center;}
+.hs-deck-slot{width:58px;height:58px;background:linear-gradient(135deg,#0d1e30,#0f2840);border:2px solid #1a5080;border-radius:10px;display:flex;align-items:center;justify-content:center;box-shadow:0 3px 8px rgba(0,0,0,0.5);}
 .hs-deck-slot canvas{width:44px;height:44px;}
 .hs-deck-label{color:#4a7a4a;font-size:10px;text-transform:uppercase;letter-spacing:1px;margin-right:8px;}
-#hsDeckPage{align-items:center;gap:24px;padding-top:40px;}
-#hsDeckPage h2{color:#3dba3d;font-size:24px;}
-#hsDeckPage .deck-subtitle{color:#666;font-size:12px;margin-top:-16px;margin-bottom:8px;}
-.deck-page-slots{display:flex;gap:16px;justify-content:center;}
-.deck-page-slot{width:80px;height:80px;background:#0d0d0d;border:2px dashed #333;border-radius:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;transition:all 0.15s;}
-.deck-page-slot.locked{cursor:not-allowed;opacity:0.5;}
-.deck-page-slot.locked .slot-num{color:#555;font-size:18px;}
-.deck-page-slot:hover{border-color:#3dba3d;}
-.deck-page-slot.filled{border-style:solid;border-color:#3dba3d;background:#0d150d;}
-.deck-page-slot.selected{border-color:#f1c40f;box-shadow:0 0 14px #f1c40f44;}
-.deck-page-slot canvas{width:64px;height:64px;}
-.deck-page-slot .slot-num{position:absolute;top:-10px;right:-8px;background:#333;color:#888;font-size:10px;width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:bold;}
-.deck-page-towers{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;justify-content:center;max-width:600px;}
-.deck-page-tower{display:flex;flex-direction:column;align-items:center;gap:8px;padding:14px 10px;background:#1a1a1a;border:2px solid #2a2a2a;border-radius:10px;cursor:pointer;transition:all 0.15s;}
-.deck-page-tower.locked{opacity:0.55;}
+/* Notification */
+#hsNotification{display:none;background:linear-gradient(135deg,#1a3a1a,#1e4a1e);border:2px solid #27ae60;border-radius:10px;padding:10px 20px;color:#a8f0a8;font-size:13px;font-weight:bold;box-shadow:0 4px 15px rgba(0,0,0,0.4);}
+/* ── DECK TAB ── */
+#hsDeckPage{align-items:center;gap:20px;padding:24px 48px;}
+#hsDeckPage h2{color:#f5d76e;font-size:22px;font-weight:900;letter-spacing:2px;text-shadow:0 2px 0 #7a3a00;}
+#hsDeckPage .deck-subtitle{color:#5aaacc;font-size:12px;margin-top:-14px;margin-bottom:4px;}
+.deck-page-slots{display:flex;gap:14px;justify-content:center;}
+.deck-page-slot{width:82px;height:82px;background:linear-gradient(135deg,#081422,#0d1e32);border:2px dashed #1a4a72;border-radius:12px;display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;transition:all 0.15s;box-shadow:inset 0 2px 8px rgba(0,0,0,0.5);}
+.deck-page-slot.locked{cursor:not-allowed;opacity:0.4;}
+.deck-page-slot.locked .slot-num{color:#3a3060;font-size:18px;}
+.deck-page-slot:hover{border-color:#f5d76e;}
+.deck-page-slot.filled{border-style:solid;border-color:#f5d76e;background:linear-gradient(135deg,#0e1e32,#132840);box-shadow:0 0 12px #f5d76e33,inset 0 2px 8px rgba(0,0,0,0.3);}
+.deck-page-slot.selected{border-color:#f5d76e;box-shadow:0 0 18px #f5d76e66;}
+.deck-page-slot canvas{width:66px;height:66px;}
+.deck-page-slot .slot-num{position:absolute;top:-10px;right:-8px;background:#0d2040;color:#4a9acc;font-size:10px;width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:bold;border:1px solid #1a4a72;}
+.deck-page-towers{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;justify-content:center;max-width:600px;}
+.deck-page-tower{display:flex;flex-direction:column;align-items:center;gap:7px;padding:12px 8px;background:linear-gradient(135deg,#0d1e30,#0f2840);border:2px solid #0e3a60;border-radius:12px;cursor:pointer;transition:all 0.15s;box-shadow:0 3px 8px rgba(0,0,0,0.4);}
+.deck-page-tower.locked{opacity:0.5;}
 .deck-page-tower.locked canvas{filter:grayscale(1);}
-.deck-page-tower.locked .dpt-name{color:#888;}
-.dpt-btn.select:disabled{background:#333;color:#777;cursor:not-allowed;}
-.deck-page-tower:hover{border-color:#3dba3d;background:#1e2a1e;}
-.deck-page-tower.selected{border-color:#f1c40f;background:#1e1e00;box-shadow:0 0 12px #f1c40f44;}
+.deck-page-tower.locked .dpt-name{color:#5a5080;}
+.dpt-btn.select:disabled{background:#2a2050;color:#5a5080;cursor:not-allowed;}
+.deck-page-tower:hover{border-color:#f5d76e;background:linear-gradient(135deg,#0e2038,#122848);}
+.deck-page-tower.selected{border-color:#f5d76e;box-shadow:0 0 14px #f5d76e44;}
 .deck-page-tower canvas{width:56px;height:56px;}
-.deck-page-tower .dpt-name{color:#ccc;font-size:12px;font-weight:bold;text-align:center;}
-.dpt-actions{display:flex;gap:8px;margin-top:4px;}
-.dpt-btn{padding:5px 12px;border:none;border-radius:5px;cursor:pointer;font-size:11px;font-weight:bold;font-family:'Segoe UI',sans-serif;}
-.dpt-btn.select{background:#27ae60;color:#fff;}
-.dpt-btn.select:hover{background:#2ecc71;}
-.dpt-btn.info{background:#2a3a6a;color:#aac0ff;border:1px solid #3a5aaa;}
-.dpt-btn.info:hover{background:#3a4a8a;}
-/* Tower info popup inside deck page */
-#deckTowerInfo{background:#111a11;border:1px solid #1e3a1e;border-radius:10px;padding:16px 20px;margin-top:8px;display:none;max-width:500px;width:100%;}
+.deck-page-tower .dpt-name{color:#aaddff;font-size:11px;font-weight:bold;text-align:center;}
+.dpt-actions{display:flex;gap:6px;margin-top:2px;}
+.dpt-btn{padding:5px 10px;border:none;border-radius:6px;cursor:pointer;font-size:10px;font-weight:bold;font-family:'Segoe UI',sans-serif;}
+.dpt-btn.select{background:linear-gradient(135deg,#f5a623,#e8831a);color:#fff;box-shadow:0 2px 0 #8b4a00;}
+.dpt-btn.select:hover{background:linear-gradient(135deg,#f7b843,#f0931a);}
+.dpt-btn.info{background:#0d2040;color:#5abaee;border:1px solid #1a5080;}
+.dpt-btn.info:hover{background:#0f2850;}
+#deckTowerInfo{background:linear-gradient(135deg,#0d1e30,#0f2840);border:2px solid #1a5080;border-radius:12px;padding:16px 20px;margin-top:6px;display:none;max-width:500px;width:100%;}
 #deckTowerInfo h3{font-size:14px;margin-bottom:8px;}
-#deckTowerInfo .dti-close{float:right;background:none;border:none;color:#666;cursor:pointer;font-size:14px;}
-#deckPageClearBtn button{color:#e74c3c;font-size:12px;cursor:pointer;padding:8px 20px;background:#2a0000;border:1px solid #661111;border-radius:6px;margin-top:4px;}
+#deckTowerInfo .dti-close{float:right;background:none;border:none;color:#3a8aaa;cursor:pointer;font-size:14px;}
+#deckPageClearBtn button{color:#ff8888;font-size:12px;cursor:pointer;padding:7px 18px;background:#2a0a0a;border:1px solid #661111;border-radius:8px;margin-top:4px;}
 #deckPageClearBtn button:hover{background:#440000;}
-#hsInfo{gap:20px;}
-#hsInfo h2{color:#a8f0a8;font-size:18px;border-bottom:1px solid #1e3a1e;padding-bottom:8px;}
+/* ── INFO TAB ── */
+#hsInfo{gap:16px;padding:20px 40px;}
+#hsInfo h2{color:#f5d76e;font-size:16px;font-weight:900;border-bottom:1px solid #0e3a60;padding-bottom:8px;text-shadow:0 1px 0 #7a3a00;}
 .info-section{margin-bottom:8px;}
-.tower-card{background:#111a11;border:1px solid #1e3a1e;border-radius:10px;padding:16px 20px;display:flex;gap:20px;align-items:flex-start;margin-bottom:12px;}
-.tower-card.locked{opacity:0.6;}
+.tower-card{background:linear-gradient(135deg,#0d1a28,#0e2035);border:1px solid #2e2558;border-radius:12px;padding:14px 18px;display:flex;gap:16px;align-items:flex-start;margin-bottom:10px;box-shadow:0 3px 10px rgba(0,0,0,0.4);}
+.tower-card.locked{opacity:0.55;}
 .tower-card.locked canvas{filter:grayscale(1);}
-.tower-card-canvas{background:#0a0a0a;border:1px solid #222;border-radius:8px;padding:8px;flex-shrink:0;}
+.tower-card-canvas{background:#0a0814;border:1px solid #0e2a44;border-radius:8px;padding:6px;flex-shrink:0;}
 .tower-card-info{flex:1;}
-.tower-card-info h3{font-size:14px;margin-bottom:6px;color:#a8f0a8;}
-.tower-stats{display:grid;grid-template-columns:1fr 1fr;gap:3px 16px;font-size:12px;color:#ccc;line-height:1.8;}
-.tower-stats b{color:#f1c40f;}
-.tower-special{margin-top:8px;font-size:11px;color:#7a9a7a;background:#0d150d;border-radius:5px;padding:6px 10px;border-left:2px solid #3dba3d;}
-.lvl-tabs-mini{display:flex;gap:6px;margin-bottom:10px;}
-.lvl-tab-mini{padding:4px 10px;border:1px solid #333;border-radius:5px;background:#1a1a1a;color:#666;font-size:11px;cursor:pointer;font-weight:bold;}
-.lvl-tab-mini.active{background:#1e3a00;color:#a8f0a8;border-color:#3dba3d;}
-.enemy-card{background:#110e00;border:1px solid #2a1800;border-radius:10px;padding:16px 20px;display:flex;gap:20px;align-items:flex-start;margin-bottom:12px;}
-.enemy-card.locked{opacity:0.5;filter:grayscale(0.8);}
-.enemy-card-canvas{background:#0a0a0a;border:1px solid #222;border-radius:8px;padding:8px;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+.tower-card-info h3{font-size:14px;margin-bottom:6px;}
+.tower-stats{display:grid;grid-template-columns:1fr 1fr;gap:2px 14px;font-size:12px;color:#b0a0d0;line-height:1.8;}
+.tower-stats b{color:#f5d76e;}
+.tower-special{margin-top:8px;font-size:11px;color:#9080c0;background:#060e18;border-radius:6px;padding:6px 10px;border-left:3px solid #0e7acc;}
+.lvl-tabs-mini{display:flex;gap:5px;margin-bottom:10px;}
+.lvl-tab-mini{padding:4px 10px;border:1px solid #0e3a60;border-radius:6px;background:#0d1a28;color:#3a7aaa;font-size:11px;cursor:pointer;font-weight:bold;transition:all 0.15s;}
+.lvl-tab-mini.active{background:#0e7acc;color:#fff;border-color:#1eaaff;box-shadow:0 2px 8px #0e7acc66;}
+.enemy-card{background:linear-gradient(135deg,#1e1215,#2a1520);border:1px solid #4a2030;border-radius:12px;padding:14px 18px;display:flex;gap:16px;align-items:flex-start;margin-bottom:10px;box-shadow:0 3px 10px rgba(0,0,0,0.4);}
+.enemy-card.locked{opacity:0.45;filter:grayscale(0.7);}
+.enemy-card-canvas{background:#0a0814;border:1px solid #3a1525;border-radius:8px;padding:6px;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
 .enemy-card-info{flex:1;}
-.enemy-card-info h3{font-size:14px;margin-bottom:6px;color:#ffcc88;}
-.enemy-stats{display:grid;grid-template-columns:1fr 1fr;gap:3px 16px;font-size:12px;color:#ccc;line-height:1.8;}
-.enemy-stats b{color:#f1c40f;}
+.enemy-card-info h3{font-size:14px;margin-bottom:6px;color:#ffbb88;}
+.enemy-stats{display:grid;grid-template-columns:1fr 1fr;gap:2px 14px;font-size:12px;color:#c0a0b0;line-height:1.8;}
+.enemy-stats b{color:#f5d76e;}
 .enemy-badge{display:inline-block;font-size:10px;padding:2px 8px;border-radius:10px;font-weight:bold;margin-bottom:8px;}
 .badge-light{background:#1a3a1a;color:#a8f0a8;}
 .badge-fast{background:#001a3a;color:#88ccff;}
@@ -93,12 +103,13 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a0a;font-family:
 .badge-boss2{background:#4a0800;color:#ff5500;}
 .badge-boss3{background:#5a0000;color:#ff2200;}
 .badge-boss4{background:#3a0030;color:#ff00cc;}
-.locked-msg{color:#333;font-size:13px;font-style:italic;margin-top:8px;}
-#hsNav{height:56px;background:#0d0d0d;border-top:1px solid #1a2a1a;display:flex;flex-shrink:0;}
-.hs-nav-btn{flex:1;border:none;background:none;color:#445544;cursor:pointer;font-size:11px;font-weight:bold;letter-spacing:1px;text-transform:uppercase;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;transition:color 0.15s;border-top:2px solid transparent;}
-.hs-nav-btn .nav-icon{font-size:18px;}
-.hs-nav-btn.active{color:#3dba3d;border-top-color:#3dba3d;}
-.hs-nav-btn:hover:not(.active){color:#7aaa7a;}
+.locked-msg{color:#3a3060;font-size:13px;font-style:italic;margin-top:8px;}
+/* ── BOTTOM NAV ── */
+#hsNav{height:60px;background:linear-gradient(0deg,#060e18,#141030);border-top:2px solid #0e3a60;display:flex;flex-shrink:0;position:relative;z-index:2;}
+.hs-nav-btn{flex:1;border:none;background:none;color:#1a5a8a;cursor:pointer;font-size:10px;font-weight:bold;letter-spacing:1px;text-transform:uppercase;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;transition:all 0.15s;border-top:3px solid transparent;}
+.hs-nav-btn .nav-icon{font-size:20px;}
+.hs-nav-btn.active{color:#f5d76e;border-top-color:#f5d76e;text-shadow:0 0 8px #f5d76e88;}
+.hs-nav-btn:hover:not(.active){color:#5aaacc;}
 #wrapper{display:flex;flex-direction:column;width:960px;height:660px;}
 #topbar{width:960px;height:36px;background:#111;display:flex;align-items:center;justify-content:center;flex-shrink:0;position:relative;}
 #topbar #msgBox{color:#f1c40f;font-size:13px;font-weight:bold;}
@@ -108,7 +119,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a0a;font-family:
 #confirmBox{background:#1a1a1a;border:2px solid #cc3333;border-radius:10px;padding:28px 36px;text-align:center;color:#fff;max-width:360px;}
 #confirmBox p{font-size:15px;margin-bottom:20px;line-height:1.6;}
 #deckWarnDialog{display:none;position:absolute;top:0;left:0;width:960px;height:660px;background:rgba(0,0,0,0.7);z-index:300;align-items:center;justify-content:center;}
-#deckWarnBox{background:#1a1a1a;border:2px solid #f1c40f;border-radius:10px;padding:28px 36px;text-align:center;color:#fff;max-width:380px;}
+#deckWarnBox{background:linear-gradient(135deg,#0d1e30,#0f2840);border:2px solid #1e6fa8;border-radius:12px;padding:28px 36px;text-align:center;color:#fff;max-width:380px;box-shadow:0 8px 32px rgba(0,0,0,0.6);}
 #choiceDialog{display:none;position:absolute;top:0;left:0;width:960px;height:660px;background:rgba(0,0,0,0.8);z-index:350;align-items:center;justify-content:center;}
 #choiceBox{background:#0f1f2e;border:2px solid #1e6fa8;border-radius:14px;padding:28px 32px;text-align:center;color:#fff;max-width:480px;}
 #choiceBox h3{margin-bottom:18px;color:#5dade2;}
@@ -117,6 +128,35 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a0a;font-family:
 .choice-card:hover{border-color:#1e6fa8;background:#15293a;transform:translateY(-2px);}
 .choice-card canvas{width:64px;height:64px;margin-bottom:8px;}
 .choice-card .cc-name{display:block;color:#fff;font-weight:bold;font-size:13px;}
+
+#rewardTrackDialog{display:none;position:absolute;top:0;left:0;width:960px;height:660px;background:linear-gradient(180deg,#0a1622,#0d2236);z-index:340;flex-direction:column;overflow:hidden;}
+#rtHeader{display:flex;align-items:center;gap:14px;padding:14px 18px;background:rgba(0,0,0,0.35);flex-shrink:0;z-index:5;}
+#rtBackBtn{width:38px;height:38px;border-radius:50%;border:none;background:#1e2d3d;color:#fff;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+#rtBackBtn:hover{background:#2a3f54;}
+#rtTitle{flex:1;color:#fff;font-weight:900;font-size:18px;letter-spacing:1px;}
+#rtXpStat{display:flex;align-items:center;gap:6px;background:#0f1f2e;border:1px solid #1e6fa8;border-radius:20px;padding:6px 16px;font-weight:bold;color:#5dade2;font-size:14px;}
+.rt-xp-icon{font-size:15px;}
+#rtScrollArea{flex:1;overflow-x:auto;overflow-y:hidden;position:relative;}
+#rtTrackInner{position:relative;height:100%;min-width:100%;padding:0 80px;display:flex;align-items:center;}
+#rtLine{position:absolute;left:0;right:0;top:50%;height:10px;margin-top:-5px;background:#1a2c3d;border-radius:5px;}
+#rtLineFill{position:absolute;left:0;top:50%;height:10px;margin-top:-5px;background:linear-gradient(90deg,#1e6fa8,#5dade2);border-radius:5px;transition:width 0.3s;}
+#rtNodes{position:relative;display:flex;align-items:center;gap:90px;z-index:2;}
+.rt-node{display:flex;flex-direction:column;align-items:center;gap:8px;width:90px;flex-shrink:0;}
+.rt-chest{width:74px;height:74px;border-radius:50%;background:#1a1a1a;border:3px solid #2a2a2a;display:flex;align-items:center;justify-content:center;font-size:32px;cursor:pointer;transition:all 0.15s;position:relative;}
+.rt-chest.locked{opacity:0.45;cursor:not-allowed;}
+.rt-chest.preview{opacity:0.3;border-style:dashed;}
+.rt-chest.collected{background:#15291a;border-color:#27ae60;opacity:0.7;}
+.rt-chest.collectible{border-color:#f1c40f;box-shadow:0 0 16px #f1c40f77;animation:rt-pulse 1.4s infinite;}
+.rt-chest.collectible:hover{transform:scale(1.08);}
+@keyframes rt-pulse{0%,100%{box-shadow:0 0 10px #f1c40f55;}50%{box-shadow:0 0 22px #f1c40faa;}}
+.rt-node .rt-level{color:#7a8a9a;font-size:11px;font-weight:bold;}
+.rt-chest-choice{gap:3px;}
+.rt-choice-mini{width:26px;height:26px;border-radius:4px;background:#0d1622;}
+.rt-xp-mark{margin-top:2px;color:#5dade2;font-size:11px;font-weight:900;background:#0d1c2a;border:1px solid #1e3a52;border-radius:8px;padding:2px 8px;}
+.rt-xp-mark.done{color:#7a8a9a;border-color:#1a2c3d;background:#0a141e;}
+.rt-node .rt-label{color:#ccc;font-size:10px;text-align:center;max-width:90px;}
+.rt-node.current .rt-level{color:#f1c40f;}
+.rt-close-btn:hover{background:#444;}
 #deckWarnBox p{font-size:15px;margin-bottom:20px;line-height:1.6;}
 .dw-btns{display:flex;gap:12px;justify-content:center;}
 .dw-btn{padding:9px 24px;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:bold;font-family:'Segoe UI',sans-serif;}
@@ -131,7 +171,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a0a;font-family:
 .conf-btn.no{background:#333;color:#ccc;border:1px solid #555;}
 .conf-btn.no:hover{background:#444;}
 #gamerow{display:flex;width:960px;height:624px;}
-#sidebar{width:180px;min-width:180px;height:624px;background:#1a1a1a;border-right:2px solid #333;display:flex;flex-direction:column;padding:10px 8px;gap:10px;overflow-y:auto;}
+#sidebar{width:180px;min-width:180px;height:624px;background:#071018;border-right:2px solid #0e3060;display:flex;flex-direction:column;padding:10px 8px;gap:10px;overflow-y:auto;}
 #gamearea{position:relative;width:600px;height:624px;flex-shrink:0;}
 #gamearea canvas{display:block;width:600px;height:624px;}
 #gameOverOverlay{display:none;position:absolute;top:0;left:0;width:600px;height:624px;background:rgba(0,0,0,0.85);align-items:center;justify-content:center;z-index:50;}
@@ -144,7 +184,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a0a;font-family:
 .go-btn.restart:hover{background:#2ecc71;}
 .go-btn.menu{background:#922b21;color:#fff;}
 .go-btn.menu:hover{background:#e74c3c;}
-#rightpanel{width:180px;min-width:180px;height:624px;background:#1a1a1a;border-left:2px solid #333;display:flex;flex-direction:column;padding:10px 8px;gap:7px;overflow-y:auto;}
+#rightpanel{width:180px;min-width:180px;height:624px;background:#071018;border-left:2px solid #0e3060;display:flex;flex-direction:column;padding:10px 8px;gap:7px;overflow-y:auto;}
 .s-title{color:#aaa;font-size:10px;text-transform:uppercase;letter-spacing:1px;padding:2px 4px;border-bottom:1px solid #333;margin-bottom:1px;}
 .stat-row{display:flex;justify-content:space-between;align-items:center;padding:2px 4px;}
 .stat-label{color:#888;font-size:11px;}
@@ -235,6 +275,21 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a0a;font-family:
   <h3>🎁 Wähle eine Freischaltung</h3>
   <div id="choiceOptions"></div>
 </div></div>
+<div id="rewardTrackDialog">
+  <div id="rtHeader">
+    <button id="rtBackBtn" onclick="hideRewardTrack()">←</button>
+    <div id="rtTitle">XP-PFAD</div>
+    <div id="rtXpStat"><span class="rt-xp-icon">⭐</span><span id="rtXpStatText">0</span></div>
+  </div>
+  <div id="rtScrollArea">
+    <div id="rtTrackInner">
+      <div id="rtLine"></div>
+      <div id="rtLineFill"></div>
+      <div id="rtNodes"></div>
+    </div>
+  </div>
+</div>
+
 <div id="wrapper" style="display:none;">
 <div id="topbar"><button id="homeBtn" onclick="askHome()">🏠 Home</button><span id="msgBox"></span></div>
 <div id="gamerow">
@@ -299,15 +354,40 @@ const XP_LEVEL_REQ=[100,1000,2000,4000,6000,9000,13000];
 function xpRequiredForLevel(lvl){return XP_LEVEL_REQ[lvl-1]||(XP_LEVEL_REQ[XP_LEVEL_REQ.length-1]+(lvl-XP_LEVEL_REQ.length)*4000);}
 
 // Unlock stages in order. 'choice' = pick one of two towers. 'slot' = +1 deck slot. 'free' = automatic unlock.
+// All tower types in order of potential unlock (excluding archer which is always free)
+const ALL_UNLOCKABLE=['cannon','mage','poison','tesla','inferno','wall','bomb'];
+
+// UNLOCK_STAGES defines each reward in order.
+// 'choice' stages have a fixed 'anchor' tower plus a dynamic second option (all not-yet-unlocked, excluding anchor).
+// 'slot' stages grant a new deck slot.
+// 'free' stages grant a tower automatically (last remaining).
 const UNLOCK_STAGES=[
-  {level:1,type:'choice',options:['cannon','mage']},
-  {level:2,type:'slot'},
-  {level:3,type:'choice',options:['poison','tesla']},
-  {level:4,type:'slot'},
-  {level:5,type:'choice',options:['inferno','wall']},
-  {level:6,type:'slot'},
-  {level:7,type:'free',tower:'bomb'}
+  {level:1,type:'choice',anchor:'cannon'},            // B1: Kanone oder Magier
+  {level:2,type:'choice',anchor:'poison'},             // B2: Gift oder was übrig ist
+  {level:3,type:'slot'},                               // B3: 2. Slot
+  {level:4,type:'choice',anchor:'tesla'},              // B4: Tesla oder was übrig ist
+  {level:5,type:'slot'},                               // B5: 3. Slot
+  {level:6,type:'choice',anchor:'wall'},               // B6: Mauer oder was übrig ist
+  {level:7,type:'choice',anchor:'inferno'},            // B7: Inferno oder was übrig ist
+  {level:8,type:'choice',anchor:'bomb'},               // B8: Bombe oder was übrig ist
+  {level:9,type:'slot'},                               // B9: 4. Slot
+  {level:10,type:'free'}                               // B10: letzte noch nicht freigeschaltete Karte
 ];
+
+// Compute the actual available options for a choice stage at collection time.
+// anchor = the fixed tower for this stage; the second option = all unlockable not yet owned, minus anchor.
+function getChoiceOptions(stage){
+  const anchor=stage.anchor;
+  // Anchor must not already be unlocked
+  const anchorAvail=!unlockedTowers.includes(anchor);
+  // Find the single best leftover: first unlockable tower that isn't the anchor and isn't unlocked yet
+  const leftover=ALL_UNLOCKABLE.filter(t=>t!==anchor&&!unlockedTowers.includes(t));
+  const secondOption=leftover.length>0?leftover[0]:null;
+  const avail=[];
+  if(anchorAvail)avail.push(anchor);
+  if(secondOption)avail.push(secondOption);
+  return avail;
+}
 
 // Strict consistency check: recompute the slot count that should be unlocked at the current
 // playerLevel, so a stale/corrupted save can never grant more slots than actually earned.
@@ -352,30 +432,64 @@ function awardXP(amount){
 // Collects the next queued reward, applying its effect and showing the relevant dialog/message.
 function collectNextReward(){
   if(pendingRewards.length===0)return;
+  collectRewardAt(0);
+}
+
+function rewardIcon(stage){
+  if(stage.type==='slot')return'🗂️';
+  if(stage.type==='free')return'🎁';
+  if(stage.type==='choice')return'❓';
+  return'🎁';
+}
+function rewardLabel(stage,isKnown){
+  if(stage.type==='slot')return'Neuer Slot';
+  if(stage.type==='free'){
+    if(!isKnown)return'???';
+    const remaining=ALL_UNLOCKABLE.filter(t=>!unlockedTowers.includes(t));
+    return remaining.length>0?(TOWER_DEFS[remaining[0]]?TOWER_DEFS[remaining[0]].label:'???'):'???';
+  }
+  if(stage.type==='choice'){
+    if(!isKnown)return'???';
+    const avail=getChoiceOptions(stage);
+    const names=avail.map(o=>TOWER_DEFS[o]?TOWER_DEFS[o].label.replace('turm','').replace('Turm',''):o);
+    return names.join(' oder ');
+  }
+  return'???';
+}
+
+// Collects the reward at a specific index in the queue. Only index 0 (leftmost/oldest) can be
+// collected first - later ones are locked until earlier ones are claimed, Clash-Royale style.
+function collectRewardAt(idx){
+  if(idx!==0||pendingRewards.length===0)return;
   const reward=pendingRewards.shift();
   const stage=reward.stage;
   if(stage.type==='slot'){
     unlockedSlots=Math.min(4,unlockedSlots+1);
     saveProgress();renderHsDeck();renderHsXpBar();updateUI();
     showHsNotification('🔓 Slot '+unlockedSlots+' freigeschaltet! Du hast jetzt '+unlockedSlots+' Deck-Slots.');
-    collectNextReward();
+    showRewardTrack();
   } else if(stage.type==='free'){
-    if(!unlockedTowers.includes(stage.tower))unlockedTowers.push(stage.tower);
-    saveProgress();renderHsDeck();renderHsXpBar();updateUI();
-    showHsNotification('🔓 '+(TOWER_DEFS[stage.tower]?TOWER_DEFS[stage.tower].label:stage.tower)+' freigeschaltet!');
-    collectNextReward();
+    // Grant last remaining unlockable tower automatically
+    const remaining=ALL_UNLOCKABLE.filter(t=>!unlockedTowers.includes(t));
+    if(remaining.length>0){
+      unlockedTowers.push(remaining[0]);
+      saveProgress();renderHsDeck();renderHsXpBar();updateUI();
+      showHsNotification('🔓 '+(TOWER_DEFS[remaining[0]]?TOWER_DEFS[remaining[0]].label:remaining[0])+' freigeschaltet!');
+    }
+    showRewardTrack();
   } else if(stage.type==='choice'){
-    const avail=stage.options.filter(o=>!unlockedTowers.includes(o));
+    const avail=getChoiceOptions(stage);
     if(avail.length===0){
-      saveProgress();collectNextReward();
+      saveProgress();showRewardTrack();
     } else if(avail.length===1){
       unlockedTowers.push(avail[0]);
-      queueMsg('🔓 '+TOWER_DEFS[avail[0]].label+' freigeschaltet!');
       saveProgress();renderHsDeck();renderHsXpBar();updateUI();
-      collectNextReward();
+      showHsNotification('🔓 '+TOWER_DEFS[avail[0]].label+' freigeschaltet!');
+      showRewardTrack();
     } else {
       pendingChoice={options:avail};
       saveProgress();
+      hideRewardTrack();
       showChoiceDialog();
     }
   }
@@ -388,8 +502,8 @@ function resolveChoice(chosenType){
   saveProgress();
   hideChoiceDialog();
   renderHsDeck();renderHsXpBar();updateUI();
-  // Continue collecting any further queued rewards
-  collectNextReward();
+  // If more rewards remain in the queue, show the track so the player can collect them one by one
+  if(pendingRewards.length>0)showRewardTrack();
 }
 
 function updateXpBars(){
@@ -419,8 +533,99 @@ function renderHsXpBar(){
 
 function onXpBarClick(){
   if(pendingChoice){showChoiceDialog();return;}
-  if(pendingRewards.length>0){collectNextReward();}
+  showRewardTrack();
 }
+
+function renderRewardTrack(){
+  const nodesDiv=document.getElementById('rtNodes');if(!nodesDiv)return;
+  nodesDiv.innerHTML='';
+  const xpStatText=document.getElementById('rtXpStatText');
+  if(xpStatText)xpStatText.textContent='Lvl '+playerLevel+' · '+playerXP+'/'+xpRequiredForLevel(playerLevel)+' XP';
+
+  const firstPendingIdx=(playerLevel-2)+1-pendingRewards.length;
+  let currentNode=null;
+
+  let cumulativeXp=0;
+  const cumulativeAtLevel=[0,0];
+  for(let L=2;L<=UNLOCK_STAGES.length+2;L++){cumulativeXp+=xpRequiredForLevel(L-1);cumulativeAtLevel[L]=cumulativeXp;}
+
+  UNLOCK_STAGES.forEach((stage,i)=>{
+    const lvlNeeded=i+2;
+    const isCollected=i<firstPendingIdx;
+    const pendingIdx=pendingRewards.findIndex(r=>r.stage===stage);
+    const isCollectible=pendingIdx===0;
+    const isQueuedLocked=pendingIdx>0;
+    const isFuture=pendingIdx===-1&&!isCollected;
+    // Known = collected, collectible, directly queued, OR the very next future stage
+    const isNextFuture=isFuture&&pendingRewards.length===0&&i===Math.max(0,firstPendingIdx);
+    const isKnown=stage.type==='slot'||isCollected||isCollectible||isQueuedLocked||isNextFuture;
+
+    const node=document.createElement('div');
+    node.className='rt-node'+(isCollectible?' current':'');
+    const chest=document.createElement('div');
+    chest.className='rt-chest'+
+      (isCollected?' collected':'')+
+      (isQueuedLocked||isFuture?' locked':'')+
+      (isFuture?' preview':'')+
+      (isCollectible?' collectible':'');
+    if(isCollected){
+      chest.textContent='✅';
+    } else if(stage.type==='choice'&&isKnown){
+      chest.classList.add('rt-chest-choice');
+      getChoiceOptions(stage).forEach(type=>{
+        const c=document.createElement('canvas');c.width=28;c.height=28;c.className='rt-choice-mini';
+        setTimeout(()=>{drawTowerOnCanvas(c,type,1);},0);
+        chest.appendChild(c);
+      });
+    } else {
+      chest.textContent=isKnown?rewardIcon(stage):'❓';
+    }
+    if(isCollectible)chest.onclick=()=>collectRewardAt(pendingIdx);
+    node.appendChild(chest);
+    const lvl=document.createElement('div');lvl.className='rt-level';lvl.textContent='Level '+lvlNeeded;node.appendChild(lvl);
+    const label=document.createElement('div');label.className='rt-label';label.textContent=rewardLabel(stage,isKnown);node.appendChild(label);
+    const xpMark=document.createElement('div');xpMark.className='rt-xp-mark'+(isCollected?' done':'');
+    xpMark.textContent=(cumulativeAtLevel[lvlNeeded]||0)+' XP';
+    node.appendChild(xpMark);
+    nodesDiv.appendChild(node);
+    if(isCollectible&&!currentNode)currentNode=node;
+  });
+
+  if(!currentNode){
+    const allNodes=nodesDiv.children;
+    const idx=Math.max(0,Math.min(allNodes.length-1,playerLevel-2));
+    currentNode=allNodes[idx]||allNodes[allNodes.length-1];
+    if(currentNode)currentNode.classList.add('current');
+  }
+
+  // Progress fill: portion of the line considered "done" (collected real stages)
+  const totalStages=UNLOCK_STAGES.length;
+  const collectedCount=Math.max(0,Math.min(totalStages,firstPendingIdx));
+  const fillRatio=totalStages>0?collectedCount/totalStages:0;
+  const fill=document.getElementById('rtLineFill');
+  if(fill)fill.style.width=(fillRatio*100)+'%';
+
+  return currentNode;
+}
+function showRewardTrack(){
+  const currentNode=renderRewardTrack();
+  document.getElementById('rewardTrackDialog').style.display='flex';
+  // Scroll so the current position is centered in the middle of the visible track.
+  // Use double rAF to guarantee the browser has computed layout (offsetLeft) before measuring.
+  requestAnimationFrame(()=>{
+    requestAnimationFrame(()=>{
+      const scrollArea=document.getElementById('rtScrollArea');
+      if(!scrollArea)return;
+      const target=currentNode||document.getElementById('rtNodes').lastElementChild;
+      if(target){
+        const targetCenter=target.offsetLeft+(target.offsetWidth||90)/2;
+        const visibleWidth=scrollArea.clientWidth||scrollArea.getBoundingClientRect().width||960;
+        scrollArea.scrollLeft=Math.max(0,targetCenter-visibleWidth/2);
+      }
+    });
+  });
+}
+function hideRewardTrack(){document.getElementById('rewardTrackDialog').style.display='none';}
 
 function showChoiceDialog(){
   if(!pendingChoice)return;
