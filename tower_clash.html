@@ -5,7 +5,7 @@
 <title>Tower Defense</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
-html,body{width:100%;height:100%;overflow:hidden;background:#0a0a0a;font-family:'Segoe UI',sans-serif;display:flex;align-items:center;justify-content:center;}
+html,body{width:100%;height:100%;overflow:hidden;background:#060e18;font-family:'Segoe UI',sans-serif;display:flex;align-items:center;justify-content:center;}
 #scaleRoot{width:960px;height:660px;transform-origin:center center;position:relative;flex-shrink:0;}
 #homescreen{position:absolute;top:0;left:0;width:960px;height:660px;background:linear-gradient(170deg,#071525 0%,#0a1e3a 40%,#071018 100%);display:flex;flex-direction:column;z-index:100;overflow:hidden;}
 /* Animated background particles */
@@ -21,6 +21,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a0a;font-family:
 .hs-stat-card .sc-label{color:#5aaacc;font-size:10px;text-transform:uppercase;letter-spacing:1px;}
 .hs-stat-card .sc-val{color:#f5d76e;font-size:26px;font-weight:bold;margin-top:4px;text-shadow:0 1px 3px rgba(0,0,0,0.5);}
 /* XP Bar */
+.hs-reward-track-label{color:#5abaee;font-size:10px;font-weight:900;letter-spacing:2px;text-transform:uppercase;margin-bottom:4px;}
 .hs-xp-bar-wrap{background:linear-gradient(135deg,#0d1e30,#0f2840);border:2px solid #1a5080;border-radius:12px;padding:12px 18px;width:360px;cursor:default;transition:all 0.2s;box-shadow:0 4px 15px rgba(0,0,0,0.5);}
 .hs-xp-bar-wrap.xp-ready{cursor:pointer;border-color:#f5d76e;box-shadow:0 0 20px #f5d76e55,0 4px 15px rgba(0,0,0,0.5);animation:xp-glow 1.5s infinite;}
 @keyframes xp-glow{0%,100%{box-shadow:0 0 14px #f5d76e44,0 4px 15px rgba(0,0,0,0.5);}50%{box-shadow:0 0 28px #f5d76e99,0 4px 15px rgba(0,0,0,0.5);}}
@@ -111,12 +112,12 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a0a;font-family:
 .hs-nav-btn.active{color:#f5d76e;border-top-color:#f5d76e;text-shadow:0 0 8px #f5d76e88;}
 .hs-nav-btn:hover:not(.active){color:#5aaacc;}
 #wrapper{display:flex;flex-direction:column;width:960px;height:660px;}
-#topbar{width:960px;height:36px;background:#111;display:flex;align-items:center;justify-content:center;flex-shrink:0;position:relative;}
+#topbar{width:960px;height:36px;background:#071018;border-bottom:1px solid #0e3060;display:flex;align-items:center;justify-content:center;flex-shrink:0;position:relative;}
 #topbar #msgBox{color:#f1c40f;font-size:13px;font-weight:bold;}
-#homeBtn{position:absolute;left:10px;top:5px;background:#2a2a2a;color:#aaa;border:1px solid #444;border-radius:5px;padding:4px 10px;cursor:pointer;font-size:11px;font-weight:bold;}
+#homeBtn{position:absolute;left:10px;top:5px;background:#0d1e30;color:#5abaee;border:1px solid #1a5080;border-radius:5px;padding:4px 10px;cursor:pointer;font-size:11px;font-weight:bold;}
 #homeBtn:hover{background:#3a3a3a;color:#fff;}
 #confirmDialog{display:none;position:absolute;top:0;left:0;width:960px;height:660px;background:rgba(0,0,0,0.7);z-index:300;align-items:center;justify-content:center;}
-#confirmBox{background:#1a1a1a;border:2px solid #cc3333;border-radius:10px;padding:28px 36px;text-align:center;color:#fff;max-width:360px;}
+#confirmBox{background:linear-gradient(135deg,#0d1e30,#0f2840);border:2px solid #1a5080;border-radius:10px;padding:28px 36px;text-align:center;color:#fff;max-width:360px;}
 #confirmBox p{font-size:15px;margin-bottom:20px;line-height:1.6;}
 #deckWarnDialog{display:none;position:absolute;top:0;left:0;width:960px;height:660px;background:rgba(0,0,0,0.7);z-index:300;align-items:center;justify-content:center;}
 #deckWarnBox{background:linear-gradient(135deg,#0d1e30,#0f2840);border:2px solid #1e6fa8;border-radius:12px;padding:28px 36px;text-align:center;color:#fff;max-width:380px;box-shadow:0 8px 32px rgba(0,0,0,0.6);}
@@ -124,7 +125,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a0a;font-family:
 #choiceBox{background:#0f1f2e;border:2px solid #1e6fa8;border-radius:14px;padding:28px 32px;text-align:center;color:#fff;max-width:480px;}
 #choiceBox h3{margin-bottom:18px;color:#5dade2;}
 #choiceOptions{display:flex;gap:16px;justify-content:center;}
-.choice-card{background:#1a1a1a;border:2px solid #2a2a2a;border-radius:10px;padding:16px;cursor:pointer;transition:all 0.15s;width:170px;}
+.choice-card{background:#0d1e30;border:2px solid #0e3060;border-radius:10px;padding:16px;cursor:pointer;transition:all 0.15s;width:170px;}
 .choice-card:hover{border-color:#1e6fa8;background:#15293a;transform:translateY(-2px);}
 .choice-card canvas{width:64px;height:64px;margin-bottom:8px;}
 .choice-card .cc-name{display:block;color:#fff;font-weight:bold;font-size:13px;}
@@ -142,7 +143,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a0a;font-family:
 #rtLineFill{position:absolute;left:0;top:50%;height:10px;margin-top:-5px;background:linear-gradient(90deg,#1e6fa8,#5dade2);border-radius:5px;transition:width 0.3s;}
 #rtNodes{position:relative;display:flex;align-items:center;gap:90px;z-index:2;}
 .rt-node{display:flex;flex-direction:column;align-items:center;gap:8px;width:90px;flex-shrink:0;}
-.rt-chest{width:74px;height:74px;border-radius:50%;background:#1a1a1a;border:3px solid #2a2a2a;display:flex;align-items:center;justify-content:center;font-size:32px;cursor:pointer;transition:all 0.15s;position:relative;}
+.rt-chest{width:74px;height:74px;border-radius:50%;background:#0d1e30;border:3px solid #1a4a72;display:flex;align-items:center;justify-content:center;font-size:32px;cursor:pointer;transition:all 0.15s;position:relative;}
 .rt-chest.locked{opacity:0.45;cursor:not-allowed;}
 .rt-chest.preview{opacity:0.3;border-style:dashed;}
 .rt-chest.collected{background:#15291a;border-color:#27ae60;opacity:0.7;}
@@ -154,51 +155,51 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a0a;font-family:
 .rt-choice-mini{width:26px;height:26px;border-radius:4px;background:#0d1622;}
 .rt-xp-mark{margin-top:2px;color:#5dade2;font-size:11px;font-weight:900;background:#0d1c2a;border:1px solid #1e3a52;border-radius:8px;padding:2px 8px;}
 .rt-xp-mark.done{color:#7a8a9a;border-color:#1a2c3d;background:#0a141e;}
-.rt-node .rt-label{color:#ccc;font-size:10px;text-align:center;max-width:90px;}
+.rt-node .rt-label{color:#aaddff;font-size:10px;text-align:center;max-width:90px;}
 .rt-node.current .rt-level{color:#f1c40f;}
 .rt-close-btn:hover{background:#444;}
 #deckWarnBox p{font-size:15px;margin-bottom:20px;line-height:1.6;}
 .dw-btns{display:flex;gap:12px;justify-content:center;}
 .dw-btn{padding:9px 24px;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:bold;font-family:'Segoe UI',sans-serif;}
-.dw-btn.deck{background:#27ae60;color:#fff;}
-.dw-btn.deck:hover{background:#2ecc71;}
-.dw-btn.ok{background:#333;color:#ccc;border:1px solid #555;}
-.dw-btn.ok:hover{background:#444;}
+.dw-btn.deck{background:linear-gradient(135deg,#f5a623,#e8831a);color:#fff;box-shadow:0 3px 0 #8b4a00;}
+.dw-btn.deck:hover{background:linear-gradient(135deg,#f7b843,#f0931a);}
+.dw-btn.ok{background:linear-gradient(135deg,#f5a623,#e8831a);color:#fff;box-shadow:0 3px 0 #8b4a00;}
+.dw-btn.ok:hover{background:linear-gradient(135deg,#f7b843,#f0931a);}
 .conf-btns{display:flex;gap:12px;justify-content:center;}
 .conf-btn{padding:9px 24px;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:bold;font-family:'Segoe UI',sans-serif;}
-.conf-btn.yes{background:#cc2222;color:#fff;}
-.conf-btn.yes:hover{background:#ee3333;}
-.conf-btn.no{background:#333;color:#ccc;border:1px solid #555;}
-.conf-btn.no:hover{background:#444;}
-#gamerow{display:flex;width:960px;height:624px;}
-#sidebar{width:180px;min-width:180px;height:624px;background:#071018;border-right:2px solid #0e3060;display:flex;flex-direction:column;padding:10px 8px;gap:10px;overflow-y:auto;}
+.conf-btn.yes{background:linear-gradient(135deg,#f5a623,#e8831a);color:#fff;box-shadow:0 3px 0 #8b4a00;}
+.conf-btn.yes:hover{background:linear-gradient(135deg,#f7b843,#f0931a);}
+.conf-btn.no{background:#1a3a5a;color:#aaddff;border:1px solid #1a5080;}
+.conf-btn.no:hover{background:#1e4a6a;}
+#gamerow{display:flex;width:960px;height:624px;background:#0a1e3a;}
+#sidebar{width:180px;min-width:180px;height:624px;background:#0a1828;border-right:2px solid #1a4a72;display:flex;flex-direction:column;padding:10px 8px;gap:10px;overflow-y:auto;}
 #gamearea{position:relative;width:600px;height:624px;flex-shrink:0;}
 #gamearea canvas{display:block;width:600px;height:624px;}
 #gameOverOverlay{display:none;position:absolute;top:0;left:0;width:600px;height:624px;background:rgba(0,0,0,0.85);align-items:center;justify-content:center;z-index:50;}
 #gameOverBox{text-align:center;color:#fff;}
 #goTitle{color:#e74c3c;font-size:36px;font-weight:bold;margin-bottom:14px;}
-#goWave{color:#ccc;font-size:18px;margin-bottom:8px;}
+#goWave{color:#aaddff;font-size:18px;margin-bottom:8px;}
 #goHighscore{color:#f1c40f;font-size:15px;font-weight:bold;margin-bottom:20px;min-height:20px;}
 .go-btn{display:block;width:260px;margin:0 auto 12px auto;padding:14px;border:none;border-radius:8px;font-size:16px;font-weight:bold;cursor:pointer;font-family:'Segoe UI',sans-serif;}
 .go-btn.restart{background:#27ae60;color:#fff;}
 .go-btn.restart:hover{background:#2ecc71;}
-.go-btn.menu{background:#922b21;color:#fff;}
-.go-btn.menu:hover{background:#e74c3c;}
-#rightpanel{width:180px;min-width:180px;height:624px;background:#071018;border-left:2px solid #0e3060;display:flex;flex-direction:column;padding:10px 8px;gap:7px;overflow-y:auto;}
-.s-title{color:#aaa;font-size:10px;text-transform:uppercase;letter-spacing:1px;padding:2px 4px;border-bottom:1px solid #333;margin-bottom:1px;}
+.go-btn.menu{background:linear-gradient(135deg,#f5a623,#e8831a);color:#fff;box-shadow:0 3px 0 #8b4a00;}
+.go-btn.menu:hover{background:linear-gradient(135deg,#f7b843,#f0931a);}
+#rightpanel{width:180px;min-width:180px;height:624px;background:#0a1828;border-left:2px solid #1a4a72;display:flex;flex-direction:column;padding:10px 8px;gap:7px;overflow-y:auto;}
+.s-title{color:#5abaee;font-size:10px;text-transform:uppercase;letter-spacing:1px;padding:2px 4px;border-bottom:1px solid #0e3060;margin-bottom:1px;}
 .stat-row{display:flex;justify-content:space-between;align-items:center;padding:2px 4px;}
-.stat-label{color:#888;font-size:11px;}
+.stat-label{color:#5abaee;font-size:11px;}
 .stat-val{color:#fff;font-size:13px;font-weight:bold;}
 .stat-val.gold{color:#f1c40f;}
 .hp-bar-wrap{padding:2px 4px;}
-.hp-bar-bg{background:#333;border-radius:3px;height:10px;width:100%;}
+.hp-bar-bg{background:#0e2a44;border-radius:3px;height:10px;width:100%;}
 .hp-bar-fill{height:10px;border-radius:3px;transition:width 0.2s;}
 .xp-bar-wrap{padding:2px 4px;margin-bottom:8px;}
-.xp-bar-bg{background:#2a2a3a;border-radius:3px;height:8px;width:100%;overflow:hidden;}
+.xp-bar-bg{background:#0e2a44;border-radius:3px;height:8px;width:100%;overflow:hidden;}
 .xp-bar-fill{height:8px;border-radius:3px;transition:width 0.2s;background:linear-gradient(90deg,#1e6fa8,#5dade2);}
-.tbtn{width:100%;min-height:70px;padding:8px 6px;border:none;border-radius:6px;cursor:pointer;font-size:11px;font-weight:bold;text-align:left;display:flex;flex-direction:row;align-items:center;gap:7px;margin-bottom:5px;transition:all 0.15s;background:#3a3a3a;color:#aaa;border:1px solid #555;}
+.tbtn{width:100%;min-height:70px;padding:8px 6px;border:none;border-radius:6px;cursor:pointer;font-size:11px;font-weight:bold;text-align:left;display:flex;flex-direction:row;align-items:center;gap:7px;margin-bottom:5px;transition:all 0.15s;background:#0a1828;color:#aaddff;border:1px solid #0e3a60;}
 .tbtn:last-child{margin-bottom:0;}
-.tbtn:disabled{background:#2e2e2e;color:#777;border:1px solid #444;opacity:0.6;cursor:not-allowed;filter:none;}
+.tbtn:disabled{background:#060e18;color:#2a5a7a;border:1px solid #0e2a44;opacity:0.6;cursor:not-allowed;filter:none;}
 .tbtn:disabled canvas{opacity:1!important;filter:none!important;}
 .tbtn-text{display:flex;flex-direction:column;gap:1px;flex:1;min-width:0;}
 .tbtn .btn-name{font-size:11px;}
@@ -216,23 +217,23 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a0a;font-family:
 .wave-btn:hover:not(:disabled){background:#cc2222;}
 .wave-btn:disabled{opacity:0.4;cursor:not-allowed;}
 .speed-bar{display:flex;width:100%;border-radius:5px;overflow:hidden;height:32px;}
-.speed-btn{flex:1;border:none;cursor:pointer;background:#2a2a2a;border-right:1px solid #111;display:flex;align-items:center;justify-content:center;padding:0;transition:background 0.15s;}
+.speed-btn{flex:1;border:none;cursor:pointer;background:#0a1828;border-right:1px solid #0e3060;display:flex;align-items:center;justify-content:center;padding:0;transition:background 0.15s;}
 .speed-btn:last-child{border-right:none;}
-.speed-btn:hover{background:#3a3a3a;}
-.speed-btn.active{background:#8b1a1a;}
+.speed-btn:hover{background:#0f2840;}
+.speed-btn.active{background:linear-gradient(135deg,#c47a10,#f5a623);}
 .speed-btn canvas{display:block;}
 .divider{height:1px;background:#2a2a2a;margin:1px 0;}
-#upgPanel{display:none;background:#222;border:1px solid #555;border-radius:6px;padding:8px;}
+#upgPanel{display:none;background:#0a1828;border:1px solid #1a5080;border-radius:6px;padding:8px;}
 #upgPanel .upg-title{color:#fff;font-size:12px;font-weight:bold;margin-bottom:4px;}
-#upgPanel .upg-stat{color:#aaa;font-size:11px;line-height:1.6;}
-#upgPanel .upg-info{color:#f1c40f;font-size:10px;margin-top:4px;border-top:1px solid #333;padding-top:4px;line-height:1.6;}
-#upgPanel .upg-btn{margin-top:5px;width:100%;padding:5px;background:#3a3a00;color:#f1c40f;border:1px solid #888800;border-radius:4px;cursor:pointer;font-size:11px;font-weight:bold;}
-#upgPanel .upg-btn:hover:not(:disabled){background:#555500;}
+#upgPanel .upg-stat{color:#aaddff;font-size:11px;line-height:1.6;}
+#upgPanel .upg-info{color:#f1c40f;font-size:10px;margin-top:4px;border-top:1px solid #0e3060;padding-top:4px;line-height:1.6;}
+#upgPanel .upg-btn{margin-top:5px;width:100%;padding:5px;background:linear-gradient(135deg,#c47a10,#f5a623);color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:11px;font-weight:bold;}
+#upgPanel .upg-btn:hover:not(:disabled){background:linear-gradient(135deg,#d48a20,#f7b843);}
 #upgPanel .upg-btn:disabled{opacity:0.4;cursor:not-allowed;}
 #upgPanel .sell-btn{margin-top:4px;width:100%;padding:5px;background:#5a1a1a;color:#ffaaaa;border:1px solid #aa3333;border-radius:4px;cursor:pointer;font-size:11px;font-weight:bold;}
 #upgPanel .sell-btn:hover{background:#882222;}
-#upgPanel .upg-done{color:#888;font-size:10px;margin-top:4px;border-top:1px solid #333;padding-top:4px;}
-#upgPanel .close-btn{float:right;background:none;border:none;color:#888;cursor:pointer;font-size:14px;line-height:1;}
+#upgPanel .upg-done{color:#3a7aaa;font-size:10px;margin-top:4px;border-top:1px solid #0e3060;padding-top:4px;}
+#upgPanel .close-btn{float:right;background:none;border:none;color:#5abaee;cursor:pointer;font-size:14px;line-height:1;}
 .no-tower{color:#555;font-size:11px;padding:4px;}
 </style>
 </head>
@@ -240,8 +241,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a0a;font-family:
 <div id="scaleRoot">
 <div id="homescreen">
 <div id="hsHome" class="hs-page active">
-<h1>⚔ TOWER DEFENSE</h1><div class="hs-sub">Verteidige dein Rathaus</div>
-<div id="hsXpBarWrap" class="hs-xp-bar-wrap" onclick="onXpBarClick()">
+<h1>⚔ TOWER DEFENSE ⚔</h1>
+<div class="hs-reward-track-label">BELOHNUNGSPFAD</div><div id="hsXpBarWrap" class="hs-xp-bar-wrap" onclick="onXpBarClick()">
   <div style="display:flex;justify-content:space-between;font-size:11px;color:#ccc;margin-bottom:4px;"><span>Level <span id="hsXpLevelText">1</span></span><span id="hsXpAmountText">0 / 100 XP</span></div>
   <div class="hs-xp-bar-bg"><div class="hs-xp-bar-fill" id="hsXpBar" style="width:0%;"></div></div>
   <div id="hsXpClickHint" style="display:none;color:#f1c40f;font-size:11px;margin-top:4px;font-weight:bold;">🎁 Tippen zum Freischalten!</div>
@@ -255,7 +256,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a0a;font-family:
 <h2>🗂️ Deck</h2><div class="deck-subtitle">Wähle bis zu 4 Türme für die Schlacht</div>
 <div class="deck-page-slots" id="deckPageSlots"></div>
 <div id="deckPageClearBtn" style="display:none;"></div>
-<div id="deckHint" style="color:#aaa;font-size:11px;margin-top:8px;">Klicke auf einen Turm um ihn in den gewählten Slot zu setzen</div>
+<div id="deckHint" style="color:#5abaee;font-size:11px;margin-top:8px;">Klicke auf einen Turm um ihn in den gewählten Slot zu setzen</div>
 <div class="deck-page-towers" id="deckPageTowers"></div>
 <div id="deckTowerInfo"></div>
 </div>
@@ -278,7 +279,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a0a;font-family:
 <div id="rewardTrackDialog">
   <div id="rtHeader">
     <button id="rtBackBtn" onclick="hideRewardTrack()">←</button>
-    <div id="rtTitle">XP-PFAD</div>
+    <div id="rtTitle">BELOHNUNGSPFAD</div>
     <div id="rtXpStat"><span class="rt-xp-icon">⭐</span><span id="rtXpStatText">0</span></div>
   </div>
   <div id="rtScrollArea">
@@ -295,8 +296,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a0a;font-family:
 <div id="gamerow">
 <div id="sidebar">
 <div class="s-title">Status</div>
-<div class="xp-bar-wrap"><div style="display:flex;justify-content:space-between;color:#aaa;font-size:10px;margin-bottom:3px;"><span>Level <span id="xpLevelText">1</span></span><span id="xpAmountText">0/100</span></div><div class="xp-bar-bg"><div class="xp-bar-fill" id="xpBar" style="width:0%;"></div></div></div>
-<div class="hp-bar-wrap"><div style="color:#aaa;font-size:10px;margin-bottom:3px;">Rathaus HP</div><div class="hp-bar-bg"><div class="hp-bar-fill" id="hpBar" style="width:100%;background:#27ae60;"></div></div><div style="color:#fff;font-size:10px;text-align:right;margin-top:1px;" id="hpText">100 / 100</div></div>
+<div class="xp-bar-wrap"><div style="display:flex;justify-content:space-between;color:#5abaee;font-size:10px;margin-bottom:3px;"><span>Level <span id="xpLevelText">1</span></span><span id="xpAmountText">0/100</span></div><div class="xp-bar-bg"><div class="xp-bar-fill" id="xpBar" style="width:0%;"></div></div></div>
+<div class="hp-bar-wrap"><div style="color:#5abaee;font-size:10px;margin-bottom:3px;">Rathaus HP</div><div class="hp-bar-bg"><div class="hp-bar-fill" id="hpBar" style="width:100%;background:#27ae60;"></div></div><div style="color:#fff;font-size:10px;text-align:right;margin-top:1px;" id="hpText">100 / 100</div></div>
 <div class="stat-row"><span class="stat-label">Gold 💰</span><span class="stat-val gold" id="goldText">180</span></div>
 <div class="stat-row"><span class="stat-label">Welle</span><span class="stat-val" id="waveText">—</span></div>
 <div class="divider"></div>
