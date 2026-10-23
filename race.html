@@ -12,7 +12,7 @@ canvas{max-width:100%;max-height:100%;display:block;touch-action:manipulation;-w
 </style></head><body>
 <canvas id="c" width="1100" height="1040"></canvas>
 <script>
-const W=1100,H=1040,HW=44,LAPS=3,OFF=7,R=8.5;
+const W=1100,H=1040,HW=44,OFF=7,R=8.5;let LAPS=3;
 const cv=document.getElementById('c'),ctx=cv.getContext('2d');
 const tr=p=>[p[0]-440,p[1]-430];
 // Mittellinie der Strecke (aus der Skizze), in Fahrtrichtung
@@ -37,11 +37,15 @@ const N=cps.length;
 // Strecke einmal vorzeichnen
 const tc=document.createElement('canvas');tc.width=W;tc.height=H;const g=tc.getContext('2d');
 g.fillStyle='#4c9a41';g.fillRect(0,0,W,H);
+let sd=7;const rnd=()=>{sd=sd*16807%2147483647;return sd/2147483647};
+for(let i=0;i<60;i++){g.fillStyle=i%2?'rgba(25,100,30,.12)':'rgba(150,210,90,.12)';g.beginPath();g.ellipse(rnd()*W,rnd()*H,40+rnd()*70,25+rnd()*45,rnd()*3,0,7);g.fill()}
 for(let i=0;i<900;i++){g.fillStyle=Math.random()<.5?'#448f3a':'#55a64a';g.fillRect(Math.random()*W,Math.random()*H,3,3)}
 const path=new Path2D();S.forEach((p,i)=>i?path.lineTo(p[0],p[1]):path.moveTo(p[0],p[1]));path.closePath();
-g.lineJoin='round';g.lineCap='round';
-g.strokeStyle='#e6e6e6';g.lineWidth=HW*2+10;g.stroke(path);
-g.strokeStyle='#4a4a4f';g.lineWidth=HW*2;g.stroke(path);
+g.lineJoin='round';g.lineCap='butt';
+g.strokeStyle='#f2f2f2';g.lineWidth=HW*2+12;g.stroke(path);
+g.strokeStyle='#d32f2f';g.setLineDash([13,13]);g.stroke(path);g.setLineDash([]);
+g.strokeStyle='#f2f2f2';g.lineWidth=HW*2;g.stroke(path);
+g.lineCap='round';g.strokeStyle='#4a4a4f';g.lineWidth=HW*2-5;g.stroke(path);
 g.save();g.translate(S[0][0],S[0][1]);g.rotate(Math.atan2(cps[0].t[1],cps[0].t[0]));
 for(let r=0;r<2;r++)for(let k=-5;k<5;k++){g.fillStyle=(r+k)%2?'#111':'#fff';g.fillRect(-8+r*8,k*HW/5,8,HW/5)}
 g.restore();
@@ -62,6 +66,36 @@ barrels.forEach(b=>{
   g.restore();
   g.strokeStyle='#111';g.lineWidth=1.5;g.strokeRect(b[0]-BR,b[1]-BR,BR*2,BR*2);
 });
+
+// Deko: Bäume, Büsche, Steine, Blumen (nur optisch, abseits der Strecke)
+function farFromTrack(x,y,m){const h=(HW+m)*(HW+m);for(let i=0;i<S.length;i++){const dx=S[i][0]-x,dy=S[i][1]-y;if(dx*dx+dy*dy<h)return false}return true}
+const placed=[];
+function place(n,rmin,rmax,margin,draw){
+  for(let a=0,c=0;c<n&&a<n*40;a++){
+    const r=rmin+rnd()*(rmax-rmin),x=r+8+rnd()*(W-2*r-16),y=r+8+rnd()*(H-2*r-16);
+    if(!farFromTrack(x,y,margin+r)||placed.some(p=>Math.hypot(p[0]-x,p[1]-y)<p[2]+r+2))continue;
+    placed.push([x,y,r]);draw(x,y,r);c++;
+  }
+}
+const tree=(x,y,r)=>{
+  g.fillStyle='rgba(0,0,0,.25)';g.beginPath();g.arc(x+r*.3,y+r*.35,r,0,7);g.fill();
+  ['#1d5a22','#2a7a2f','#3c9a43'].forEach((c,i)=>{g.fillStyle=c;const rr=r*(1-i*.2);
+    for(let k=0;k<5;k++){const an=k*1.2566+i;g.beginPath();g.arc(x+Math.cos(an)*rr*.4-i*2,y+Math.sin(an)*rr*.4-i*2,rr*.6,0,7);g.fill()}});
+};
+const bush=(x,y,r)=>{
+  g.fillStyle='rgba(0,0,0,.22)';g.beginPath();g.arc(x+2,y+3,r,0,7);g.fill();
+  ['#2c7a30','#46a24a'].forEach((c,i)=>{g.fillStyle=c;
+    for(let k=0;k<3;k++){const an=k*2.09+i;g.beginPath();g.arc(x+Math.cos(an)*r*.4-i,y+Math.sin(an)*r*.4-i,r*(.65-i*.12),0,7);g.fill()}});
+};
+const rock=(x,y,r)=>{
+  g.fillStyle='rgba(0,0,0,.25)';g.beginPath();g.ellipse(x+3,y+4,r,r*.8,0,0,7);g.fill();
+  const pts=[];for(let k=0;k<8;k++){const an=k*.785,rr=r*(.75+rnd()*.3);pts.push([x+Math.cos(an)*rr,y+Math.sin(an)*rr])}
+  g.fillStyle='#8a8d8f';g.beginPath();pts.forEach((p,i)=>i?g.lineTo(p[0],p[1]):g.moveTo(p[0],p[1]));g.closePath();g.fill();
+  g.strokeStyle='#5d6062';g.lineWidth=1.5;g.stroke();
+  g.fillStyle='rgba(255,255,255,.28)';g.beginPath();g.ellipse(x-r*.2,y-r*.25,r*.4,r*.28,-.5,0,7);g.fill();
+};
+place(26,14,22,24,tree);place(34,8,13,24,bush);place(16,7,14,24,rock);
+for(let i=0;i<220;i++){const x=rnd()*W,y=rnd()*H;if(!farFromTrack(x,y,30))continue;g.fillStyle=['#fff','#ffe066','#ff9ec4','#c9b6ff'][i%4];g.fillRect(x,y,2,2)}
 
 function onTrack(x,y){const h=HW*HW;for(let i=0;i<S.length;i++){const dx=S[i][0]-x,dy=S[i][1]-y;if(dx*dx+dy*dy<h)return true}return false}
 function cross(ax,ay,bx,by,cx,cy,dx,dy){
@@ -100,7 +134,7 @@ reset();
 
 function step(c,dt,input){
   let f=[Math.cos(c.a),Math.sin(c.a)];
-  const on=onTrack(c.x,c.y),cap=on?250:80;
+  const on=onTrack(c.x,c.y),cap=on?265:80;
   if(input){
     const vf0=c.vx*f[0]+c.vy*f[1];
     const st=(kd(c,'r')?1:0)-(kd(c,'l')?1:0);
@@ -110,7 +144,7 @@ function step(c,dt,input){
   const s=[-f[1],f[0]];
   let vf=c.vx*f[0]+c.vy*f[1],vs=c.vx*s[0]+c.vy*s[1];
   if(input){
-    if(kd(c,'up')&&vf<cap)vf+=(on?250:120)*dt;
+    if(kd(c,'up')&&vf<cap)vf+=(on?270:120)*dt;
     if(kd(c,'dn'))vf-=(vf>0?420:150)*dt;
   }
   vf*=Math.exp(-(on?0.35:1.6)*dt);
@@ -196,13 +230,13 @@ const BTN=[{x:W/2-260,y:330,w:520,h:90},{x:W/2-260,y:440,w:520,h:90}];
 const YES={x:W/2-170,y:H/2+10,w:150,h:56},NO={x:W/2+20,y:H/2+10,w:150,h:56};
 let conf=0;
 const backBtn=()=>({x:16,y:cars.length*34+70,w:150,h:40});
-function startGame(m){mode=m;cars=m===1?[all[0]]:all;all[0].off=m===1?0:-18;all[0].k=m===1?KB:K1;reset();state='count';t=0}
+function startGame(m){mode=m;LAPS=m===1?1:3;cars=m===1?[all[0]]:all;all[0].off=m===1?0:-18;all[0].k=m===1?KB:K1;reset();state='count';t=0}
 cv.addEventListener('click',e=>{
   const r=cv.getBoundingClientRect(),x=(e.clientX-r.left)*W/r.width,y=(e.clientY-r.top)*H/r.height;
   const hit=b=>x>b.x&&x<b.x+b.w&&y>b.y&&y<b.y+b.h;
   if(state==='menu'){BTN.forEach((b,i)=>{if(hit(b))startGame(i+1)});return}
   if(conf){
-    if(hit(YES)){if(conf===1)conf=2;else{conf=0;state='menu'}}
+    if(hit(YES)){conf=0;state='menu'}
     else if(hit(NO))conf=0;
     return;
   }
@@ -221,21 +255,46 @@ function drawPanel(title,y,foot,n){
   if(foot){ctx.fillStyle='#ccc';ctx.font='20px system-ui,sans-serif';ctx.textAlign='center';ctx.fillText(foot,W/2,y+h-16)}
   ctx.textAlign='left';
 }
+function menuBg(){
+  const tm=performance.now()/1000;
+  const gr=ctx.createLinearGradient(0,0,0,H);
+  gr.addColorStop(0,'#0b1226');gr.addColorStop(.55,'#4a2569');gr.addColorStop(1,'#e8743b');
+  ctx.fillStyle=gr;ctx.fillRect(0,0,W,H);
+  for(let r=0;r<2;r++){
+    const y=r?H-48:0,off=(tm*60*(r?-1:1))%48;
+    for(let x=-48;x<W+48;x+=24)for(let k=0;k<2;k++){
+      ctx.fillStyle=((x/24+k)&1)?'rgba(255,255,255,.14)':'rgba(0,0,0,.25)';ctx.fillRect(x+off,y+k*24,24,24);
+    }
+  }
+  for(let i=0;i<22;i++){
+    const sp=300+(i*97)%400,y=60+(i*173)%880,len=80+(i*53)%160,x=((tm*sp+i*211)%(W+400))-200;
+    ctx.fillStyle='rgba(255,255,255,'+(.05+(i%4)*.04)+')';ctx.fillRect(x,y,len,2);
+  }
+  [['#e53935',925],['#1e88e5',965]].forEach(([c,y],i)=>{
+    const x=((tm*(260+i*70)+i*500)%(W+300))-150;
+    ctx.save();ctx.translate(x,y);ctx.scale(2.2,2.2);
+    ctx.fillStyle='rgba(0,0,0,.35)';ctx.fillRect(-13,-5,30,16);
+    ctx.fillStyle=c;ctx.fillRect(-15,-8,30,16);
+    ctx.fillStyle='rgba(0,0,0,.65)';ctx.fillRect(-2,-6,9,12);
+    ctx.fillStyle='#ffe9a0';ctx.fillRect(13,-7,3,4);ctx.fillRect(13,3,3,4);
+    ctx.restore();
+  });
+}
 function drawMenu(){
-  ctx.fillStyle='#15181d';ctx.fillRect(0,0,W,H);
+  menuBg();
   ctx.textAlign='center';ctx.lineJoin='round';
   ctx.font='bold 96px system-ui,sans-serif';ctx.lineWidth=10;ctx.strokeStyle='#000';ctx.fillStyle='#f5c400';
   ctx.strokeText('RENNSPIEL',W/2,250);ctx.fillText('RENNSPIEL',W/2,250);
   ctx.font='bold 30px system-ui,sans-serif';
-  ['1 Spieler – Zeitrennen   [1]','2 Spieler – Duell   [2]'].forEach((s,i)=>{
+  ['1 Spieler – Zeitrennen','2 Spieler – Duell'].forEach((s,i)=>{
     const b=BTN[i];
     ctx.fillStyle='rgba(255,255,255,.14)';ctx.fillRect(b.x,b.y,b.w,b.h);
     ctx.strokeStyle='#f5c400';ctx.lineWidth=3;ctx.strokeRect(b.x,b.y,b.w,b.h);
     ctx.fillStyle='#fff';ctx.fillText(s,W/2,b.y+b.h/2+10);
   });
-  drawPanel('Bestzeiten (1 Spieler)',580,'',5);
+  drawPanel('Bestzeiten',580,'',5);
   ctx.textAlign='center';ctx.fillStyle='#ccc';ctx.font='20px system-ui,sans-serif';
-  ctx.fillText('Spieler 1: W A S D (allein auch Pfeiltasten)   |   Spieler 2: Pfeiltasten',W/2,890);
+  ctx.fillStyle='#fff';ctx.fillText('Spieler 1: W A S D   |   Spieler 2: Pfeiltasten',W/2,890);
   ctx.textAlign='left';
 }
 addEventListener('keydown',e=>{
@@ -257,7 +316,7 @@ addEventListener('keydown',e=>{
   }
   if(conf){
     if(e.code==='Escape'||e.code==='KeyN')conf=0;
-    else if(e.code==='KeyJ'||e.code==='KeyY'||e.code==='Enter'){if(conf===1)conf=2;else{conf=0;state='menu'}}
+    else if(e.code==='KeyJ'||e.code==='KeyY'||e.code==='Enter'){conf=0;state='menu'}
     return;
   }
   if(e.code==='Escape'){conf=1;return}
