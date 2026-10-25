@@ -69,8 +69,8 @@ body::before{content:"";position:fixed;inset:0;background-image:linear-gradient(
     <svg class="tank tkR" viewBox="0 -34 50 110"><use href="#tk"/></svg>
   </div>
   <div class="modes">
-    <button class="mode-card" onclick="selectMode('bot')"><div class="mode-ico">🤖</div><div class="mode-name">1 SPIELER</div><div class="mode-desc">Tritt gegen den Bot an und beweise dein Können.</div></button>
-    <button class="mode-card" onclick="selectMode('pvp')"><div class="mode-ico">⚔️</div><div class="mode-name">2 SPIELER</div><div class="mode-desc">Duell am selben Gerät: WASD gegen Pfeiltasten.</div></button>
+    <button class="mode-card" onclick="selectMode('bot')"><div class="mode-ico">🤖</div><div class="mode-name">1 SPIELER</div><div class="mode-desc">Tritt gegen den Bot an</div></button>
+    <button class="mode-card" onclick="selectMode('pvp')"><div class="mode-ico">⚔️</div><div class="mode-name">2 SPIELER</div><div class="mode-desc">Duell gegen einen Freund</div></button>
   </div>
   <div class="hint">SPIELER 1: WASD + LEERTASTE · SPIELER 2: PFEILTASTEN + ENTER</div>
 </div>
@@ -485,7 +485,7 @@ function startGame(mode){
   }else{
     player2=new Tank(W-170,H/2,'#a88a55',{},'Bot');bot=new Bot(player2,player1);
     player2.maxReload=140;player2.dmg=10;
-    gameInfo.textContent='🤖 Du: WASD + Leertaste | Bot: KI-gesteuert';
+    gameInfo.textContent='WASD + Leertaste';
   }
   player2.angle=-Math.PI/2;tanks=[player1,player2];
 }
