@@ -24,7 +24,7 @@ const MAPS=[
 {key:'rennspiel_bestzeiten_b',name:'Tunnelfahrt',desc:'Oben raus, unten durch den Tunnel wieder rein',wrap:true,shift:[0,-H],start:37,
  pts:[[760,830],[860,810],[935,770],[965,700],[950,620],[900,570],[800,555],[700,590],[600,600],[500,570],[400,545],[300,560],[200,580],[140,540],[130,460],[150,380],[200,320],[290,290],[390,280],[480,285],[540,260],[555,200],[550,120],[550,50],[550,-80],[550,-160],[575,-205],[640,-220]]},
 {key:'rennspiel_bestzeiten_c',name:'Gegenverkehr',desc:'Hin und zurück über dieselbe Strecke – im Mittelstück begegnet man sich',
- cpi:[0,3,5,9,13,19,24,29,32,38,44,50],skipBar:[8],
+ cpi:[0,3,5,9,13,19,24,29,38,44,50],
  pts:[[1018,240],[1022,170],[1025,115],[995,92],[945,92],[910,115],[900,160],[880,190],[830,162],[770,132],[710,110],[665,118],[648,165],[668,205],[708,243],[724,278],[700,296],[650,294],[580,293],[510,294],[455,292],[400,258],[330,225],[250,208],[170,225],[118,265],[113,310],[150,345],[220,355],[300,342],[375,318],[450,296],[520,297],[590,297],[655,299],[700,300],[712,340],[692,395],[640,425],[600,458],[610,505],[680,533],[740,515],[790,445],[825,385],[865,352],[905,362],[935,402],[945,450],[990,462],[1040,432],[1048,398],[1015,340],[1016,290]].map(p=>[p[0]-10,(p[1]-85)*1.75+110])}
 ];
 
@@ -177,7 +177,7 @@ function cross(ax,ay,bx,by,cx,cy,dx,dy){
 
 /* ---------- Autos ---------- */
 const keys=new Set();
-const mk=(id,name,col,k,off)=>({id,name,col,k,off,x:0,y:0,px:0,py:0,a:-Math.PI/2,vx:0,vy:0,laps:0,next:0,dir:1,base:0});
+const mk=(id,name,col,k,off)=>({id,name,col,k,off,x:0,y:0,px:0,py:0,a:-Math.PI/2,vx:0,vy:0,laps:0,got:new Set()});
 const all=[
   mk(0,'Spieler 1','#e53935',{up:'KeyW',dn:'KeyS',l:'KeyA',r:'KeyD'},-18),
   mk(1,'Spieler 2','#1e88e5',{up:'ArrowUp',dn:'ArrowDown',l:'ArrowLeft',r:'ArrowRight'},18)];
@@ -188,11 +188,11 @@ let state='menu',t=0,raceT=0,winner=null;
 function reset(){
   tubs.forEach((b,i)=>{b.x=b.sx;b.y=b.sy;b.vx=b.vy=0});
   cars.forEach(c=>{
-    c.dir=1;c.base=0;const i=cps[0].i,p=S[i],v=vn[i];
+    const i=cps[0].i,p=S[i],v=vn[i];
     c.x=p[0]+v[0]*c.off-v[2]*16;c.y=p[1]+v[1]*c.off-v[3]*16;
     if(wr)c.y=((c.y%H)+H)%H;
     c.px=c.x;c.py=c.y;c.a=ang[i];
-    c.vx=c.vy=0;c.laps=1;c.next=1;
+    c.vx=c.vy=0;c.laps=1;c.got=new Set();
   });
   raceT=0;winner=null;
 }
@@ -279,14 +279,14 @@ function updTubs(dt){
   }
 }
 function checkpoints(c){
-  const cp=cps[c.next];
-  for(const k of KS){
-    const o=k*H;
-    if(cross(c.px,c.py,c.x,c.y,cp.a[0],cp.a[1]+o,cp.b[0],cp.b[1]+o)&&((c.x-c.px)*cp.t[0]+(c.y-c.py)*cp.t[1])*c.dir>0){
-      if(c.next===c.base)c.laps++;
-      c.next=(c.next+c.dir+N)%N;
+  for(let n=0;n<N;n++){
+    const cp=cps[n];
+    if(n>0&&c.got.has(n))continue;
+    if(!KS.some(k=>cross(c.px,c.py,c.x,c.y,cp.a[0],cp.a[1]+k*H,cp.b[0],cp.b[1]+k*H)))continue;
+    if(n>0)c.got.add(n);
+    else if(c.got.size===N-1){
+      c.laps++;c.got.clear();
       if(c.laps>LAPS&&state==='race'){winner=c;state=mode===1?'name':'done'}
-      return;
     }
   }
 }
@@ -469,7 +469,7 @@ function draw(){
   ctx.fillStyle='rgba(0,0,0,.5)';ctx.fillRect(16,16,360,cars.length*34+44);
   ctx.font='bold 20px system-ui,sans-serif';
   cars.forEach((c,i)=>{
-    const passed=c.laps===0?0:((((c.next-c.base)*c.dir)%N+N)%N||N)-1;
+    const passed=c.got.size;
     ctx.fillStyle=c.col;ctx.fillRect(28,34+i*34,16,16);
     ctx.fillStyle='#fff';
     ctx.fillText(`${c.name}  Runde ${Math.max(1,Math.min(c.laps,LAPS))}/${LAPS}  CP ${passed}/${N-1}`,54,48+i*34);
