@@ -1,890 +1,558 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panzer 1v1</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(180deg, #5a9e2f 0%, #4a7c2e 100%);
-            height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            overflow: hidden;
-        }
-
-        #homeScreen {
-            text-align: center;
-            color: #2d5016;
-            z-index: 10;
-            animation: fadeIn 0.8s ease;
-            background: rgba(255, 255, 255, 0.3);
-            backdrop-filter: blur(15px);
-            padding: 60px 40px;
-            border-radius: 30px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            border: 3px solid rgba(139, 69, 19, 0.3);
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(30px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .game-title {
-            font-size: 64px;
-            font-weight: 900;
-            margin-bottom: 40px;
-            text-shadow: 3px 3px 0 #8B4513, 6px 6px 0 rgba(139, 69, 19, 0.3);
-            letter-spacing: 3px;
-            color: #2d5016;
-        }
-
-        .menu-container {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-            align-items: center;
-        }
-
-        .menu-button {
-            width: 350px;
-            padding: 20px 30px;
-            font-size: 22px;
-            font-weight: bold;
-            border: 3px solid rgba(139, 69, 19, 0.4);
-            border-radius: 15px;
-            cursor: pointer;
-            color: #2d5016;
-            background: rgba(255, 255, 255, 0.4);
-            backdrop-filter: blur(10px);
-            transition: all 0.3s ease;
-            letter-spacing: 1px;
-        }
-
-        .menu-button:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
-            background: rgba(255, 255, 255, 0.6);
-        }
-
-        .menu-button.pvp {
-            border-left: 6px solid #8B4513;
-        }
-
-        .menu-button.pvp:hover {
-            background: rgba(139, 69, 19, 0.2);
-        }
-
-        .menu-button.bot {
-            border-left: 6px solid #2d5016;
-        }
-
-        .menu-button.bot:hover {
-            background: rgba(45, 80, 22, 0.2);
-        }
-
-        #gameScreen {
-            display: none;
-            text-align: center;
-            position: relative;
-        }
-
-        #gameContainer {
-            position: relative;
-            display: inline-block;
-        }
-
-        canvas {
-            border: 5px solid #8B4513;
-            background: #7ec850;
-            border-radius: 15px;
-            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.5);
-        }
-
-        #victoryOverlay {
-            display: none;
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(0, 0, 0, 0.85);
-            color: white;
-            padding: 30px 50px;
-            border-radius: 20px;
-            text-align: center;
-            z-index: 20;
-            border: 3px solid #FFD700;
-            box-shadow: 0 0 50px rgba(255, 215, 0, 0.5);
-            animation: victoryPulse 2s infinite;
-        }
-
-        @keyframes victoryPulse {
-            0%, 100% { box-shadow: 0 0 50px rgba(255, 215, 0, 0.5); }
-            50% { box-shadow: 0 0 80px rgba(255, 215, 0, 0.8); }
-        }
-
-        #victoryText {
-            font-size: 36px;
-            font-weight: bold;
-            margin-bottom: 15px;
-            color: #FFD700;
-            text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
-        }
-
-        #victorySubtext {
-            font-size: 18px;
-            color: #ccc;
-            margin-bottom: 20px;
-        }
-
-        #restartButton {
-            padding: 12px 30px;
-            font-size: 18px;
-            background: #FFD700;
-            color: #333;
-            border: none;
-            border-radius: 10px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: all 0.3s;
-        }
-
-        #restartButton:hover {
-            background: #FFA500;
-            transform: scale(1.05);
-        }
-
-        #gameUI {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-            padding: 0 10px;
-        }
-
-        #backButton {
-            padding: 12px 25px;
-            font-size: 16px;
-            background: rgba(139, 69, 19, 0.8);
-            color: white;
-            border: 2px solid #5a3e2b;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: all 0.3s;
-            font-weight: bold;
-        }
-
-        #backButton:hover {
-            background: #8B4513;
-            transform: scale(1.05);
-        }
-
-        #gameInfo {
-            color: #2d5016;
-            font-size: 18px;
-            flex-grow: 1;
-            text-align: center;
-            background: rgba(255, 255, 255, 0.4);
-            padding: 10px;
-            border-radius: 10px;
-            margin: 0 20px;
-            font-weight: bold;
-        }
-
-        @media (max-width: 1000px) {
-            canvas { width: 100%; height: auto; }
-            .game-title { font-size: 40px; }
-            .menu-button { width: 280px; padding: 15px 20px; font-size: 18px; }
-            #homeScreen { padding: 40px 25px; }
-            #victoryText { font-size: 28px; }
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Panzer Duel</title>
+<style>
+:root{--bg1:#1f2a17;--bg2:#3b4a2a;--ink:#e8e2c9;--gold:#d9b44a;--brown:#8b5a2b}
+@media (prefers-color-scheme:dark){:root{--bg1:#10160c;--bg2:#27331b}}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
+body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:radial-gradient(circle at 50% 40%,var(--bg2),var(--bg1));display:flex;justify-content:center;align-items:center;overflow:hidden;color:var(--ink);padding:env(safe-area-inset-top,0) 0 env(safe-area-inset-bottom,0)}
+#homeScreen{text-align:center;z-index:10;animation:fadeIn .8s ease;background:rgba(20,26,14,.65);backdrop-filter:blur(12px);padding:56px 44px;border-radius:24px;box-shadow:0 20px 60px rgba(0,0,0,.55);border:2px solid rgba(217,180,74,.35)}
+@keyframes fadeIn{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:none}}
+.game-title{font-size:60px;font-weight:900;margin-bottom:8px;letter-spacing:4px;color:var(--gold);text-shadow:0 3px 0 #5a3e12,0 8px 18px rgba(0,0,0,.6)}
+.sub{opacity:.7;margin-bottom:34px;letter-spacing:2px;font-size:14px}
+.menu-container{display:flex;flex-direction:column;gap:16px;align-items:center}
+.menu-button{width:340px;padding:18px 28px;font-size:20px;font-weight:700;border:2px solid rgba(217,180,74,.4);border-radius:12px;cursor:pointer;color:var(--ink);background:linear-gradient(180deg,rgba(255,255,255,.12),rgba(255,255,255,.03));transition:all .25s;letter-spacing:1px}
+.menu-button:hover{transform:translateY(-4px);box-shadow:0 12px 30px rgba(0,0,0,.5);border-color:var(--gold);background:rgba(217,180,74,.18)}
+#gameScreen{display:none;text-align:center;width:100%;max-width:1240px;padding:0 10px}
+#gameContainer{position:relative;display:inline-block;max-width:100%}
+canvas{border:4px solid #3a2a14;border-radius:12px;box-shadow:0 0 0 2px #8b6b2e,0 18px 50px rgba(0,0,0,.65);max-width:100%;max-height:calc(100vh - 100px);height:auto;display:block;margin:0 auto}
+#victoryOverlay{display:none;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(10,12,6,.88);padding:28px 48px;border-radius:18px;z-index:20;border:2px solid var(--gold);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 40px rgba(217,180,74,.4)}50%{box-shadow:0 0 75px rgba(217,180,74,.75)}}
+#victoryText{font-size:32px;font-weight:800;margin-bottom:10px;color:var(--gold)}
+#victorySubtext{font-size:17px;opacity:.8;margin-bottom:20px}
+#restartButton{padding:12px 28px;font-size:17px;background:var(--gold);color:#2a2008;border:none;border-radius:10px;cursor:pointer;font-weight:700;transition:all .25s}
+#restartButton:hover{background:#f0cc62;transform:scale(1.05)}
+#gameUI{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+#backButton{padding:10px 20px;font-size:15px;background:rgba(0,0,0,.4);color:var(--ink);border:1px solid rgba(217,180,74,.5);border-radius:10px;cursor:pointer;transition:all .25s;font-weight:700}
+#backButton:hover{background:rgba(217,180,74,.25)}
+#gameInfo{flex-grow:1;font-size:15px;background:rgba(0,0,0,.35);padding:10px;border-radius:10px;margin:0 14px;font-weight:600}
+body::before{content:"";position:fixed;inset:0;background-image:linear-gradient(rgba(217,180,74,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(217,180,74,.06) 1px,transparent 1px);background-size:48px 48px;-webkit-mask-image:radial-gradient(circle at 50% 50%,#000,transparent 75%);mask-image:radial-gradient(circle at 50% 50%,#000,transparent 75%);pointer-events:none}
+#homeScreen{position:relative;overflow:hidden;width:min(860px,94vw);padding:44px 30px 26px;background:linear-gradient(160deg,rgba(44,58,30,.88),rgba(14,18,9,.92));border:1px solid rgba(217,180,74,.5);box-shadow:0 0 0 6px rgba(0,0,0,.25),0 30px 80px rgba(0,0,0,.7),inset 0 0 90px rgba(217,180,74,.07)}
+#homeScreen::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 50% 0%,rgba(217,180,74,.24),transparent 55%);pointer-events:none}
+.badge{display:inline-block;font-size:12px;letter-spacing:5px;color:var(--gold);border:1px solid rgba(217,180,74,.5);padding:4px 14px;border-radius:20px;margin-bottom:14px;background:rgba(0,0,0,.3)}
+.game-title{margin-bottom:4px;background:linear-gradient(180deg,#fff3c4,#d9b44a 55%,#9a6f1c);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;text-shadow:none;filter:drop-shadow(0 4px 0 #3b2a08) drop-shadow(0 10px 18px rgba(0,0,0,.6))}
+#homeScreen .sub{margin-bottom:6px}
+.stage{position:relative;display:flex;align-items:center;justify-content:space-between;margin-top:4px}
+.stage .tank{width:70px;height:auto;filter:drop-shadow(6px 8px 6px rgba(0,0,0,.55))}
+.tkL{color:#58823a;transform:rotate(90deg);animation:rockL 3s ease-in-out infinite}
+.tkR{color:#a88a55;transform:rotate(-90deg);animation:rockR 3s ease-in-out infinite}
+@keyframes rockL{50%{transform:rotate(90deg) translateY(4px)}}
+@keyframes rockR{50%{transform:rotate(-90deg) translateY(4px)}}
+.tracer{position:absolute;top:50%;left:16%;width:34px;height:3px;border-radius:3px;background:linear-gradient(90deg,transparent,#ffd34d);box-shadow:0 0 12px #ffb02e;animation:fire 2.6s linear infinite}
+@keyframes fire{from{left:16%;opacity:0}10%{opacity:1}88%{opacity:1}to{left:78%;opacity:0}}
+.modes{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:6px;position:relative}
+.mode-card{position:relative;overflow:hidden;text-align:left;padding:20px 22px;border-radius:14px;cursor:pointer;color:var(--ink);font:inherit;background:linear-gradient(160deg,rgba(255,255,255,.11),rgba(255,255,255,.02));border:1px solid rgba(217,180,74,.35);transition:all .25s}
+.mode-card::after{content:"";position:absolute;top:0;left:-60%;width:40%;height:100%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.2),transparent);transform:skewX(-20deg);transition:left .6s}
+.mode-card:hover::after{left:130%}
+.mode-card:hover{transform:translateY(-4px);border-color:var(--gold);box-shadow:0 14px 34px rgba(0,0,0,.55),0 0 26px rgba(217,180,74,.22)}
+.mode-ico{font-size:30px;margin-bottom:6px}
+.mode-name{font-size:22px;font-weight:800;letter-spacing:1px;color:var(--gold)}
+.mode-desc{font-size:13px;opacity:.72;margin-top:4px;line-height:1.4}
+.hint{margin-top:20px;font-size:12px;opacity:.5;letter-spacing:1px}
+@media (max-width:700px){.game-title{font-size:38px}.menu-button{width:250px;font-size:17px}#homeScreen{padding:38px 22px}#victoryText{font-size:22px}#victoryOverlay{padding:20px 24px}#gameInfo{font-size:12px}}
+@media (max-width:700px){.stage .tank{width:40px}.modes{grid-template-columns:1fr}.hint{display:none}}
+</style>
 </head>
 <body>
-    <div id="homeScreen">
-        <h1 class="game-title">PANZER DUEL</h1>
-        
-        <div class="menu-container">
-            <button class="menu-button bot" onclick="selectMode('bot')">
-                1 Spieler
-            </button>
-            
-            <button class="menu-button pvp" onclick="selectMode('pvp')">
-                2 Spieler
-            </button>
-        </div>
+<div id="homeScreen">
+  <svg width="0" height="0" style="position:absolute"><symbol id="tk" viewBox="0 -34 50 110"><rect x="0" y="2" width="11" height="74" rx="4" fill="#1d1d1d"/><rect x="39" y="2" width="11" height="74" rx="4" fill="#1d1d1d"/><rect x="0.5" y="10" width="10" height="56" rx="3" fill="currentColor" stroke="rgba(0,0,0,.5)"/><rect x="39.5" y="10" width="10" height="56" rx="3" fill="currentColor" stroke="rgba(0,0,0,.5)"/><path d="M13 2h24l3 10v54l-4 7H14l-4-7V12z" fill="currentColor" stroke="rgba(0,0,0,.5)" stroke-width="1.5"/><rect x="40" y="36" width="9" height="28" rx="4.5" fill="currentColor" stroke="rgba(0,0,0,.6)"/><rect x="40" y="36" width="9" height="28" rx="4.5" fill="rgba(255,255,255,.15)"/><path d="M22 14l3-48 3 48z" fill="#8a8a8a" stroke="#333" stroke-width=".8"/><ellipse cx="25" cy="30" rx="18" ry="22" fill="currentColor" stroke="rgba(0,0,0,.6)" stroke-width="1.6"/><ellipse cx="22" cy="22" rx="12" ry="14" fill="rgba(255,255,255,.16)"/><circle cx="32" cy="36" r="6" fill="rgba(0,0,0,.4)"/><circle cx="17" cy="36" r="4.6" fill="rgba(0,0,0,.35)"/></symbol></svg>
+  <div class="badge">★ 1 GEGEN 1 ★</div>
+  <h1 class="game-title">PANZER DUEL</h1>
+  <div class="sub">KETTEN · KANONEN · KAMPF</div>
+  <div class="stage">
+    <svg class="tank tkL" viewBox="0 -34 50 110"><use href="#tk"/></svg>
+    <div class="tracer"></div>
+    <svg class="tank tkR" viewBox="0 -34 50 110"><use href="#tk"/></svg>
+  </div>
+  <div class="modes">
+    <button class="mode-card" onclick="selectMode('bot')"><div class="mode-ico">🤖</div><div class="mode-name">1 SPIELER</div><div class="mode-desc">Tritt gegen den Bot an und beweise dein Können.</div></button>
+    <button class="mode-card" onclick="selectMode('pvp')"><div class="mode-ico">⚔️</div><div class="mode-name">2 SPIELER</div><div class="mode-desc">Duell am selben Gerät: WASD gegen Pfeiltasten.</div></button>
+  </div>
+  <div class="hint">SPIELER 1: WASD + LEERTASTE · SPIELER 2: PFEILTASTEN + ENTER</div>
+</div>
+<div id="gameScreen">
+  <div id="gameUI">
+    <button id="backButton" onclick="goToHome()">← Zurück</button>
+    <div id="gameInfo">Wähle einen Spielmodus</div>
+    <div style="width:80px"></div>
+  </div>
+  <div id="gameContainer">
+    <canvas id="gameCanvas" width="1200" height="720"></canvas>
+    <div id="victoryOverlay">
+      <div id="victoryText"></div>
+      <div id="victorySubtext"></div>
+      <button id="restartButton" onclick="restartGame()">Erneut spielen</button>
     </div>
+  </div>
+</div>
 
-    <div id="gameScreen">
-        <div id="gameUI">
-            <button id="backButton" onclick="goToHome()">← Zurück</button>
-            <div id="gameInfo">Wähle einen Spielmodus</div>
-            <div style="width: 80px;"></div>
-        </div>
-        <div id="gameContainer">
-            <canvas id="gameCanvas" width="900" height="550"></canvas>
-            <div id="victoryOverlay">
-                <div id="victoryText"></div>
-                <div id="victorySubtext"></div>
-                <button id="restartButton" onclick="restartGame()">Erneut spielen</button>
-            </div>
-        </div>
-    </div>
+<script>
+const canvas=document.getElementById('gameCanvas'),ctx=canvas.getContext('2d');
+const gameInfo=document.getElementById('gameInfo'),homeScreen=document.getElementById('homeScreen'),gameScreen=document.getElementById('gameScreen');
+const victoryOverlay=document.getElementById('victoryOverlay'),victoryText=document.getElementById('victoryText'),victorySubtext=document.getElementById('victorySubtext');
+const W=canvas.width,H=canvas.height;
+let gameMode=null,gameRunning=false,gameEnded=false,shake=0;
 
-    <script>
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
-        const gameInfo = document.getElementById('gameInfo');
-        const homeScreen = document.getElementById('homeScreen');
-        const gameScreen = document.getElementById('gameScreen');
-        const victoryOverlay = document.getElementById('victoryOverlay');
-        const victoryText = document.getElementById('victoryText');
-        const victorySubtext = document.getElementById('victorySubtext');
+/* ---------- Hilfsfunktionen ---------- */
+const hash=n=>Math.abs(Math.sin(n*127.1)*43758.5453)%1;
+function shade(hex,amt){const n=parseInt(hex.slice(1),16);
+  const c=v=>Math.max(0,Math.min(255,v+amt));
+  return `rgb(${c(n>>16)},${c(n>>8&255)},${c(n&255)})`}
 
-        let gameMode = null;
-        let gameRunning = false;
-        let gameEnded = false;
+/* ---------- Hindernisse ---------- */
+const obstacles=[
+ {x:320,y:160,radius:38,type:'tree'},{x:900,y:570,radius:40,type:'tree'},{x:620,y:110,radius:38,type:'tree'},
+ {x:820,y:280,radius:36,type:'tree'},{x:230,y:570,radius:32,type:'tree'},
+ {x:870,y:180,radius:42,type:'pond'},
+ {x:470,y:290,width:55,height:45,type:'rock'},{x:750,y:440,width:50,height:40,type:'rock'},{x:330,y:470,width:45,height:50,type:'rock'},
+ {x:600,y:360,width:100,height:22,type:'sandbag'},{x:380,y:250,width:80,height:22,type:'sandbag'},
+ {x:80,y:250,radius:22,type:'bush'},{x:1120,y:450,radius:22,type:'bush'},{x:650,y:250,radius:18,type:'bush'},{x:560,y:570,radius:20,type:'bush'}
+];
 
-        const obstacles = [
-            { x: 250, y: 150, radius: 35, type: 'tree' },
-            { x: 650, y: 400, radius: 38, type: 'tree' },
-            { x: 150, y: 420, radius: 30, type: 'tree' },
-            { x: 750, y: 150, radius: 32, type: 'tree' },
-            { x: 450, y: 100, radius: 36, type: 'tree' },
-            { x: 450, y: 450, radius: 34, type: 'tree' },
-            { x: 350, y: 250, width: 55, height: 45, type: 'rock' },
-            { x: 550, y: 300, width: 50, height: 40, type: 'rock' },
-            { x: 300, y: 380, width: 45, height: 50, type: 'rock' },
-            { x: 600, y: 180, width: 48, height: 52, type: 'rock' },
-            { x: 100, y: 250, radius: 22, type: 'bush' },
-            { x: 800, y: 300, radius: 22, type: 'bush' },
-            { x: 500, y: 200, radius: 18, type: 'bush' },
-            { x: 400, y: 350, radius: 20, type: 'bush' },
-        ];
+function checkObstacleCollision(x,y,radius=20){
+  for(const o of obstacles){
+    if(o.width){
+      const cx=Math.max(o.x-o.width/2,Math.min(x,o.x+o.width/2)),cy=Math.max(o.y-o.height/2,Math.min(y,o.y+o.height/2));
+      if(Math.hypot(x-cx,y-cy)<radius)return true;
+    }else if(Math.hypot(x-o.x,y-o.y)<o.radius+radius)return true;
+  }
+  return false;
+}
+function bulletHitsObstacle(b){
+  for(const o of obstacles){
+    if(o.width){
+      if(b.x>o.x-o.width/2&&b.x<o.x+o.width/2&&b.y>o.y-o.height/2&&b.y<o.y+o.height/2)return true;
+    }else if(o.type!=='pond'&&Math.hypot(b.x-o.x,b.y-o.y)<o.radius)return true;
+  }
+  return false;
+}
 
-        function checkObstacleCollision(x, y, radius = 20) {
-            for (let obs of obstacles) {
-                if (obs.type === 'tree' || obs.type === 'bush') {
-                    let dx = x - obs.x;
-                    let dy = y - obs.y;
-                    let dist = Math.sqrt(dx * dx + dy * dy);
-                    if (dist < obs.radius + radius) return true;
-                } else if (obs.type === 'rock') {
-                    let closestX = Math.max(obs.x - obs.width/2, Math.min(x, obs.x + obs.width/2));
-                    let closestY = Math.max(obs.y - obs.height/2, Math.min(y, obs.y + obs.height/2));
-                    let dx = x - closestX;
-                    let dy = y - closestY;
-                    if (Math.sqrt(dx * dx + dy * dy) < radius) return true;
-                }
-            }
-            return false;
-        }
+/* ---------- Statischer Hintergrund (einmal gerendert → kein Flackern) ---------- */
+const bg=document.createElement('canvas');bg.width=W;bg.height=H;
+const trk=document.createElement('canvas');trk.width=W;trk.height=H; // Kettenspuren
+const bgc=bg.getContext('2d'),trc=trk.getContext('2d');
 
-        function bulletHitsObstacle(bullet) {
-            for (let obs of obstacles) {
-                if (obs.type === 'tree' || obs.type === 'bush') {
-                    let dx = bullet.x - obs.x;
-                    let dy = bullet.y - obs.y;
-                    if (Math.sqrt(dx * dx + dy * dy) < obs.radius) return true;
-                } else if (obs.type === 'rock') {
-                    if (bullet.x > obs.x - obs.width/2 && bullet.x < obs.x + obs.width/2 &&
-                        bullet.y > obs.y - obs.height/2 && bullet.y < obs.y + obs.height/2) {
-                        return true;
-                    }
-                }
-            }
-            return false;
-        }
+function drawPond(c,o){
+  const r=o.radius;c.save();
+  let g=c.createRadialGradient(o.x,o.y,r*.2,o.x,o.y,r*1.2);
+  g.addColorStop(0,'#4a97ad');g.addColorStop(.62,'#2f6d82');g.addColorStop(.8,'#35677a');g.addColorStop(.86,'#7a6f45');g.addColorStop(1,'rgba(100,85,50,0)');
+  c.fillStyle=g;c.beginPath();c.ellipse(o.x,o.y,r*1.2,r*1.1,.3,0,7);c.fill();
+  c.strokeStyle='rgba(255,255,255,.28)';c.lineWidth=1.2;
+  for(let i=0;i<3;i++){c.beginPath();c.ellipse(o.x-r*.2+i*6,o.y-r*.25+i*8,r*(.35-i*.07),r*(.12),0,.2,2.8);c.stroke();}
+  c.fillStyle='rgba(255,255,255,.18)';c.beginPath();c.ellipse(o.x-r*.35,o.y-r*.4,r*.22,r*.08,-.5,0,7);c.fill();
+  for(let i=0;i<14;i++){const a=hash(o.x+i)*6.283,d=r*(.95+.2*hash(o.y+i));
+    c.strokeStyle='#4b6b2a';c.lineWidth=1.6;c.beginPath();c.moveTo(o.x+Math.cos(a)*d,o.y+Math.sin(a)*d);c.lineTo(o.x+Math.cos(a)*d+1,o.y+Math.sin(a)*d-9);c.stroke();
+    c.fillStyle='#6b4a2a';c.fillRect(o.x+Math.cos(a)*d-.6,o.y+Math.sin(a)*d-12,2,4);}
+  for(let i=0;i<4;i++){const a=i*1.7+hash(o.x)*3;c.fillStyle='#5a9a45';c.beginPath();c.ellipse(o.x+Math.cos(a)*r*.5,o.y+Math.sin(a)*r*.45,5,3,a,0,7);c.fill();}
+  c.restore();
+}
+function drawSandbag(c,o){
+  c.save();c.fillStyle='rgba(0,0,0,.35)';c.beginPath();c.roundRect(o.x-o.width/2+5,o.y-o.height/2+7,o.width,o.height,8);c.fill();
+  const n=Math.round(o.width/16),w=o.width/n,h=o.height/2+3,x0=o.x-o.width/2;
+  for(let r=0;r<2;r++){const cnt=r?n-1:n;
+    for(let i=0;i<cnt;i++){const x=x0+i*w+(r?w/2:0),y=o.y-o.height/2-1+r*(o.height/2-2);
+      const g=c.createLinearGradient(x,y,x,y+h);g.addColorStop(0,'#d6c18a');g.addColorStop(1,'#9c8754');
+      c.fillStyle=g;c.beginPath();c.roundRect(x+.8,y,w-1.6,h,6);c.fill();c.strokeStyle='#6e5e38';c.lineWidth=1;c.stroke();
+      c.strokeStyle='rgba(90,70,40,.5)';c.beginPath();c.moveTo(x+w*.3,y+h*.5);c.lineTo(x+w*.7,y+h*.5);c.stroke();}}
+  c.restore();
+}
+function drawObstacle(c,o){
+  c.save();
+  if(o.type==='tree'||o.type==='bush'){
+    const r=o.radius,tree=o.type==='tree';
+    c.shadowColor='rgba(0,0,0,.45)';c.shadowBlur=tree?16:8;c.shadowOffsetX=tree?8:4;c.shadowOffsetY=tree?10:5;
+    c.fillStyle=tree?'#1f3d12':'#2c5518';c.beginPath();c.arc(o.x,o.y,r,0,7);c.fill();
+    c.shadowColor='transparent';
+    const cols=tree?['#27501a','#336a22','#418530','#55a040']:['#356b1f','#438628','#58a037'];
+    cols.forEach((col,k)=>{
+      const lr=r*(0.55-k*0.07),ring=r*(0.62-k*0.12);
+      for(let i=0;i<7;i++){
+        const a=i/7*6.283+hash(o.x+k)*3;
+        c.fillStyle=col;c.beginPath();c.arc(o.x+Math.cos(a)*ring-k*1.5,o.y+Math.sin(a)*ring-k*1.5,lr,0,7);c.fill();
+      }
+    });
+    c.fillStyle='rgba(200,255,150,.18)';c.beginPath();c.arc(o.x-r*.25,o.y-r*.3,r*.3,0,7);c.fill();
+    if(tree){c.fillStyle='#3b2412';c.beginPath();c.arc(o.x,o.y,3.5,0,7);c.fill();}
+  }else if(o.type==='pond'){drawPond(c,o);
+  }else if(o.type==='sandbag'){drawSandbag(c,o);
+  }else{
+    const n=9,pts=[];
+    for(let i=0;i<n;i++){const a=i/n*6.283;
+      pts.push([o.x+Math.cos(a)*o.width/2*(.85+.3*hash(o.x+i)),o.y+Math.sin(a)*o.height/2*(.85+.3*hash(o.y+i*3))]);}
+    const path=(dx=0,dy=0)=>{c.beginPath();pts.forEach((p,i)=>i?c.lineTo(p[0]+dx,p[1]+dy):c.moveTo(p[0]+dx,p[1]+dy));c.closePath();};
+    c.fillStyle='rgba(0,0,0,.35)';path(6,8);c.fill();
+    const g=c.createLinearGradient(o.x-o.width/2,o.y-o.height/2,o.x+o.width/2,o.y+o.height/2);
+    g.addColorStop(0,'#b7b4aa');g.addColorStop(.5,'#8a877f');g.addColorStop(1,'#5f5d57');
+    c.fillStyle=g;path();c.fill();c.strokeStyle='#4a4842';c.lineWidth=1.5;c.stroke();
+    c.strokeStyle='rgba(0,0,0,.3)';c.lineWidth=1;c.beginPath();
+    c.moveTo(o.x-o.width/4,o.y-o.height/4);c.lineTo(o.x+2,o.y+4);c.lineTo(o.x+o.width/5,o.y+o.height/4);c.stroke();
+    c.fillStyle='rgba(255,255,255,.2)';c.beginPath();c.ellipse(o.x-o.width/5,o.y-o.height/5,o.width*.16,o.height*.1,-.5,0,7);c.fill();
+    c.fillStyle='rgba(80,120,50,.55)';c.beginPath();c.ellipse(o.x+o.width/4,o.y+o.height/3.2,8,4,0,0,7);c.fill(); // Moos
+  }
+  c.restore();
+}
 
-        class Tank {
-            constructor(x, y, color, controls, name) {
-                this.x = x;
-                this.y = y;
-                this.width = 40;
-                this.height = 50;
-                this.color = color;
-                this.angle = 0;
-                this.speed = 2.5;
-                this.turnSpeed = 0.04;
-                this.hp = 100;
-                this.maxHp = 100;
-                this.controls = controls;
-                this.bullets = [];
-                this.reloadTime = 0;
-                this.maxReload = 45;
-                this.name = name;
-            }
+function buildBG(){
+  const c=bgc,R=Math.random;
+  let g=c.createRadialGradient(W/2,H/2,100,W/2,H/2,Math.hypot(W,H)/2);g.addColorStop(0,'#87b655');g.addColorStop(1,'#56792f');
+  c.fillStyle=g;c.fillRect(0,0,W,H);
+  for(let i=0;i<260;i++){ // Farbflecken
+    c.fillStyle=`hsla(${75+R()*35},${32+R()*25}%,${27+R()*28}%,.12)`;
+    c.beginPath();c.arc(R()*W,R()*H,25+R()*80,0,7);c.fill();
+  }
+  [[170,110,300,200,.15],[880,470,320,190,-.1],[760,80,230,150,.2]].forEach(([fx,fy,fw,fh,rot])=>{ // Felder mit Mähstreifen
+    c.save();c.translate(fx+fw/2,fy+fh/2);c.rotate(rot);
+    for(let y=-fh/2;y<fh/2;y+=14){c.fillStyle=Math.floor(y/14)%2?'rgba(255,255,255,.05)':'rgba(0,0,0,.05)';c.fillRect(-fw/2,y,fw,14)}
+    c.strokeStyle='rgba(60,45,20,.25)';c.lineWidth=2;c.strokeRect(-fw/2,-fh/2,fw,fh);c.restore();
+  });
+  const road=(p0,p1,p2,p3,w)=>{ // Feldwege mit Spurrillen
+    const path=(o=0)=>{c.beginPath();c.moveTo(p0[0],p0[1]+o);c.bezierCurveTo(p1[0],p1[1]+o,p2[0],p2[1]+o,p3[0],p3[1]+o)};
+    c.lineCap='round';
+    c.strokeStyle='rgba(90,110,50,.5)';c.lineWidth=w+14;path();c.stroke();
+    c.strokeStyle='rgba(112,86,52,.88)';c.lineWidth=w;path();c.stroke();
+    c.strokeStyle='rgba(158,128,86,.6)';c.lineWidth=w*.62;path();c.stroke();
+    c.strokeStyle='rgba(70,52,30,.45)';c.lineWidth=3;path(-w*.22);c.stroke();path(w*.22);c.stroke();
+    c.strokeStyle='rgba(90,130,50,.55)';c.lineWidth=4;c.setLineDash([2,26]);path();c.stroke();c.setLineDash([]);
+  };
+  road([-30,H*.56],[W*.28,H*.34],[W*.62,H*.78],[W+30,H*.48],56);
+  road([W*.47,H*.62],[W*.5,H*.8],[W*.43,H*.92],[W*.45,H+30],44);
+  for(let i=0;i<9;i++){ // Einschlagkrater
+    const x=120+R()*(W-240),y=60+R()*(H-120),r=8+R()*14;
+    g=c.createRadialGradient(x,y,r*.2,x,y,r*1.5);g.addColorStop(0,'rgba(40,30,18,.75)');g.addColorStop(.55,'rgba(70,55,32,.55)');g.addColorStop(.8,'rgba(120,100,64,.35)');g.addColorStop(1,'rgba(0,0,0,0)');
+    c.fillStyle=g;c.beginPath();c.ellipse(x,y,r*1.5,r*1.25,R()*3,0,7);c.fill();
+  }
+  for(let i=0;i<6500;i++){ // Grashalme
+    const x=R()*W,y=R()*H,l=3+R()*7;
+    c.strokeStyle=R()<.5?'rgba(40,80,20,.35)':'rgba(170,220,110,.3)';c.lineWidth=1;
+    c.beginPath();c.moveTo(x,y);c.lineTo(x+(R()-.5)*3,y-l);c.stroke();
+  }
+  for(let i=0;i<170;i++){c.fillStyle=['#f2e96b','#fff','#e7a3c8','#b9a6ee'][i%4];c.globalAlpha=.75;c.beginPath();c.arc(R()*W,R()*H,1.3,0,7);c.fill()}
+  for(let i=0;i<180;i++){c.fillStyle=`rgba(${120+R()*60|0},${115+R()*50|0},${100+R()*40|0},.7)`;c.beginPath();c.ellipse(R()*W,R()*H,1.5+R()*2,1+R()*1.5,R()*3,0,7);c.fill()}
+  c.globalAlpha=1;
+  obstacles.forEach(o=>drawObstacle(c,o));
+  for(let i=0;i<W;i+=9)for(const y of[0,H]){c.fillStyle=`hsl(${95+R()*25},45%,${22+R()*12}%)`;c.beginPath();c.arc(i+R()*6,y+(y?-1:1)*R()*6,9+R()*7,0,7);c.fill()} // Hecke
+  for(let j=0;j<H;j+=9)for(const x of[0,W]){c.fillStyle=`hsl(${95+R()*25},45%,${22+R()*12}%)`;c.beginPath();c.arc(x+(x?-1:1)*R()*6,j+R()*6,9+R()*7,0,7);c.fill()}
+  g=c.createRadialGradient(W/2,H/2,H*.38,W/2,H/2,W*.62);g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,'rgba(0,0,0,.4)');
+  c.fillStyle=g;c.fillRect(0,0,W,H);
+}
+buildBG();
 
-            move(keys) {
-                let newX = this.x;
-                let newY = this.y;
+/* ---------- Partikel ---------- */
+const parts=[];
+function emit(x,y,n,o){
+  for(let i=0;i<n;i++){
+    const a=o.dir!==undefined?o.dir+(Math.random()-.5)*(o.spread||.5):Math.random()*6.283,s=Math.random()*(o.sp||2)+(o.min||0);
+    parts.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:o.life*(.6+Math.random()*.4),max:o.life,size:o.size*(.6+Math.random()*.8),grow:o.grow||0,c:o.c,add:!!o.add,op:o.op||.6});
+  }
+}
+function explode(x,y,big){
+  emit(x,y,big?40:10,{sp:big?5:3,life:big?35:20,size:big?9:5,grow:big?10:5,c:'255,150,40',add:true,op:.8});
+  emit(x,y,big?30:8,{sp:big?3:2,life:big?80:40,size:big?12:6,grow:big?16:8,c:'40,40,40',op:.5});
+  emit(x,y,big?30:12,{sp:big?7:5,min:1,life:25,size:1.6,c:'255,220,120',add:true,op:1});
+}
+function updateParts(){
+  for(let i=parts.length-1;i>=0;i--){
+    const p=parts[i];p.x+=p.vx;p.y+=p.vy;p.vx*=.95;p.vy*=.95;
+    if(!p.add&&p.size>3){p.vy-=.02}
+    if(--p.life<=0)parts.splice(i,1);
+  }
+}
+function drawParts(){
+  for(const p of parts){
+    const a=p.life/p.max;
+    ctx.globalCompositeOperation=p.add?'lighter':'source-over';
+    ctx.fillStyle=`rgba(${p.c},${a*p.op})`;
+    ctx.beginPath();ctx.arc(p.x,p.y,p.size+p.grow*(1-a),0,7);ctx.fill();
+  }
+  ctx.globalCompositeOperation='source-over';
+}
 
-                if (keys[this.controls.forward]) {
-                    newX += Math.sin(this.angle) * this.speed;
-                    newY -= Math.cos(this.angle) * this.speed;
-                }
-                if (keys[this.controls.backward]) {
-                    newX -= Math.sin(this.angle) * this.speed;
-                    newY += Math.cos(this.angle) * this.speed;
-                }
+/* ---------- Panzer ---------- */
+class Tank{
+  constructor(x,y,color,controls,name){
+    Object.assign(this,{x,y,color,controls,name,width:40,height:50,angle:0,speed:2,turnSpeed:.033,hp:100,maxHp:100,bullets:[],reloadTime:0,maxReload:80,tread:0,recoil:0,flash:0,dist:0,dead:false});
+  }
+  tick(){ // läuft für JEDEN Panzer jedes Frame (auch Bot!)
+    if(this.reloadTime>0)this.reloadTime--;
+    this.recoil*=.85;if(this.flash>0)this.flash--;
+    if(this.hp<=0)this.dead=true;
+    if(this.hp<45&&Math.random()<(this.dead?.5:.25))
+      emit(this.x+(Math.random()-.5)*16,this.y+(Math.random()-.5)*16,1,{sp:.6,life:50,size:4,grow:8,c:this.dead?'30,30,30':'70,70,70',op:.5});
+    if(this.dead&&Math.random()<.2)emit(this.x,this.y,1,{sp:1,life:18,size:4,grow:3,c:'255,130,30',add:true,op:.7});
+  }
+  pts(x,y,a){const s=Math.sin(a),c=Math.cos(a);return[[x-s*14,y+c*14],[x,y],[x+s*14,y-c*14]]}
+  blocked(x,y,a){ // Hindernisse + andere Panzer (3 Kreise entlang der Wanne)
+    const me=this.pts(x,y,a);
+    for(const p of me)if(checkObstacleCollision(p[0],p[1],24))return true;
+    for(const o of tanks){if(o===this)continue;
+      for(const q of o.pts(o.x,o.y,o.angle))for(const p of me)if(Math.hypot(p[0]-q[0],p[1]-q[1])<46)return true}
+    return false;
+  }
+  turn(da){const na=this.angle+da;if(!this.blocked(this.x,this.y,na)||this.blocked(this.x,this.y,this.angle))this.angle=na}
+  hitBy(bx,by){return this.pts(this.x,this.y,this.angle).some(p=>Math.hypot(bx-p[0],by-p[1])<25)}
+  moveTo(nx,ny,dirSign=1){
+    const ox=this.x,oy=this.y;
+    if(!this.blocked(nx,ny,this.angle)){this.x=nx;this.y=ny}
+    else if(!this.blocked(nx,oy,this.angle))this.x=nx;       // an Hindernissen entlanggleiten
+    else if(!this.blocked(ox,ny,this.angle))this.y=ny;
+    const d=Math.hypot(this.x-ox,this.y-oy);
+    this.tread+=d*dirSign;
+    if(d>0){
+      this.dist+=d;if(Math.random()<.35)emit(this.x-Math.sin(this.angle)*38*dirSign,this.y+Math.cos(this.angle)*38*dirSign,1,{sp:.5,life:32,size:3,grow:7,c:'165,140,100',op:.28});
+      if(this.dist>7){this.dist=0;
+        trc.save();trc.translate(this.x,this.y);trc.rotate(this.angle);trc.fillStyle='rgba(40,28,14,.22)';
+        trc.fillRect(-24,30,9,3);trc.fillRect(15,30,9,3);trc.restore();}
+    }
+    return d>0;
+  }
+  move(keys){
+    if(this.dead)return;
+    const s=Math.sin(this.angle),c=Math.cos(this.angle);
+    if(keys[this.controls.forward])this.moveTo(this.x+s*this.speed,this.y-c*this.speed,1);
+    if(keys[this.controls.backward])this.moveTo(this.x-s*this.speed,this.y+c*this.speed,-1);
+    let da=0;if(keys[this.controls.left])da-=this.turnSpeed;if(keys[this.controls.right])da+=this.turnSpeed;
+    if(da)this.turn(da);
+    if(keys[this.controls.shoot]&&this.reloadTime<=0)this.shoot();
+    this.clamp();
+  }
+  clamp(){
+    this.x=Math.max(42,Math.min(W-42,this.x));
+    this.y=Math.max(42,Math.min(H-42,this.y));
+  }
+  shoot(err=0){
+    const a=this.angle+err,s=Math.sin(a),c=Math.cos(a),mx=this.x+Math.sin(this.angle)*66,my=this.y-Math.cos(this.angle)*66;
+    this.bullets.push({x:mx,y:my,px:mx,py:my,vx:s*5,vy:-c*5,life:180});
+    this.reloadTime=this.maxReload;this.recoil=6;this.flash=5;shake=Math.max(shake,3);
+    emit(mx,my,6,{dir:this.angle-1.5708,spread:.6,sp:3,min:1,life:20,size:3,grow:5,c:'255,190,80',add:true,op:.8});
+    emit(mx,my,4,{dir:this.angle-1.5708,spread:.8,sp:1.5,life:35,size:4,grow:8,c:'150,150,150',op:.4});
+  }
+  updateBullets(){
+    for(let i=this.bullets.length-1;i>=0;i--){
+      const b=this.bullets[i];b.px=b.x;b.py=b.y;b.x+=b.vx;b.y+=b.vy;b.life--;
+      if(bulletHitsObstacle(b)){explode(b.x,b.y,false);this.bullets.splice(i,1);continue}
+      if(b.life<=0||b.x<0||b.x>W||b.y<0||b.y>H)this.bullets.splice(i,1);
+    }
+  }
+  checkCollision(o){
+    for(let i=this.bullets.length-1;i>=0;i--){
+      const b=this.bullets[i];
+      if(o.hitBy(b.x,b.y)){
+        o.hp-=this.dmg||15;this.bullets.splice(i,1);shake=Math.max(shake,8);
+        explode(b.x,b.y,false);return true;
+      }
+    }
+    return false;
+  }
+  draw(c){
+    const col=this.dead?'#2a2724':this.color,dk=shade(col,-40),mid=shade(col,-18),lt=shade(col,22);
+    c.save();c.translate(this.x+6,this.y+8);c.rotate(this.angle);c.fillStyle='rgba(0,0,0,.3)';c.beginPath();c.roundRect(-26,-38,52,76,7);c.fill();c.fillRect(-3,-66,6,34);c.restore();
+    c.save();c.translate(this.x,this.y);c.rotate(this.angle);
+    for(const tx of[-25,14]){ // Ketten, Antriebs-/Leitrad, Kettenschutz
+      c.fillStyle='#121212';c.beginPath();c.roundRect(tx,-39,11,78,5);c.fill();
+      const off=((this.tread%5)+5)%5;c.fillStyle='#3d3a34';
+      for(let y=-38+off;y<38;y+=5)c.fillRect(tx+1,y,9,2.8);
+      c.fillStyle='#2a2a28';c.beginPath();c.arc(tx+5.5,-32,5,0,7);c.moveTo(tx+10.5,33);c.arc(tx+5.5,33,5,0,7);c.fill();
+      c.fillStyle='#55534d';c.beginPath();c.arc(tx+5.5,-32,2,0,7);c.moveTo(tx+7.5,33);c.arc(tx+5.5,33,2,0,7);c.fill();
+      const fg=c.createLinearGradient(tx,0,tx+11,0);fg.addColorStop(0,dk);fg.addColorStop(.5,mid);fg.addColorStop(1,dk);
+      c.fillStyle=fg;c.beginPath();c.roundRect(tx-.5,-26,12,56,3);c.fill();c.strokeStyle='rgba(0,0,0,.55)';c.lineWidth=1;c.stroke();
+      c.strokeStyle='rgba(255,255,255,.14)';c.beginPath();c.moveTo(tx+1.5,-24);c.lineTo(tx+1.5,28);c.stroke();
+      c.strokeStyle='rgba(0,0,0,.3)';c.beginPath();c.moveTo(tx+9.5,-24);c.lineTo(tx+9.5,28);c.stroke();
+    }
+    const hull=()=>{c.beginPath();c.moveTo(-13,-36);c.lineTo(13,-36);c.lineTo(15,-27);c.lineTo(15,31);c.lineTo(11,37);c.lineTo(-11,37);c.lineTo(-15,31);c.lineTo(-15,-27);c.closePath()};
+    let g=c.createLinearGradient(-15,0,15,0);g.addColorStop(0,dk);g.addColorStop(.3,lt);g.addColorStop(.7,col);g.addColorStop(1,dk);
+    hull();c.fillStyle=g;c.fill();
+    c.save();hull();c.clip();
+    c.globalAlpha=.4; // Abnutzung
+    [[-8,-12,8,12,.3,dk],[8,6,7,10,-.3,dk],[-6,24,8,6,0,mid],[6,-30,7,3,0,lt]].forEach(q=>{c.fillStyle=q[5];c.beginPath();c.ellipse(q[0],q[1],q[2],q[3],q[4],0,7);c.fill()});
+    c.globalAlpha=1;
+    c.strokeStyle='rgba(0,0,0,.4)';c.lineWidth=1;c.beginPath();c.moveTo(-15,-26);c.lineTo(15,-26);c.moveTo(-15,12);c.lineTo(15,12);c.stroke();
+    c.fillStyle='rgba(0,0,0,.35)';c.beginPath();c.roundRect(-11,-33,9,7,2);c.fill();c.strokeStyle='rgba(255,255,255,.2)';c.stroke(); // Fahrerluke
+    c.fillStyle='#202020';c.beginPath();c.arc(8,-30,2.4,0,7);c.fill();c.fillRect(7.4,-37,1.2,7); // Bug-MG
+    c.fillStyle='#6d6e68';c.fillRect(-12,-24,10,6);c.strokeStyle='rgba(0,0,0,.5)';c.lineWidth=.7; // Ersatzkettenglieder
+    for(let i=1;i<4;i++){c.beginPath();c.moveTo(-12+i*2.5,-24);c.lineTo(-12+i*2.5,-18);c.stroke()}
+    c.beginPath();c.moveTo(-12,-21);c.lineTo(-2,-21);c.stroke();
+    c.fillStyle='rgba(0,0,0,.3)';c.fillRect(-12,14,10.5,19);c.fillRect(1.5,14,10.5,19); // Motordeck-Gitter
+    c.strokeStyle='rgba(0,0,0,.5)';c.lineWidth=1;
+    for(let y=16;y<33;y+=2.4){c.beginPath();c.moveTo(-11,y);c.lineTo(-2.5,y);c.moveTo(2.5,y);c.lineTo(11,y);c.stroke()}
+    c.fillStyle='rgba(255,255,255,.2)';for(let y=-20;y<28;y+=9){c.beginPath();c.arc(-13.3,y,.7,0,7);c.moveTo(14,y);c.arc(13.3,y,.7,0,7);c.fill()}
+    c.restore();
+    hull();c.strokeStyle='rgba(0,0,0,.55)';c.lineWidth=1.6;c.stroke();
+    const cyl=(x,y,w,h)=>{ // Zusatztanks auf den Kettenschützern
+      const cg=c.createLinearGradient(x,0,x+w,0);cg.addColorStop(0,dk);cg.addColorStop(.35,lt);cg.addColorStop(1,dk);
+      c.fillStyle=cg;c.beginPath();c.roundRect(x,y,w,h,w/2);c.fill();c.strokeStyle='rgba(0,0,0,.55)';c.lineWidth=1;c.stroke();
+      c.strokeStyle='rgba(0,0,0,.4)';for(let k=h*.25;k<h;k+=h*.3){c.beginPath();c.moveTo(x+.5,y+k);c.lineTo(x+w-.5,y+k);c.stroke()}
+    };
+    cyl(15.5,4,9,30);cyl(-24.5,10,8,22);
+    c.fillStyle=mid;c.beginPath();c.roundRect(-24,-21,9,9,1.5);c.fill();c.strokeStyle='rgba(0,0,0,.5)';c.lineWidth=1;c.stroke(); // Werkzeugkasten
+    c.fillStyle='#202020';c.fillRect(-9,37,4,2.5);c.fillRect(5,37,4,2.5);
+    // Kanone
+    const bl=46-this.recoil;
+    const bg2=c.createLinearGradient(-3.4,0,3.4,0);bg2.addColorStop(0,'#2b2b2b');bg2.addColorStop(.4,'#9c9c9c');bg2.addColorStop(1,'#2b2b2b');
+    c.fillStyle=bg2;c.beginPath();c.moveTo(-3.4,-18);c.lineTo(3.4,-18);c.lineTo(2.3,-18-bl);c.lineTo(-2.3,-18-bl);c.closePath();c.fill();
+    c.fillStyle='#1c1c1c';c.fillRect(-2.8,-18-bl-2,5.6,3);
+    // Gegossener Rundturm
+    const tur=()=>{c.beginPath();c.ellipse(0,-5,18,22,0,0,7)};
+    c.fillStyle='rgba(0,0,0,.28)';c.beginPath();c.ellipse(0,-4,19.5,23.5,0,0,7);c.fill();
+    const tg=c.createRadialGradient(-6,-14,3,0,-4,26);tg.addColorStop(0,lt);tg.addColorStop(.55,col);tg.addColorStop(1,dk);
+    tur();c.fillStyle=tg;c.fill();
+    c.save();tur();c.clip();c.globalAlpha=.35;c.fillStyle=dk;
+    [[-6,-2,6,10,.3],[8,8,5,8,-.4],[2,-18,8,4,0]].forEach(q=>{c.beginPath();c.ellipse(q[0],q[1],q[2],q[3],q[4],0,7);c.fill()});
+    c.globalAlpha=1;c.strokeStyle='rgba(0,0,0,.28)';c.lineWidth=1;c.beginPath();c.ellipse(0,-5,13,17,0,0,7);c.stroke();
+    c.restore();
+    tur();c.strokeStyle='rgba(0,0,0,.6)';c.lineWidth=1.8;c.stroke();
+    c.fillStyle=mid;c.beginPath();c.roundRect(-8,-31,16,10,4);c.fill();c.strokeStyle='rgba(0,0,0,.55)';c.lineWidth=1.2;c.stroke(); // Blende
+    c.fillStyle='#202020';c.fillRect(4.6,-32,1.6,9);
+    c.fillStyle='#1e1e1e';c.beginPath();c.arc(8,3,7,0,7);c.fill();c.fillStyle=mid;c.beginPath();c.arc(8,3,5.2,0,7);c.fill(); // Kommandantenkuppel
+    c.strokeStyle='rgba(0,0,0,.55)';c.lineWidth=1;c.beginPath();c.arc(8,3,3,0,7);c.stroke();c.fillStyle='rgba(255,255,255,.18)';c.beginPath();c.arc(6.6,1.6,1.4,0,7);c.fill();
+    c.fillStyle='#222';c.beginPath();c.arc(-8,3,5.8,0,7);c.fill();c.fillStyle=mid;c.beginPath();c.arc(-8,3,4.4,0,7);c.fill(); // Ladeluke
+    c.strokeStyle='rgba(255,255,255,.25)';c.lineWidth=.9;c.beginPath();c.moveTo(-10.5,3);c.lineTo(-5.5,3);c.stroke();
+    c.fillStyle=mid;c.beginPath();c.arc(0,12,3.2,0,7);c.fill();c.strokeStyle='rgba(0,0,0,.5)';c.stroke(); // Lüfterhaube
+    c.fillStyle='rgba(255,255,255,.65)';c.beginPath();for(let i=0;i<10;i++){const a=i*Math.PI/5-Math.PI/2,r=i%2?1.2:3;c.lineTo(Math.cos(a)*r,-13+Math.sin(a)*r)}c.closePath();c.fill();
+    if(this.flash>0){
+      c.globalCompositeOperation='lighter';const fy=-18-bl-6;
+      const f=c.createRadialGradient(0,fy,1,0,fy,20);f.addColorStop(0,'rgba(255,240,170,.95)');f.addColorStop(1,'rgba(255,120,20,0)');
+      c.fillStyle=f;c.beginPath();c.arc(0,fy,20,0,7);c.fill();c.globalCompositeOperation='source-over';
+    }
+    c.restore();
+    for(const b of this.bullets){ // Geschosse
+      c.strokeStyle='rgba(255,170,50,.55)';c.lineWidth=3;c.lineCap='round';
+      c.beginPath();c.moveTo(b.x-b.vx*3.5,b.y-b.vy*3.5);c.lineTo(b.x,b.y);c.stroke();
+      c.fillStyle='rgba(255,200,60,.3)';c.beginPath();c.arc(b.x,b.y,8,0,7);c.fill();
+      c.fillStyle='#ffd34d';c.beginPath();c.arc(b.x,b.y,3.8,0,7);c.fill();
+      c.fillStyle='#fff';c.beginPath();c.arc(b.x,b.y,1.8,0,7);c.fill();
+    }
+  }
+}
 
-                if (!checkObstacleCollision(newX, newY, 22)) {
-                    this.x = newX;
-                    this.y = newY;
-                }
+/* ---------- Bot ---------- */
+class Bot{
+  constructor(tank,target){this.tank=tank;this.target=target;this.actionTimer=0;this.currentAction='move'}
+  update(){
+    const t=this.tank;
+    if(t.dead)return;
+    if(--this.actionTimer<=0){this.decideAction();this.actionTimer=Math.random()*40+25}
+    const dx=this.target.x-t.x,dy=this.target.y-t.y;
+    let diff=Math.atan2(dx,-dy)-t.angle;
+    while(diff>Math.PI)diff-=6.283;while(diff<-Math.PI)diff+=6.283;
+    if(Math.abs(diff)>.03)t.turn(Math.sign(diff)*t.turnSpeed*.7);
+    const s=Math.sin(t.angle),c=Math.cos(t.angle),sp=t.speed;
+    let nx=t.x,ny=t.y,sign=1;
+    switch(this.currentAction){
+      case'move':nx+=s*sp*.5;ny-=c*sp*.5;break;
+      case'retreat':nx-=s*sp*.45;ny+=c*sp*.45;sign=-1;break;
+      case'strafe_left':nx-=c*sp*.45;ny-=s*sp*.45;break;
+      case'strafe_right':nx+=c*sp*.45;ny+=s*sp*.45;break;
+    }
+    const moved=t.moveTo(nx,ny,sign);
+    if(!moved)this.actionTimer=0; // festgefahren → neue Aktion wählen
+    if(Math.abs(diff)<.1&&t.reloadTime<=0&&Math.random()<.03&&this.hasLineOfSight())t.shoot((Math.random()-.5)*.3);
+    t.clamp();
+  }
+  hasLineOfSight(){
+    const dx=this.target.x-this.tank.x,dy=this.target.y-this.tank.y,d=Math.hypot(dx,dy);
+    if(d>360)return false;
+    const steps=Math.floor(d/20);
+    for(let i=1;i<steps;i++)if(checkObstacleCollision(this.tank.x+dx/steps*i,this.tank.y+dy/steps*i,5))return false;
+    return true;
+  }
+  decideAction(){
+    const d=Math.hypot(this.tank.x-this.target.x,this.tank.y-this.target.y);
+    if(d<150)this.currentAction=Math.random()>.5?'retreat':'strafe_left';
+    else if(d>300)this.currentAction='move';
+    else{const a=['strafe_left','strafe_right','move'];this.currentAction=a[Math.floor(Math.random()*3)]}
+  }
+}
 
-                if (keys[this.controls.left]) {
-                    this.angle -= this.turnSpeed;
-                }
-                if (keys[this.controls.right]) {
-                    this.angle += this.turnSpeed;
-                }
-                if (keys[this.controls.shoot] && this.reloadTime <= 0) {
-                    this.shoot();
-                }
+/* ---------- Spielsteuerung ---------- */
+let player1,player2,bot,tanks=[],keys={};
 
-                this.x = Math.max(this.width/2, Math.min(canvas.width - this.width/2, this.x));
-                this.y = Math.max(this.height/2, Math.min(canvas.height - this.height/2, this.y));
+function selectMode(m){gameMode=m;homeScreen.style.display='none';gameScreen.style.display='block';startGame(m)}
+function goToHome(){gameRunning=false;player1=player2=bot=null;gameScreen.style.display='none';homeScreen.style.display='block';victoryOverlay.style.display='none';gameEnded=false;gameInfo.textContent='Wähle einen Spielmodus'}
+function restartGame(){startGame(gameMode)}
 
-                this.reloadTime--;
-            }
+function startGame(mode){
+  gameRunning=true;gameEnded=false;victoryOverlay.style.display='none';
+  parts.length=0;trc.clearRect(0,0,W,H);shake=0;
+  player1=new Tank(170,H/2,'#58823a',{forward:'w',backward:'s',left:'a',right:'d',shoot:' '},'Spieler 1');
+  player1.angle=Math.PI/2;
+  if(mode==='pvp'){
+    player2=new Tank(W-170,H/2,'#a88a55',{forward:'ArrowUp',backward:'ArrowDown',left:'ArrowLeft',right:'ArrowRight',shoot:'Enter'},'Spieler 2');
+    bot=null;gameInfo.textContent='👥 P1: WASD + Leertaste | P2: Pfeiltasten + Enter';
+  }else{
+    player2=new Tank(W-170,H/2,'#a88a55',{},'Bot');bot=new Bot(player2,player1);
+    player2.maxReload=140;player2.dmg=10;
+    gameInfo.textContent='🤖 Du: WASD + Leertaste | Bot: KI-gesteuert';
+  }
+  player2.angle=-Math.PI/2;tanks=[player1,player2];
+}
 
-            shoot() {
-                this.bullets.push({
-                    x: this.x + Math.sin(this.angle) * 30,
-                    y: this.y - Math.cos(this.angle) * 30,
-                    vx: Math.sin(this.angle) * 6,
-                    vy: -Math.cos(this.angle) * 6,
-                    life: 100
-                });
-                this.reloadTime = this.maxReload;
-            }
+addEventListener('keydown',e=>{keys[e.key]=true;keys[e.key.toLowerCase()]=true;if([' ','Enter','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key))e.preventDefault()});
+addEventListener('keyup',e=>{keys[e.key]=false;keys[e.key.toLowerCase()]=false});
+addEventListener('blur',()=>keys={});
 
-            updateBullets() {
-                for (let i = this.bullets.length - 1; i >= 0; i--) {
-                    let b = this.bullets[i];
-                    b.x += b.vx;
-                    b.y += b.vy;
-                    b.life--;
+function drawHUD(){
+  if(!player1||!player2)return;
+  const bar=(x,p,col,label,align)=>{
+    ctx.fillStyle='rgba(0,0,0,.55)';ctx.beginPath();ctx.roundRect(x,14,210,34,8);ctx.fill();
+    ctx.fillStyle='rgba(255,255,255,.12)';ctx.beginPath();ctx.roundRect(x+8,32,194,10,5);ctx.fill();
+    const w=194*Math.max(0,p.hp)/p.maxHp;
+    if(w>0){ctx.fillStyle=p.hp>35?col:'#ff5a4a';ctx.beginPath();ctx.roundRect(x+8,32,w,10,5);ctx.fill();}
+    ctx.fillStyle='#fff';ctx.font='bold 12px Segoe UI,Arial';ctx.textAlign='left';
+    ctx.fillText(`${label}  ${Math.max(0,Math.round(p.hp))} HP`,x+10,27);
+    const r=1-Math.max(0,p.reloadTime)/p.maxReload; // Nachladebalken
+    ctx.fillStyle='rgba(0,0,0,.55)';ctx.fillRect(x,52,210,4);
+    ctx.fillStyle=r>=1?'#ffd34d':'#b58a2a';ctx.fillRect(x,52,210*r,4);
+  };
+  bar(16,player1,'#7ddc5a','Spieler 1');
+  bar(W-226,player2,'#e8b04a',gameMode==='pvp'?'Spieler 2':'Bot');
+}
 
-                    if (bulletHitsObstacle(b)) {
-                        this.bullets.splice(i, 1);
-                        continue;
-                    }
+function showVictory(winner){
+  gameRunning=false;gameEnded=true;victoryOverlay.style.display='block';
+  victoryText.textContent=`🏆 ${winner} hat gewonnen! 🏆`;
+  victorySubtext.textContent=gameMode==='bot'?(winner==='Spieler 1'?'Du hast den Bot besiegt!':'Der Bot war stärker. Versuche es erneut!'):'Großartiges Duell!';
+}
+function checkWin(){
+  if(player1.hp<=0){explode(player1.x,player1.y,true);shake=18;const w=gameMode==='pvp'?'Spieler 2':'Bot';gameInfo.textContent=`🎉 ${w} hat gewonnen!`;showVictory(w)}
+  else if(player2.hp<=0){explode(player2.x,player2.y,true);shake=18;gameInfo.textContent='🎉 Spieler 1 hat gewonnen!';showVictory('Spieler 1')}
+}
 
-                    if (b.life <= 0 || b.x < 0 || b.x > canvas.width || b.y < 0 || b.y > canvas.height) {
-                        this.bullets.splice(i, 1);
-                    }
-                }
-            }
-
-            checkCollision(otherTank) {
-                for (let i = this.bullets.length - 1; i >= 0; i--) {
-                    let b = this.bullets[i];
-                    let dx = b.x - otherTank.x;
-                    let dy = b.y - otherTank.y;
-                    let dist = Math.sqrt(dx*dx + dy*dy);
-                    if (dist < 28) {
-                        otherTank.hp -= 15;
-                        this.bullets.splice(i, 1);
-                        return true;
-                    }
-                }
-                return false;
-            }
-
-            draw(ctx) {
-                ctx.save();
-                ctx.translate(this.x, this.y);
-                ctx.rotate(this.angle);
-
-                // Schatten
-                ctx.fillStyle = 'rgba(0,0,0,0.3)';
-                ctx.fillRect(-this.width/2 + 3, -this.height/2 + 3, this.width, this.height);
-
-                // Ketten
-                ctx.fillStyle = '#2a2a2a';
-                ctx.fillRect(-this.width/2 - 5, -this.height/2, 8, this.height);
-                ctx.fillRect(this.width/2 - 3, -this.height/2, 8, this.height);
-                
-                // Ketten-Details
-                ctx.fillStyle = '#444';
-                for (let i = 0; i < 6; i++) {
-                    ctx.fillRect(-this.width/2 - 3, -this.height/2 + 3 + i * 9, 4, 3);
-                    ctx.fillRect(this.width/2 - 1, -this.height/2 + 3 + i * 9, 4, 3);
-                }
-
-                // Panzerkörper
-                let bodyGradient = ctx.createLinearGradient(-this.width/2, 0, this.width/2, 0);
-                bodyGradient.addColorStop(0, this.color);
-                bodyGradient.addColorStop(0.5, this.lightenColor(this.color, 20));
-                bodyGradient.addColorStop(1, this.color);
-                ctx.fillStyle = bodyGradient;
-                ctx.fillRect(-this.width/2, -this.height/2, this.width, this.height);
-                
-                // Karosserie-Rand
-                ctx.strokeStyle = 'rgba(0,0,0,0.3)';
-                ctx.lineWidth = 1.5;
-                ctx.strokeRect(-this.width/2, -this.height/2, this.width, this.height);
-                
-                // Motorabdeckung (hinten)
-                ctx.fillStyle = 'rgba(0,0,0,0.2)';
-                ctx.fillRect(-this.width/2 + 3, this.height/2 - 15, this.width - 6, 12);
-                
-                // Lüftungsschlitze
-                ctx.strokeStyle = 'rgba(0,0,0,0.3)';
-                ctx.lineWidth = 1;
-                for (let i = 0; i < 4; i++) {
-                    ctx.beginPath();
-                    ctx.moveTo(-this.width/2 + 8, this.height/2 - 12 + i * 3);
-                    ctx.lineTo(this.width/2 - 8, this.height/2 - 12 + i * 3);
-                    ctx.stroke();
-                }
-
-                // Turm
-                let turmGradient = ctx.createRadialGradient(0, -5, 5, 0, -5, 18);
-                turmGradient.addColorStop(0, this.lightenColor(this.color, 30));
-                turmGradient.addColorStop(1, this.color);
-                ctx.fillStyle = turmGradient;
-                ctx.beginPath();
-                ctx.arc(0, -5, 17, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.strokeStyle = 'rgba(0,0,0,0.4)';
-                ctx.lineWidth = 2;
-                ctx.stroke();
-                
-                // Turm-Details
-                ctx.fillStyle = 'rgba(0,0,0,0.1)';
-                ctx.beginPath();
-                ctx.arc(0, -5, 12, 0, Math.PI * 2);
-                ctx.fill();
-                
-                // Luke
-                ctx.fillStyle = 'rgba(255,255,255,0.2)';
-                ctx.beginPath();
-                ctx.arc(-5, -10, 5, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.strokeStyle = 'rgba(0,0,0,0.3)';
-                ctx.lineWidth = 1;
-                ctx.stroke();
-                
-                // Antenne
-                ctx.strokeStyle = '#333';
-                ctx.lineWidth = 1.5;
-                ctx.beginPath();
-                ctx.moveTo(8, -18);
-                ctx.lineTo(10, -28);
-                ctx.stroke();
-                ctx.fillStyle = '#ff4444';
-                ctx.beginPath();
-                ctx.arc(10, -28, 2, 0, Math.PI * 2);
-                ctx.fill();
-                
-                // Kanone
-                let barrelGradient = ctx.createLinearGradient(-3, -38, 3, -10);
-                barrelGradient.addColorStop(0, '#555');
-                barrelGradient.addColorStop(0.3, '#888');
-                barrelGradient.addColorStop(0.5, '#aaa');
-                barrelGradient.addColorStop(0.7, '#888');
-                barrelGradient.addColorStop(1, '#555');
-                ctx.fillStyle = barrelGradient;
-                ctx.fillRect(-4, -38, 8, 30);
-                
-                // Kanonen-Rand
-                ctx.strokeStyle = '#333';
-                ctx.lineWidth = 1;
-                ctx.strokeRect(-4, -38, 8, 30);
-                
-                // Mündung
-                ctx.fillStyle = '#333';
-                ctx.fillRect(-5, -40, 10, 6);
-                
-                ctx.restore();
-
-                // Kugeln
-                for (let b of this.bullets) {
-                    // Leuchteffekt
-                    ctx.fillStyle = 'rgba(255, 200, 0, 0.3)';
-                    ctx.beginPath();
-                    ctx.arc(b.x, b.y, 7, 0, Math.PI * 2);
-                    ctx.fill();
-                    
-                    ctx.fillStyle = '#FFD700';
-                    ctx.beginPath();
-                    ctx.arc(b.x, b.y, 4, 0, Math.PI * 2);
-                    ctx.fill();
-                    
-                    ctx.fillStyle = '#FFF';
-                    ctx.beginPath();
-                    ctx.arc(b.x, b.y, 2, 0, Math.PI * 2);
-                    ctx.fill();
-                }
-            }
-
-            lightenColor(color, percent) {
-                let num = parseInt(color.replace('#', ''), 16);
-                let amt = Math.round(2.55 * percent);
-                let R = Math.min(255, (num >> 16) + amt);
-                let G = Math.min(255, (num >> 8 & 0x00FF) + amt);
-                let B = Math.min(255, (num & 0x0000FF) + amt);
-                return `rgb(${R}, ${G}, ${B})`;
-            }
-        }
-
-        class Bot {
-            constructor(tank, target) {
-                this.tank = tank;
-                this.target = target;
-                this.actionTimer = 0;
-                this.currentAction = 'move';
-            }
-
-            update() {
-                this.actionTimer--;
-                if (this.actionTimer <= 0) {
-                    this.decideAction();
-                    this.actionTimer = Math.random() * 40 + 25;
-                }
-
-                let dx = this.target.x - this.tank.x;
-                let dy = this.target.y - this.tank.y;
-                let targetAngle = Math.atan2(dx, -dy);
-                
-                let angleDiff = targetAngle - this.tank.angle;
-                while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
-                while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
-
-                if (Math.abs(angleDiff) > 0.03) {
-                    this.tank.angle += Math.sign(angleDiff) * this.tank.turnSpeed * 1.2;
-                }
-
-                let newX = this.tank.x;
-                let newY = this.tank.y;
-
-                if (this.currentAction === 'move') {
-                    newX += Math.sin(this.tank.angle) * this.tank.speed * 0.7;
-                    newY -= Math.cos(this.tank.angle) * this.tank.speed * 0.7;
-                } else if (this.currentAction === 'retreat') {
-                    newX -= Math.sin(this.tank.angle) * this.tank.speed * 0.6;
-                    newY += Math.cos(this.tank.angle) * this.tank.speed * 0.6;
-                } else if (this.currentAction === 'strafe_left') {
-                    newX -= Math.cos(this.tank.angle) * this.tank.speed * 0.6;
-                    newY -= Math.sin(this.tank.angle) * this.tank.speed * 0.6;
-                } else if (this.currentAction === 'strafe_right') {
-                    newX += Math.cos(this.tank.angle) * this.tank.speed * 0.6;
-                    newY += Math.sin(this.tank.angle) * this.tank.speed * 0.6;
-                }
-
-                if (!checkObstacleCollision(newX, newY, 22)) {
-                    this.tank.x = newX;
-                    this.tank.y = newY;
-                }
-
-                if (Math.abs(angleDiff) < 0.15 && this.tank.reloadTime <= 0) {
-                    if (this.hasLineOfSight()) {
-                        this.tank.shoot();
-                    }
-                }
-
-                this.tank.x = Math.max(this.tank.width/2, Math.min(canvas.width - this.tank.width/2, this.tank.x));
-                this.tank.y = Math.max(this.tank.height/2, Math.min(canvas.height - this.tank.height/2, this.tank.y));
-            }
-
-            hasLineOfSight() {
-                let dx = this.target.x - this.tank.x;
-                let dy = this.target.y - this.tank.y;
-                let dist = Math.sqrt(dx * dx + dy * dy);
-                if (dist > 400) return false;
-                
-                let steps = Math.floor(dist / 20);
-                for (let i = 1; i < steps; i++) {
-                    let checkX = this.tank.x + (dx / steps) * i;
-                    let checkY = this.tank.y + (dy / steps) * i;
-                    if (checkObstacleCollision(checkX, checkY, 5)) return false;
-                }
-                return true;
-            }
-
-            decideAction() {
-                let dist = Math.sqrt(
-                    (this.tank.x - this.target.x)**2 + 
-                    (this.tank.y - this.target.y)**2
-                );
-                if (dist < 150) {
-                    this.currentAction = Math.random() > 0.5 ? 'retreat' : 'strafe_left';
-                } else if (dist > 300) {
-                    this.currentAction = 'move';
-                } else {
-                    let actions = ['strafe_left', 'strafe_right', 'move'];
-                    this.currentAction = actions[Math.floor(Math.random() * actions.length)];
-                }
-            }
-        }
-
-        let player1, player2, bot;
-        let keys = {};
-
-        function selectMode(mode) {
-            gameMode = mode;
-            homeScreen.style.display = 'none';
-            gameScreen.style.display = 'block';
-            victoryOverlay.style.display = 'none';
-            gameEnded = false;
-            startGame(mode);
-        }
-
-        function goToHome() {
-            gameRunning = false;
-            player1 = null;
-            player2 = null;
-            bot = null;
-            gameScreen.style.display = 'none';
-            homeScreen.style.display = 'block';
-            victoryOverlay.style.display = 'none';
-            gameEnded = false;
-            gameInfo.textContent = 'Wähle einen Spielmodus';
-        }
-
-        function restartGame() {
-            victoryOverlay.style.display = 'none';
-            gameEnded = false;
-            startGame(gameMode);
-        }
-
-        function startGame(mode) {
-            gameRunning = true;
-            gameEnded = false;
-            victoryOverlay.style.display = 'none';
-            
-            player1 = new Tank(150, 275, '#4a8b2e', {
-                forward: 'w',
-                backward: 's',
-                left: 'a',
-                right: 'd',
-                shoot: ' '
-            }, 'Spieler 1');
-
-            if (mode === 'pvp') {
-                player2 = new Tank(750, 275, '#8b4513', {
-                    forward: 'ArrowUp',
-                    backward: 'ArrowDown',
-                    left: 'ArrowLeft',
-                    right: 'ArrowRight',
-                    shoot: 'Enter'
-                }, 'Spieler 2');
-                bot = null;
-                gameInfo.textContent = '👥 P1: WASD + Space | P2: Pfeiltasten + Enter';
-            } else {
-                player2 = new Tank(750, 275, '#8b4513', {}, 'Bot');
-                bot = new Bot(player2, player1);
-                gameInfo.textContent = '🤖 Du: WASD + Space | Bot: KI-gesteuert';
-            }
-        }
-
-        document.addEventListener('keydown', (e) => {
-            keys[e.key] = true;
-            if (e.key === ' ' || e.key === 'Enter') {
-                e.preventDefault();
-            }
-        });
-
-        document.addEventListener('keyup', (e) => {
-            keys[e.key] = false;
-        });
-
-        function drawBackground() {
-            let grassGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-            grassGradient.addColorStop(0, '#7ec850');
-            grassGradient.addColorStop(1, '#5a9e2f');
-            ctx.fillStyle = grassGradient;
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            ctx.fillStyle = '#6ab840';
-            for (let i = 0; i < 300; i++) {
-                let gx = Math.random() * canvas.width;
-                let gy = Math.random() * canvas.height;
-                ctx.fillRect(gx, gy, 2, 8 + Math.random() * 6);
-            }
-        }
-
-        function drawObstacles() {
-            for (let obs of obstacles) {
-                if (obs.type === 'tree') {
-                    ctx.fillStyle = 'rgba(0,0,0,0.2)';
-                    ctx.beginPath();
-                    ctx.arc(obs.x + 2, obs.y + 2, obs.radius, 0, Math.PI * 2);
-                    ctx.fill();
-                    
-                    ctx.fillStyle = '#2d5016';
-                    ctx.beginPath();
-                    ctx.arc(obs.x, obs.y, obs.radius, 0, Math.PI * 2);
-                    ctx.fill();
-                    
-                    ctx.fillStyle = '#3a6b1e';
-                    ctx.beginPath();
-                    ctx.arc(obs.x, obs.y, obs.radius * 0.8, 0, Math.PI * 2);
-                    ctx.fill();
-                    
-                    ctx.fillStyle = '#4a8b2e';
-                    ctx.beginPath();
-                    ctx.arc(obs.x, obs.y, obs.radius * 0.55, 0, Math.PI * 2);
-                    ctx.fill();
-                    
-                    ctx.fillStyle = '#5a9b3e';
-                    for (let i = 0; i < 5; i++) {
-                        let angle = (i / 5) * Math.PI * 2;
-                        let dotX = obs.x + Math.cos(angle) * obs.radius * 0.5;
-                        let dotY = obs.y + Math.sin(angle) * obs.radius * 0.5;
-                        ctx.beginPath();
-                        ctx.arc(dotX, dotY, obs.radius * 0.2, 0, Math.PI * 2);
-                        ctx.fill();
-                    }
-                    
-                } else if (obs.type === 'rock') {
-                    ctx.fillStyle = 'rgba(0,0,0,0.2)';
-                    ctx.fillRect(obs.x - obs.width/2 + 3, obs.y - obs.height/2 + 3, obs.width, obs.height);
-                    
-                    ctx.fillStyle = '#808080';
-                    ctx.fillRect(obs.x - obs.width/2, obs.y - obs.height/2, obs.width, obs.height);
-                    
-                    ctx.fillStyle = '#999';
-                    ctx.beginPath();
-                    ctx.arc(obs.x - obs.width/4, obs.y - obs.height/4, obs.width * 0.3, 0, Math.PI * 2);
-                    ctx.fill();
-                    
-                    ctx.strokeStyle = '#666';
-                    ctx.lineWidth = 2;
-                    ctx.strokeRect(obs.x - obs.width/2, obs.y - obs.height/2, obs.width, obs.height);
-                    
-                    ctx.strokeStyle = '#777';
-                    ctx.lineWidth = 1;
-                    ctx.beginPath();
-                    ctx.moveTo(obs.x - obs.width/3, obs.y - obs.height/3);
-                    ctx.lineTo(obs.x + obs.width/4, obs.y + obs.height/4);
-                    ctx.stroke();
-                    ctx.beginPath();
-                    ctx.moveTo(obs.x + obs.width/4, obs.y - obs.height/4);
-                    ctx.lineTo(obs.x - obs.width/3, obs.y + obs.height/3);
-                    ctx.stroke();
-                    
-                } else if (obs.type === 'bush') {
-                    ctx.fillStyle = 'rgba(0,0,0,0.2)';
-                    ctx.beginPath();
-                    ctx.arc(obs.x + 2, obs.y + 2, obs.radius, 0, Math.PI * 2);
-                    ctx.fill();
-                    
-                    ctx.fillStyle = '#3a6b1e';
-                    ctx.beginPath();
-                    ctx.arc(obs.x, obs.y, obs.radius, 0, Math.PI * 2);
-                    ctx.fill();
-                    
-                    ctx.fillStyle = '#4a8b2e';
-                    ctx.beginPath();
-                    ctx.arc(obs.x, obs.y, obs.radius * 0.8, 0, Math.PI * 2);
-                    ctx.fill();
-                    
-                    ctx.fillStyle = '#5a9b3e';
-                    ctx.beginPath();
-                    ctx.arc(obs.x, obs.y, obs.radius * 0.5, 0, Math.PI * 2);
-                    ctx.fill();
-                }
-            }
-        }
-
-        function drawHUD() {
-            if (!player1 || !player2) return;
-            
-            ctx.fillStyle = '#333';
-            ctx.fillRect(20, 20, 200, 20);
-            ctx.fillStyle = '#00ff88';
-            ctx.fillRect(20, 20, 200 * (player1.hp/player1.maxHp), 20);
-            ctx.fillStyle = 'white';
-            ctx.font = 'bold 14px Arial';
-            ctx.fillText(`Spieler 1: ${Math.max(0, Math.round(player1.hp))} HP`, 25, 35);
-
-            ctx.fillStyle = '#333';
-            ctx.fillRect(canvas.width - 220, 20, 200, 20);
-            ctx.fillStyle = '#ff4444';
-            ctx.fillRect(canvas.width - 220, 20, 200 * (player2.hp/player2.maxHp), 20);
-            ctx.fillStyle = 'white';
-            ctx.fillText(`${gameMode === 'pvp' ? 'Spieler 2' : 'Bot'}: ${Math.max(0, Math.round(player2.hp))} HP`, canvas.width - 215, 35);
-
-            if (player1.reloadTime > 0) {
-                ctx.fillStyle = 'rgba(255,215,0,0.7)';
-                ctx.font = '12px Arial';
-                ctx.fillText('Lädt nach...', 20, 55);
-            }
-            if (gameMode === 'pvp' && player2.reloadTime > 0) {
-                ctx.fillStyle = 'rgba(255,215,0,0.7)';
-                ctx.fillText('Lädt nach...', canvas.width - 120, 55);
-            }
-        }
-
-        function showVictory(winner) {
-            gameRunning = false;
-            gameEnded = true;
-            victoryOverlay.style.display = 'block';
-            victoryText.textContent = `🏆 ${winner} hat gewonnen! 🏆`;
-            if (gameMode === 'bot' && winner === 'Spieler 1') {
-                victorySubtext.textContent = 'Du hast den Bot besiegt!';
-            } else if (gameMode === 'bot') {
-                victorySubtext.textContent = 'Der Bot war stärker. Versuche es erneut!';
-            } else {
-                victorySubtext.textContent = 'Großartiges Duell!';
-            }
-        }
-
-        function checkWin() {
-            if (player1.hp <= 0) {
-                let winner = gameMode === 'pvp' ? 'Spieler 2' : 'Bot';
-                gameInfo.textContent = `🎉 ${winner} hat gewonnen!`;
-                showVictory(winner);
-            } else if (player2.hp <= 0) {
-                gameInfo.textContent = '🎉 Spieler 1 hat gewonnen!';
-                showVictory('Spieler 1');
-            }
-        }
-
-        function gameLoop() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            drawBackground();
-            drawObstacles();
-
-            if (gameRunning && player1 && player2) {
-                player1.move(keys);
-                player1.updateBullets();
-                
-                if (bot) {
-                    bot.update();
-                } else {
-                    player2.move(keys);
-                }
-                player2.updateBullets();
-
-                player1.checkCollision(player2);
-                player2.checkCollision(player1);
-
-                checkWin();
-            }
-
-            if (player1) player1.draw(ctx);
-            if (player2) player2.draw(ctx);
-            drawHUD();
-
-            requestAnimationFrame(gameLoop);
-        }
-
-        gameLoop();
-    </script>
+let last=0,acc=0;const STEP=1000/60;
+function gameLoop(ts=0){
+  acc+=Math.min(100,ts-last);last=ts;
+  while(acc>=STEP){acc-=STEP;step()}
+  render();
+  requestAnimationFrame(gameLoop);
+}
+function step(){
+  if(gameRunning&&player1&&player2){
+    player1.tick();player2.tick();
+    player1.move(keys);player1.updateBullets();
+    if(bot)bot.update();else player2.move(keys);
+    player2.updateBullets();
+    player1.checkCollision(player2);player2.checkCollision(player1);
+    checkWin();
+  }else if(player1&&player2){player1.tick();player2.tick();player1.updateBullets();player2.updateBullets()}
+  updateParts();
+  shake*=.88;
+}
+function render(){
+  ctx.clearRect(0,0,W,H);
+  ctx.save();
+  if(shake>.3)ctx.translate((Math.random()-.5)*shake,(Math.random()-.5)*shake);
+  ctx.drawImage(bg,0,0);
+  ctx.drawImage(trk,0,0);
+  if(player1)player1.draw(ctx);
+  if(player2)player2.draw(ctx);
+  drawParts();
+  ctx.restore();
+  drawHUD();
+}
+requestAnimationFrame(gameLoop);
+</script>
 </body>
 </html>
